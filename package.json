@@ -1,23 +1,16 @@
 {
-  "name": "translate-container",
-  "version": "3.1.0",
+  "name": "myapp",
+  "version": "0.0.0",
   "private": true,
-  "license": "GPLv3",
-  "authors": [
-    "Erickson Silva <erickson.silva@lavid.ufpb.br>",
-    "Jonathan Lincoln Brilhante <jonathan.lincoln.brilhante@gmail.com>",
-    "Wesnydy Lima Ribeiro <wesnydy@lavid.ufpb.br>"
-  ],
   "scripts": {
     "start": "node ./bin/www"
   },
   "dependencies": {
-    "amqplib": "~0.5.1",
-    "bluebird": "^3.4.7",
-    "body-parser": "~1.16.0",
-    "express": "^4.15.2",
-    "mongoose": "^4.8.4",
-    "path": "^0.12.7",
-    "shortid": "~2.2.6"
+    "cookie-parser": "~1.4.3",
+    "debug": "~2.6.9",
+    "express": "~4.16.0",
+    "http-errors": "~1.6.2",
+    "jade": "~1.11.0",
+    "morgan": "~1.9.0"
   }
 }
