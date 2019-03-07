@@ -3,7 +3,7 @@
 	"version": "1.0.0",
 	"private": true,
 	"scripts": {
-		"start": "NODE_ENV=dev babel-node ./bin/www"
+		"start": "DEBUG=vlibras-translator:* NODE_ENV=dev babel-node ./bin/www"
 	},
 	"dependencies": {
 		"amqplib": "^0.5.3",
@@ -13,6 +13,7 @@
 		"express": "~4.16.0",
 		"express-validator": "^5.3.1",
 		"http-errors": "~1.6.2",
+		"mongoose": "^5.4.17",
 		"morgan": "~1.9.0",
 		"uuid": "^3.3.2"
 	},
