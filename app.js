@@ -8,6 +8,7 @@ import env from './config/environments/environment';
 dotenv.config({ path: env() });
 
 import healthRouter from './routes/healthCheck';
+import reviewRouter from './routes/translationReview';
 import translatorRouter from './routes/textTranslator';
 
 const app = express();
@@ -18,6 +19,7 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 
 app.use('/', healthRouter);
+app.use('/', reviewRouter);
 app.use('/', translatorRouter);
 
 // catch 404 and forward to error handler
