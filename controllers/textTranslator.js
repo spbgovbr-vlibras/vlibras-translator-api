@@ -18,8 +18,8 @@ const translator = async function textTranslator(req, res, next) {
 		await sendToQueue(process.env.TEXT_ROUTE, req.body.text, uid);
 		
 		const translationRequest = new Translation({
-			requestTag: uid,
-			text: req.body.text
+			text: req.body.text,
+			requester: req.headers['x-forwarded-for'] || req.connection.remoteAddress
 		});
 
 		await translationRequest.save();
