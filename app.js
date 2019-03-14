@@ -5,8 +5,9 @@ import cookieParser from 'cookie-parser';
 import logger from 'morgan';
 
 import env from './config/environments/environment';
-dotenv.config({path: env()});
+dotenv.config({ path: env() });
 
+import healthRouter from './routes/healthCheck';
 import translatorRouter from './routes/textTranslator';
 
 const app = express();
@@ -16,6 +17,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 
+app.use('/', healthRouter);
 app.use('/', translatorRouter);
 
 // catch 404 and forward to error handler
