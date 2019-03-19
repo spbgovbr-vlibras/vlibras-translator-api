@@ -29,7 +29,7 @@ const server = http.createServer(app);
  */
 
 db().then(() => {
-  serverDebug(`Connected to database ${process.env.DB_NAME}`);
+  serverDebug(`Connected to ${process.env.DB_NAME}`);
 	server.listen(port);
   server.on('error', onError);
   server.on('listening', onListening);

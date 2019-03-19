@@ -2,7 +2,7 @@ import createError from 'http-errors';
 import { validationResult } from 'express-validator/check';
 import Review from '../models/review';
 
-const review = async function textTranslator(req, res, next) {
+const review = async function translationReview(req, res, next) {
 
 	const errors = validationResult(req);
 
@@ -10,14 +10,23 @@ const review = async function textTranslator(req, res, next) {
 		return next(createError(422, errors.array()));
 	}
 
-	const payload = {
-		text: req.body.text,
-		translation: req.body.translation,
-		rating: req.body.rating,
-		review: req.body.review
-	};
+	try {
+		const reviewRequest = new Review({
+			text: req.body.text,
+			translation: req.body.translation,
+			rating: req.body.rating,
+			review: req.body.review || "",
+			requester: req.headers['x-forwarded-for'] || req.connection.remoteAddress
+		});
 
-	res.status(200).json(payload);	
+		await reviewRequest.save();
+
+		res.sendStatus(200);
+		
+	} catch (error) {
+		next(error);
+	}
+	
 }
 
 export default review;
