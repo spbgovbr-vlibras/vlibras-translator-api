@@ -16,6 +16,11 @@ const translator = async function textTranslator(req, res, next) {
 		const uid = uuid();
 		const connectionChannel = await setupConnection();
 
+		const translationRequest = new Translation({
+			text: req.body.text,
+			requester: req.headers['x-forwarded-for'] || req.connection.remoteAddress
+		});
+
 		await connectionChannel.assertExchange(
 			process.env.EXCHANGE_NAME,
 			process.env.EXCHANGE_TYPE,
@@ -34,6 +39,11 @@ const translator = async function textTranslator(req, res, next) {
 					
 					res.status(200).send(content.translation);
 					setTimeout(() => { connectionChannel.close(); }, 500);
+
+					Translation.findByIdAndUpdate(
+						translationRequest._id, 
+						{ translation: content.translation }
+					).exec();
 				}
 			},
 			{ noAck: true }
@@ -47,11 +57,6 @@ const translator = async function textTranslator(req, res, next) {
 			Buffer.from(payload),
 			{ correlationId: uid, replyTo: process.env.CONSUMER_QUEUE }
 		);
-
-		const translationRequest = new Translation({
-			text: req.body.text,
-			requester: req.headers['x-forwarded-for'] || req.connection.remoteAddress
-		});
 
 		await translationRequest.save();
 
