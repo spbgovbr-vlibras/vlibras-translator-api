@@ -27,7 +27,7 @@ const translator = async function textTranslator(req, res, next) {
 			(msg) => {
 				if (msg.properties.correlationId === uid) {
 					res.status(200).json(msg.content.toString());
-					setTimeout(() => { console.log("xxxx fechando canal xxxx"); connectionChannel.close(); }, 500);
+					setTimeout(() => { connectionChannel.close(); }, 500);
 				}
 			},
 			{ noAck: true }

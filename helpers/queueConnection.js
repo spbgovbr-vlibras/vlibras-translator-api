@@ -13,11 +13,9 @@ const connectionURL = {
 const setupConnection = async function setupQueueConnection() {
 	try {
 		if (connection === undefined) {
-			console.log(">>>> Criando nova conexão <<<<");
 			connection = await amqplib.connect(connectionURL);
 		}
 
-		console.log("#### Criando novo canal ####");
 		return await connection.createChannel();
 
 	} catch (error) {
