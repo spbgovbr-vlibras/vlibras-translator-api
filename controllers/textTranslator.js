@@ -26,7 +26,13 @@ const translator = async function textTranslator(req, res, next) {
 			process.env.CONSUMER_QUEUE,
 			(msg) => {
 				if (msg.properties.correlationId === uid) {
-					res.status(200).json(msg.content.toString());
+					const content = JSON.parse(msg.content.toString())
+
+					if (content.error !== undefined) {
+						return next(createError(500, content.error));
+					}
+					
+					res.status(200).send(content.translation);
 					setTimeout(() => { connectionChannel.close(); }, 500);
 				}
 			},
