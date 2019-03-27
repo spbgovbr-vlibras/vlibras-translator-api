@@ -30,7 +30,7 @@ app.use((req, res, next) => {
 // error handler
 app.use((err, req, res, next) => {
 	res.status(err.status || 500);
-	if(app.get('env') === 'development') {
+	if(app.get('env') === 'dev') {
 		console.error('\x1b[2m', err);
 		res.json({ error : err });
 	} else {
