@@ -1,0 +1,47 @@
+apiVersion: extensions/v1beta1
+#kubectl expose deployment translateapi --port=80 --type=LoadBalancer
+#kubectl autoscale deployment translateapi --cpu-percent=70 --min=1 --max=8
+kind: Deployment
+metadata:
+  name: translateapi
+  labels:
+    app: translateapi
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: translateapi
+  template:
+    metadata:
+      labels:
+        app: translateapi
+    spec:
+      containers:
+        - image: vlibras/translator-api:03
+          name: translateapi
+          env:
+            - name: AMQP_HOST
+              value: "10.11.247.75"
+            - name: AMQP_PORT
+              value: "5672"
+            - name: PORT
+              value: "80"
+            - name: DB_HOST
+              value: "10.11.247.190"
+            - name: DB_PORT
+              value: "27017"
+          ports:
+            - containerPort: 80
+              name: vlibras
+          resources:
+            requests:
+              cpu: 600m
+              memory: 1.5Gi
+          #readinessProbe:
+          #  httpGet:
+          #    path: /
+          #    port: 80
+          #  initialDelaySeconds: 30
+          #  periodSeconds: 30
+      hostNetwork: true
+

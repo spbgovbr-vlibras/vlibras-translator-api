@@ -1,0 +1,25 @@
+#kubectl expose rc mongo-controller --type=ClusterIP --port=27017
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: mongo-remote
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        name: mongo-remote
+    spec:
+      containers:
+        - name: mongocontainer
+          image: mongo:4.0.3
+          imagePullPolicy: Always
+          command:
+          - "mongod"
+          - "--bind_ip"
+          - "0.0.0.0"
+          ports:
+          - containerPort: 27017
+            name: mongocontainer
+      nodeSelector:
+        kubernetes.io/hostname: xxx
