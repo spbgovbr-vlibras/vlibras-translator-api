@@ -3,7 +3,7 @@
 	"version": "1.0.0",
 	"private": true,
 	"scripts": {
-		"start": "DEBUG=vlibras-translator:* NODE_ENV=dev babel-node ./bin/www"
+		"start": "DEBUG=vlibras-translator:* NODE_ENV=production babel-node ./bin/www"
 	},
 	"dependencies": {
 		"amqplib": "^0.5.3",
