@@ -1,12 +1,15 @@
 {
 	"name": "vlibras-translator",
+	"description": "VLibras Translation Service API",
 	"version": "1.0.0",
 	"private": true,
-	"scripts": {
-		"start": "DEBUG=vlibras-translator:* NODE_ENV=production babel-node ./bin/www"
-	},
+	"contributors": [
+		"Wesnydy Ribeiro <wesnydy@lavid.ufpb.br>"
+	],	
 	"dependencies": {
 		"amqplib": "^0.5.3",
+		"babel-cli": "^6.26.0",
+		"babel-preset-es2015": "^6.24.1",
 		"cookie-parser": "~1.4.3",
 		"debug": "~2.6.9",
 		"dotenv": "^6.2.0",
@@ -17,8 +20,11 @@
 		"morgan": "~1.9.0",
 		"uuid": "^3.3.2"
 	},
-	"devDependencies": {
-		"babel-cli": "^6.26.0",
-		"babel-preset-es2015": "^6.24.1"
+	"engines": {
+	  "node": "10.15.3"
+	},
+	"scripts": {
+		"start": "DEBUG=vlibras-translator:* NODE_ENV=production babel-node ./bin/www",
+		"dev": "DEBUG=vlibras-translator:* NODE_ENV=dev babel-node ./bin/www"
 	}
 }

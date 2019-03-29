@@ -1,8 +1,8 @@
 apiVersion: "v1"
-#gcloud compute disks create dicionario-disk --zone us-central1-a --size 30
+#gcloud compute disks create translator-disk --zone us-central1-a --size 30
 kind: "PersistentVolume"
 metadata:
-  name: dicionario-pv
+  name: translator-pv
 spec:
   capacity:
     storage: 30Gi 
@@ -10,4 +10,4 @@ spec:
     - ReadWriteMany
   gcePersistentDisk: 
     fsType: ext4
-    pdName: dicionario-disk
+    pdName: translator-disk

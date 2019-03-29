@@ -8,4 +8,4 @@ WORKDIR translator-api/
 
 RUN npm install && npm audit fix
 
-ENTRYPOINT npm start
+ENTRYPOINT npm start --silent

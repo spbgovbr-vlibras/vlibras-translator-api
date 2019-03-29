@@ -1,24 +1,23 @@
 apiVersion: extensions/v1beta1
-#kubectl expose deployment translateapi --port=80 --type=LoadBalancer
-#kubectl autoscale deployment translateapi --cpu-percent=70 --min=1 --max=8
+#kubectl expose deployment translatorapi --port=80 --type=LoadBalancer
 kind: Deployment
 metadata:
-  name: translateapi
+  name: translatorapi
   labels:
-    app: translateapi
+    app: translatorapi
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: translateapi
+      app: translatorapi
   template:
     metadata:
       labels:
-        app: translateapi
+        app: translatorapi
     spec:
       containers:
         - image: vlibras/translator-api:03
-          name: translateapi
+          name: translatorapi
           env:
             - name: AMQP_HOST
               value: "10.11.247.75"
@@ -39,7 +38,7 @@ spec:
               memory: 1.5Gi
           #readinessProbe:
           #  httpGet:
-          #    path: /
+          #    path: /healthcheck
           #    port: 80
           #  initialDelaySeconds: 30
           #  periodSeconds: 30
