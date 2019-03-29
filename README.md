@@ -104,7 +104,7 @@ npm install
 To test the installation, simply start the translation API with the following command:
 
 ```sh
-npm start
+npm run dev
 ```
 
 ## Documentation
@@ -117,6 +117,7 @@ Add additional notes about how to deploy this on a live system.
 
 ## Contributors
 
+* Jonathan Brilhante - <jonathan.brilhante@lavid.ufpb.br>
 * Wesnydy Ribeiro - <wesnydy@lavid.ufpb.br>
 
 ## License
