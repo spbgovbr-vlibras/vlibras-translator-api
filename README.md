@@ -122,7 +122,7 @@ Add additional notes about how to deploy this on a live system.
 
 ## License
 
-This project is licensed under the GPLv3 License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the LGPLv3 License - see the [LICENSE](LICENSE) file for details.
 
 
 
