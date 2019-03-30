@@ -98,10 +98,18 @@ sudo apt install -y rabbitmq-server
 After installing all the prerequisites, install the project by running the command:
 
 ```sh
+cd api/
+```
+
+```sh
 npm install
 ```
 
 To test the installation, simply start the translation API with the following command:
+
+```sh
+cd api/
+```
 
 ```sh
 npm run dev
