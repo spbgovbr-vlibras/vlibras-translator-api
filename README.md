@@ -162,6 +162,7 @@ Finally, starting the service is made by :
 
 ```sh
 kubectl apply -f kubernetes/server.yaml
+kubectl expose deployment translatorapi --port=80 --type=LoadBalancer
 ```
 
 
