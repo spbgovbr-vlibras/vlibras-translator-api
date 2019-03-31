@@ -23,6 +23,8 @@ VLibras Translation Service API.
   - [Installing](#installing)
 - **[Documentation](#documentation)**
 - **[Deployment](#deployment)**
+  - [Deploy Tools](#deploy-tools)
+  - [Deploying](#deploying)
 - **[Contributors](#contributors)**
 - **[License](#license)**
 
@@ -117,35 +119,119 @@ npm run dev
 
 ## Documentation
 
-In writing process.
+> In writing process.
 
 ## Deployment
 
-### Prerequisites
+These instructions will get you a copy of the project up and running on a live System.
 
-To fully deployment this application its necessary to have instaled and configurated the Docker Engine (https://www.docker.com/) and Kubernetes Container Orchestration (https://kubernetes.io/)
-Accomplishing this task change to datacenter to another. Acess all links above to fullfil your needs. 
+### Deploy Tools
 
-### Instalation
+To fully deployment of this project its necessary to have installed and configured the Docker Engine and Kubernetes Container Orchestration.
 
+[Docker](https://www.docker.com/)
 
-If you already MongoDB and RabbitMQ running on your cluster, skip those steps.
+Update the apt package index:
+
+```sh
+sudo apt update
+```
+
+Install packages to allow apt to use a repository over HTTPS:
+
+```sh
+sudo apt install -y apt-transport-https ca-certificates curl gnupg-agent software-properties-common
+```
+
+Add Docker’s official GPG key:
+
+```sh
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+```
+
+Use the following command to set up the stable repository:
+
+```sh
+sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+```
+
+Update the apt package index:
+
+```sh
+sudo apt update
+```
+
+Install the latest version of Docker and containerd:
+
+```sh
+sudo apt install -y docker-ce docker-ce-cli containerd.io
+```
+
+<br/>
+
+[Kubernetes](https://kubernetes.io/)
+
+Update the apt package index:
+
+```sh
+sudo apt update
+```
+
+Install packages to allow apt to use a repository over HTTPS:
+
+```sh
+sudo apt install -y apt-transport-https
+```
+
+Add Kubernetes’s official GPG key:
+
+```sh
+curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
+```
+
+Use the following command to set up the main repository:
+
+```sh
+echo "deb https://apt.kubernetes.io/ kubernetes-bionic main" | sudo tee -a /etc/apt/sources.list.d/kubernetes.list
+```
+
+Update the apt package index:
+
+```sh
+sudo apt update
+```
+
+Install the kubectl:
+
+```sh
+sudo apt install -y kubectl
+```
+
+### Deploying
+
+> Note: if you already have MongoDB and RabbitMQ running on your cluster, skip to the server configuration.
 
 Once kubectl is installed and set, run the following commands:
 
 ```sh
-kubectl apply -f kubernetes/mongo.yaml 
+kubectl apply -f kubernetes/mongo.yaml
+```
+
+```sh 
 kubectl expose rc mongo-controller --type=ClusterIP
 ```
-These commands will start the MongoDB pods. You must configure a volume set to be used by it. By default it set to be used in a Google Cloud Plataform (GCP)
+
+The commands above will start the MongoDB pods. You must configure a volume set to be used by it. By default it set to be used in a Google Cloud Platform (GCP). Following, the commands bellow starts up the RabbitMQ pod. As it happened to MongoDB, you must configure a volume set or use the default of a GCP.
 
 ```sh
 kubectl apply -f kubernetes/rabbitmq.yaml
+```
+
+```sh
 kubectl expose deployment rabbitmq --type=ClusterIP
 ```
-Following, this line starts up the RabbitMQ pod. As it happened to MongoDB, you must configure a volume set or use the default of a GCP.
 
-Then , open the file server.yaml and edit these enviroment variables to match yours.
+Then, open the server.yaml file and edit the environment variables below to match your settings.
 
 ```sh
 - name: AMQP_HOST
@@ -158,13 +244,15 @@ Then , open the file server.yaml and edit these enviroment variables to match yo
   value: "MongoDB-Port"
 ```
 
-Finally, starting the service is made by :
+Finally, starting the server by running the commands:
 
 ```sh
 kubectl apply -f kubernetes/server.yaml
-kubectl expose deployment translatorapi --port=80 --type=LoadBalancer
 ```
 
+```sh
+kubectl expose deployment translatorapi --port=80 --type=LoadBalancer
+```
 
 ## Contributors
 
