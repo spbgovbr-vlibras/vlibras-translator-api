@@ -16,7 +16,7 @@ spec:
         app: translatorapi
     spec:
       containers:
-        - image: vlibras/translator-api:03
+        - image: vlibras/translator-api:05
           name: translatorapi
           env:
             - name: AMQP_HOST
