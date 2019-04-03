@@ -14,7 +14,8 @@ const translator = async function textTranslator(req, res, next) {
 
 	try {
 		const uid = uuid();
-		const connectionChannel = await setupConnection();
+		const queueConnection = await setupConnection();
+		const connectionChannel = await queueConnection.createChannel();
 
 		const translationRequest = new Translation({
 			text: req.body.text,

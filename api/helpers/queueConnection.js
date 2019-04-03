@@ -12,11 +12,15 @@ const connectionURL = {
 
 const setupConnection = async function setupQueueConnection() {
 	try {
-		if (connection === undefined) {
+		if (connection === undefined) {		
 			connection = await amqplib.connect(connectionURL);
+			connection.on("close", () => {
+				connection = undefined;
+				return setTimeout(() => { setupConnection(); }, 500);
+			});
 		}
 
-		return await connection.createChannel();
+		return connection;
 
 	} catch (error) {
 		if (connection !== undefined) {
