@@ -17,19 +17,19 @@ const translator = async function textTranslator(req, res, next) {
 		const queueConnection = await setupConnection();
 		const connectionChannel = await queueConnection.createChannel();
 
+		const { consumerCount } = await connectionChannel.assertQueue(process.env.TRANSLATOR_QUEUE);
+
+		if (consumerCount === 0) {
+			return next(createError(500, "Translation Core Unavailable"));
+		}
+
 		const translationRequest = new Translation({
 			text: req.body.text,
 			requester: req.headers['x-forwarded-for'] || req.connection.remoteAddress
 		});
 
-		await connectionChannel.assertExchange(
-			process.env.EXCHANGE_NAME,
-			process.env.EXCHANGE_TYPE,
-			{ durable: true }
-		);
-
 		connectionChannel.consume(
-			process.env.CONSUMER_QUEUE,
+			process.env.API_CONSUMER_QUEUE,
 			(msg) => {
 				if (msg.properties.correlationId === uid) {
 					const content = JSON.parse(msg.content.toString())
@@ -53,10 +53,10 @@ const translator = async function textTranslator(req, res, next) {
 		const payload = JSON.stringify({ text: req.body.text });
 		
 		await connectionChannel.publish(
-			process.env.EXCHANGE_NAME,
-			process.env.TEXT_ROUTE,
+			'',
+			process.env.TRANSLATOR_QUEUE,
 			Buffer.from(payload),
-			{ correlationId: uid, replyTo: process.env.CONSUMER_QUEUE }
+			{ correlationId: uid, replyTo: process.env.API_CONSUMER_QUEUE }
 		);
 
 		await translationRequest.save();
