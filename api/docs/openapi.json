@@ -15,6 +15,9 @@
   "servers" : [ {
     "url" : "http://traducao.vlibras.gov.br",
     "description" : "VLibras Translator Brazilian Government Server"
+  }, {
+    "url" : "http://localhost:3000",
+    "description" : "VLibras Translator Localhost Server"
   } ],
   "tags" : [ {
     "name" : "translations",
