@@ -9,6 +9,7 @@ import helmet from 'helmet';
 import env from './config/environments/environment';
 dotenv.config({ path: env() });
 
+import apiDocRouter from './routes/apiDoc';
 import healthRouter from './routes/healthCheck';
 import reviewRouter from './routes/translationReview';
 import translatorRouter from './routes/textTranslator';
@@ -22,6 +23,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 
+app.use('/', apiDocRouter);
 app.use('/', healthRouter);
 app.use('/', reviewRouter);
 app.use('/', translatorRouter);
