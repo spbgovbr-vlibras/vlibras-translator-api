@@ -107,7 +107,7 @@ cd api/
 npm install
 ```
 
-To test the installation, simply start the translation API with the following command:
+To test the installation, simply start the translation server with the following command:
 
 ```sh
 cd api/
@@ -119,7 +119,11 @@ npm run dev
 
 ## Documentation
 
-> In writing process.
+To access the documentation and usage examples of the VLibras Translator API, start the translation server in your localhost and open a browser with the following link:
+
+```sh
+ http://localhost:3000/docs
+```
 
 ## Deployment
 
