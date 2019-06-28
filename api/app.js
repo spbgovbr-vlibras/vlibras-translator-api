@@ -3,6 +3,7 @@ import express from 'express';
 import cookieParser from 'cookie-parser';
 import logger from 'morgan';
 import cors from 'cors';
+import compression from 'compression';
 import helmet from 'helmet';
 
 import env from './config/environments/environment';
@@ -15,6 +16,7 @@ import translatorRouter from './routes/textTranslator';
 const app = express();
 
 app.use(cors());
+app.use(compression());
 app.use(helmet());
 app.use(logger(env.LOGGER_FORMAT));
 app.use(express.json());
