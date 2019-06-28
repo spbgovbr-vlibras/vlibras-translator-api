@@ -1,13 +1,14 @@
 import amqplib from 'amqplib';
+import env from '../config/environments/environment';
 
 let connection;
 
 const connectionURL = {
-	protocol: process.env.AMQP_PROTOCOL,
-	hostname: process.env.AMQP_HOST,
-	port: process.env.AMQP_PORT,
-	username: process.env.AMQP_USER,
-	password: process.env.AMQP_PASS
+	protocol: env.AMQP_PROTOCOL,
+	hostname: env.AMQP_HOST,
+	port: env.AMQP_PORT,
+	username: env.AMQP_USER,
+	password: env.AMQP_PASS
 };
 
 const setupConnection = async function setupQueueConnection() {

@@ -26,7 +26,7 @@ const review = async function translationReview(req, res, next) {
 	} catch (error) {
 		next(error);
 	}
-	
+
 }
 
 export default review;

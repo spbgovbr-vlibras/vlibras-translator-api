@@ -2,6 +2,7 @@ import createError from 'http-errors';
 import uuid from 'uuid/v4';
 import { validationResult } from 'express-validator/check';
 import setupConnection from '../helpers/queueConnection';
+import env from '../config/environments/environment';
 import Translation from '../models/translation';
 
 const translator = async function textTranslator(req, res, next) {
@@ -17,7 +18,9 @@ const translator = async function textTranslator(req, res, next) {
 		const queueConnection = await setupConnection();
 		const connectionChannel = await queueConnection.createChannel();
 
-		const { consumerCount } = await connectionChannel.assertQueue(process.env.TRANSLATOR_QUEUE);
+		const { consumerCount } = await connectionChannel.assertQueue(
+			env.TRANSLATOR_QUEUE, 
+			{ durable: false });
 
 		if (consumerCount === 0) {
 			return next(createError(500, "Translation Core Unavailable"));
@@ -29,7 +32,7 @@ const translator = async function textTranslator(req, res, next) {
 		});
 
 		connectionChannel.consume(
-			process.env.API_CONSUMER_QUEUE,
+			env.API_CONSUMER_QUEUE,
 			(msg) => {
 				if (msg.properties.correlationId === uid) {
 					const content = JSON.parse(msg.content.toString())
@@ -51,12 +54,12 @@ const translator = async function textTranslator(req, res, next) {
 		);
 
 		const payload = JSON.stringify({ text: req.body.text });
-		
+
 		await connectionChannel.publish(
 			'',
-			process.env.TRANSLATOR_QUEUE,
+			env.TRANSLATOR_QUEUE,
 			Buffer.from(payload),
-			{ correlationId: uid, replyTo: process.env.API_CONSUMER_QUEUE }
+			{ correlationId: uid, replyTo: env.API_CONSUMER_QUEUE }
 		);
 
 		await translationRequest.save();
@@ -64,7 +67,7 @@ const translator = async function textTranslator(req, res, next) {
 	} catch (error) {
 		next(error);
 	}
-	
+
 }
 
 export default translator;
