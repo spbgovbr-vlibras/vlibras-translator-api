@@ -16,31 +16,27 @@ spec:
         app: translatorapi
     spec:
       containers:
-        - image: vlibras/translator-api:05
+        - image: vlibras/translator-api:07
           name: translatorapi
           env:
             - name: AMQP_HOST
-              value: "10.11.247.75"
+              value: "10.0.146.134"
             - name: AMQP_PORT
               value: "5672"
             - name: PORT
               value: "80"
             - name: DB_HOST
-              value: "10.11.247.190"
+              value: "10.0.27.166"
             - name: DB_PORT
               value: "27017"
           ports:
             - containerPort: 80
               name: vlibras
-          resources:
-            requests:
-              cpu: 600m
-              memory: 1.5Gi
-          #readinessProbe:
-          #  httpGet:
-          #    path: /healthcheck
-          #    port: 80
-          #  initialDelaySeconds: 30
-          #  periodSeconds: 30
+          livenessProbe:
+            httpGet:
+              path: /healthcheck
+              port: 80
+            initialDelaySeconds: 60
+            periodSeconds: 20
       hostNetwork: true
 
