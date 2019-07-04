@@ -34,10 +34,7 @@ These instructions will get you a copy of the project up and running on your loc
 
 ### System Requirements
 
-* OS: Ubuntu 18.04.2 LTS (Bionic Beaver)  
-* Processor: -  
-* Memory: -   
-* Storage: -
+* OS: Ubuntu 18.04.2 LTS (Bionic Beaver)
 
 ### Prerequisites
 
@@ -76,23 +73,15 @@ sudo apt install -y mongodb-org
 [RabbitMQ](https://www.rabbitmq.com/)
 
 ```sh
-wget -O - "https://github.com/rabbitmq/signing-keys/releases/download/2.0/rabbitmq-release-signing-key.asc" | sudo apt-key add -
+wget -O - "https://packagecloud.io/rabbitmq/rabbitmq-server/gpgkey" | sudo apt-key add -
 ```
 
 ```sh
-sudo apt install apt-transport-https
+curl -s https://packagecloud.io/install/repositories/rabbitmq/rabbitmq-server/script.deb.sh | sudo bash
 ```
 
 ```sh
-echo "deb https://dl.bintray.com/rabbitmq/debian bionic main" | sudo tee /etc/apt/sources.list.d/bintray.rabbitmq.list
-```
-
-```sh
-sudo apt update
-```
-
-```sh
-sudo apt install -y rabbitmq-server
+sudo apt install -y rabbitmq-server --fix-missing
 ```
 
 ### Installing
@@ -127,7 +116,9 @@ To access the documentation and usage examples of the VLibras Translator API, st
 
 ## Deployment
 
-These instructions will get you a copy of the project up and running on a live System.
+> In writting process
+
+<!-- These instructions will get you a copy of the project up and running on a live System.
 
 ### Deploy Tools
 
@@ -256,7 +247,7 @@ kubectl apply -f kubernetes/server.yaml
 
 ```sh
 kubectl expose deployment translatorapi --port=80 --type=LoadBalancer
-```
+``` -->
 
 ## Contributors
 
@@ -266,7 +257,3 @@ kubectl expose deployment translatorapi --port=80 --type=LoadBalancer
 ## License
 
 This project is licensed under the LGPLv3 License - see the [LICENSE](LICENSE) file for details.
-
-
-
-
