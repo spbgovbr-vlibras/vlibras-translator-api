@@ -96,7 +96,7 @@ cd api/
 npm install
 ```
 
-To test the installation, simply start the translation server with the following command:
+To test the installation, simply start the translation API with the following command:
 
 ```sh
 cd api/
