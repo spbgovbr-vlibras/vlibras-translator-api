@@ -31,7 +31,7 @@ spec:
               value: "27017"
           ports:
             - containerPort: 80
-              name: vlibras
+              name: vlibras-translator-port
           livenessProbe:
             httpGet:
               path: /healthcheck
@@ -39,4 +39,3 @@ spec:
             initialDelaySeconds: 60
             periodSeconds: 20
       hostNetwork: true
-
