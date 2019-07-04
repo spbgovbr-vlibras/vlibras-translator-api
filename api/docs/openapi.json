@@ -13,15 +13,8 @@
 		"version" : "2.0.0"
 	},
 	"servers" : [ {
-		"url" : "http://traducao.vlibras.gov.br",
-		"description" : "VLibras Translator Brazilian Government Server"
-	}, {
 		"url" : "http://traducao2.vlibras.gov.br",
 		"description" : "VLibras Translator v2 Brazilian Government Server"
-	},
-	{
-		"url" : "http://traducao2-dth.vlibras.gov.br",
-		"description" : "VLibras Translator v2 Brazilian Government DTH Server"
 	}, {
 		"url" : "http://localhost:3000",
 		"description" : "VLibras Translator Localhost Server"
