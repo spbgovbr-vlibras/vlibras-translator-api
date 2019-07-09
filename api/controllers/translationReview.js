@@ -15,14 +15,14 @@ const review = async function translationReview(req, res, next) {
 			text: req.body.text,
 			translation: req.body.translation,
 			rating: req.body.rating,
-			review: req.body.review || "",
+			review: req.body.review || '',
 			requester: req.headers['x-forwarded-for'] || req.connection.remoteAddress
 		});
 
 		await reviewRequest.save();
 
 		res.sendStatus(200);
-		
+
 	} catch (error) {
 		next(error);
 	}

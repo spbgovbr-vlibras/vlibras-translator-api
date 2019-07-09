@@ -12,6 +12,7 @@ import apiDocRouter from './routes/apiDoc';
 import healthRouter from './routes/healthCheck';
 import reviewRouter from './routes/translationReview';
 import translatorRouter from './routes/textTranslator';
+import videoMakerRouter from './routes/videoMaker';
 
 const app = express();
 
@@ -27,6 +28,7 @@ app.use('/', apiDocRouter);
 app.use('/', healthRouter);
 app.use('/', reviewRouter);
 app.use('/', translatorRouter);
+app.use('/', videoMakerRouter);
 
 app.use((req, res, next) => {
 	next(createError(404));
