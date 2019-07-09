@@ -23,7 +23,7 @@ const translator = async function textTranslator(req, res, next) {
 			{ durable: false });
 
 		if (consumerCount === 0) {
-			return next(createError(500, "Translation Core Unavailable"));
+			return next(createError(500, 'Translation Core Unavailable'));
 		}
 
 		const translationRequest = new Translation({
