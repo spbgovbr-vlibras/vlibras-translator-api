@@ -3,7 +3,7 @@ import uuid from 'uuid/v4';
 import { validationResult } from 'express-validator/check';
 import setupConnection from '../helpers/queueConnection';
 import env from '../config/environments/environment';
-import { AVATARS } from '../config/video/parameters';
+import { AVATARS, STATUS } from '../config/video/parameters';
 import Video from '../models/video';
 
 const videoMaker = async function librasVideoMaker(req, res, next) {
@@ -30,7 +30,7 @@ const videoMaker = async function librasVideoMaker(req, res, next) {
 		const videoGenRequest = new Video({
 			gloss: req.body.gloss,
 			uid: uid,
-			status: 'queued',
+			status: STATUS.queued,
 			requester: req.headers['x-forwarded-for'] || req.connection.remoteAddress
 		});
 

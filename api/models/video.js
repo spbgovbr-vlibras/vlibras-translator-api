@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import { STATUS } from '../config/video/parameters';
 
 const videoSchema = new mongoose.Schema({
 	gloss: { type: String, required: true },
@@ -6,7 +7,7 @@ const videoSchema = new mongoose.Schema({
 	path: { type: String },
 	size: { type: Number },
 	duration: { type: Number },
-	status: { type: String, required: true },
+	status: { type: String, enum: Object.values(STATUS), required: true },
 	requester: { type: String, required: true }
 }, { timestamps: true, versionKey: false });
 
