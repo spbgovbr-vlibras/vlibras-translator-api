@@ -66,7 +66,7 @@ const videoStatus = async function librasVideoGenerationStatus(req, res, next) {
 	}
 
 	try {
-			const query = { tag: req.params.requestUID };
+			const query = { uid: req.params.requestUID };
 			const { status, size } = await Video.findOne(query).exec() || {};
 
 			if (status === undefined) {
