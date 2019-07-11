@@ -45,6 +45,8 @@ const videoMaker = async function librasVideoMaker(req, res, next) {
 			{ correlationId: uid }
 		);
 
+		setTimeout(() => { connectionChannel.close(); }, 500);
+
 		await videoGenRequest.save();
 
 		res.status(200).json({ requestUID: uid });
