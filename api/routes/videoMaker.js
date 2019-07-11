@@ -5,7 +5,9 @@ import { videoMaker, videoStatus, videoDownload } from '../controllers/videoMake
 const videoMakerRouter = express.Router();
 
 videoMakerRouter
-	.post('/video', check('gloss').not().isEmpty(), videoMaker)
+	.post('/video', [
+		check('gloss').not().isEmpty(), 
+		check('avatar').matches(/^icaro$|^hozana$/)], videoMaker)
 	.get('/video/status/:requestUID', check('requestUID').isUUID(4), videoStatus)
 	.get('/video/download/:requestUID', check('requestUID').isUUID(4), videoDownload);
 
