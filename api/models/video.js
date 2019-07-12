@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import { STATUS } from '../config/video/parameters';
+import { STATUS } from '../config/videoParameters';
 
 const videoSchema = new mongoose.Schema({
 	gloss: { type: String, required: true },
