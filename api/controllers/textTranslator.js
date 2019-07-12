@@ -3,6 +3,7 @@ import uuid from 'uuid/v4';
 import { validationResult } from 'express-validator/check';
 import setupConnection from '../helpers/queueConnection';
 import env from '../config/environments/environment';
+import { TRANSLATION_TIMEOUT } from '../config/timeoutParameters';
 import Translation from '../models/translation';
 
 const translator = async function textTranslator(req, res, next) {
@@ -52,6 +53,17 @@ const translator = async function textTranslator(req, res, next) {
 			},
 			{ noAck: true }
 		);
+
+		setTimeout(() => {
+			if(!res.headersSent) {
+				try {
+					connectionChannel.close();
+
+				} catch (channelAlreadyClosedError) {}
+
+				return next(createError(408, 'Translation Core Timeout'));
+			}
+		}, TRANSLATION_TIMEOUT);
 
 		const payload = JSON.stringify({ text: req.body.text });
 
