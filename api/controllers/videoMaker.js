@@ -86,13 +86,17 @@ const videoStatus = async function librasVideoGenerationStatus(req, res, next) {
 
 	try {
 			const query = { uid: req.params.requestUID };
-			const { status, size } = await Video.findOne(query).exec() || {};
+			const { status, size, expired } = await Video.findOne(query).exec() || {};
 
 			if (status === undefined) {
 				return next(createError(404, VIDEOMAKER_CORE_ERROR.processNotFound));
-			} 
+			}
 
-			res.status(200).json({ status: status, ...(size && { size: size }) });
+			const videoStatus = expired === true
+				? { status: STATUS.expired }
+				: { status: status, ...(size && { size: size }) }
+
+			res.status(200).json(videoStatus);
 
 	} catch (error) {
 		next(error);
@@ -110,7 +114,7 @@ const videoDownload = async function downloadLibrasvideo(req, res, next) {
 
 	try {
 			const query = { uid: req.params.requestUID };
-			const { status, path } = await Video.findOne(query).exec() || {};
+			const { status, path, expired } = await Video.findOne(query).exec() || {};
 
 			if (status === undefined) {
 				return next(createError(404, VIDEOMAKER_CORE_ERROR.videoNotFound));
@@ -118,6 +122,10 @@ const videoDownload = async function downloadLibrasvideo(req, res, next) {
 
 			if (status !== STATUS.generated || path === undefined) {
 				return next(createError(404, VIDEOMAKER_CORE_ERROR.videoNotGenerated));
+			}
+
+			if (expired === true) {
+				return next(createError(404, VIDEOMAKER_CORE_ERROR.videoExpired));
 			}
 
 			res.status(200).download(path, 'vlibrasvideo.mp4');
