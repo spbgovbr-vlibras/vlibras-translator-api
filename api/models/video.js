@@ -1,10 +1,10 @@
 import mongoose from 'mongoose';
-import { STATUS } from '../config/videoParameters';
+import { STATUS } from '../config/video';
 
 const videoSchema = new mongoose.Schema({
 	gloss: { type: String, required: true },
-	uid: { type: String, required: true },
-	path: { type: String },
+	uid: { type: String, unique: true, required: true },
+	path: { type: String, unique: true },
 	size: { type: Number },
 	duration: { type: Number },
 	status: { type: String, enum: Object.values(STATUS), required: true },
