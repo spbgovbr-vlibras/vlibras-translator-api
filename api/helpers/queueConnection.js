@@ -12,7 +12,7 @@ const connectionURL = {
 
 const setupConnection = async function setupQueueConnection() {
 	try {
-		if (connection === undefined) {		
+		if (connection === undefined) {
 			connection = await amqplib.connect(connectionURL);
 			connection.on('close', () => {
 				connection = undefined;
@@ -24,7 +24,7 @@ const setupConnection = async function setupQueueConnection() {
 
 	} catch (error) {
 		if (connection !== undefined) {
-			setTimeout(() => {	connection.close();	}, 500);
+			setTimeout(() => { connection.close(); }, 500);
 		}
 
 		throw new Error(error);

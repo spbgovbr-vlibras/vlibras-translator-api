@@ -4,6 +4,7 @@ import { validationResult } from 'express-validator/check';
 import setupConnection from '../helpers/queueConnection';
 import env from '../config/environments/environment';
 import { CHANNEL_CLOSE_TIMEOUT, TRANSLATION_TIMEOUT } from '../config/timeout';
+import { TRANSLATION_MESSAGE_TTL } from '../config/timeout';
 import { TRANSLATION_CORE_ERROR } from '../config/error';
 import Translation from '../models/translation';
 
@@ -79,7 +80,10 @@ const translator = async function textTranslator(req, res, next) {
 			'',
 			env.TRANSLATOR_QUEUE,
 			Buffer.from(payload),
-			{ correlationId: uid, replyTo: env.API_CONSUMER_QUEUE }
+			{ correlationId: uid,
+				replyTo: env.API_CONSUMER_QUEUE,
+				expiration: TRANSLATION_MESSAGE_TTL
+			}
 		);
 
 		await translationRequest.save();

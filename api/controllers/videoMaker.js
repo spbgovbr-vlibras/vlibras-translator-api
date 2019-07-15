@@ -4,6 +4,7 @@ import { validationResult } from 'express-validator/check';
 import setupConnection from '../helpers/queueConnection';
 import env from '../config/environments/environment';
 import { CHANNEL_CLOSE_TIMEOUT, VIDEOGENERATION_TIMEOUT } from '../config/timeout';
+import { VIDEOGENERATION_MESSAGE_TTL } from '../config/timeout';
 import { VIDEOMAKER_CORE_ERROR } from '../config/error';
 import { STATUS } from '../config/video';
 import Video from '../models/video';
@@ -44,7 +45,7 @@ const videoMaker = async function librasVideoMaker(req, res, next) {
 			'',
 			env.VIDEOMAKER_QUEUE,
 			Buffer.from(payload),
-			{ correlationId: uid }
+			{ correlationId: uid, expiration: VIDEOGENERATION_MESSAGE_TTL }
 		);
 
 		setTimeout(() => { 
@@ -64,7 +65,6 @@ const videoMaker = async function librasVideoMaker(req, res, next) {
 			try {
 				Video.findOneAndUpdate(query, update).exec();
 			} catch (mongoNetworkError) {}
-			
 
 		 }, VIDEOGENERATION_TIMEOUT);
 
