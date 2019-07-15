@@ -3,7 +3,8 @@ import uuid from 'uuid/v4';
 import { validationResult } from 'express-validator/check';
 import setupConnection from '../helpers/queueConnection';
 import env from '../config/environments/environment';
-import { TRANSLATION_TIMEOUT } from '../config/timeoutParameters';
+import { CHANNEL_CLOSE_TIMEOUT, TRANSLATION_TIMEOUT } from '../config/timeout';
+import { TRANSLATION_CORE_ERROR } from '../config/error';
 import Translation from '../models/translation';
 
 const translator = async function textTranslator(req, res, next) {
@@ -24,7 +25,7 @@ const translator = async function textTranslator(req, res, next) {
 			{ durable: false });
 
 		if (consumerCount === 0) {
-			return next(createError(500, 'Translation Core Unavailable'));
+			return next(createError(500, TRANSLATION_CORE_ERROR.unavailable));
 		}
 
 		const translationRequest = new Translation({
@@ -43,7 +44,14 @@ const translator = async function textTranslator(req, res, next) {
 					}
 					
 					res.status(200).send(content.translation);
-					setTimeout(() => { connectionChannel.close(); }, 500);
+
+					setTimeout(() => { 
+						try {
+							connectionChannel.close();
+
+						} catch (channelAlreadyClosedError) {}
+
+					 }, CHANNEL_CLOSE_TIMEOUT);
 
 					Translation.findByIdAndUpdate(
 						translationRequest._id, 
@@ -61,7 +69,7 @@ const translator = async function textTranslator(req, res, next) {
 
 				} catch (channelAlreadyClosedError) {}
 
-				return next(createError(408, 'Translation Core Timeout'));
+				return next(createError(408, TRANSLATION_CORE_ERROR.timeout));
 			}
 		}, TRANSLATION_TIMEOUT);
 
