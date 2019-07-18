@@ -5,8 +5,8 @@ import review from '../controllers/translationReview';
 const reviewRouter = express.Router();
 
 reviewRouter.post('/review', [
-	check('text').not().isEmpty(),
-	check('translation').not().isEmpty(),
+	check('text').isLength({ min: 1, max: 5000 }),
+	check('translation').isLength({ min: 1, max: 5000 }),
 	check('rating').matches(/^good$|^bad$/)
 ], review);
 
