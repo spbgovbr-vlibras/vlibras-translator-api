@@ -37,7 +37,10 @@ const videoMaker = async function librasVideoMaker(req, res, next) {
 			requester: req.headers['x-forwarded-for'] || req.connection.remoteAddress
 		});
 
-		const videoParams = { avatar: req.body.avatar };
+		const videoParams = { 
+			avatar: req.body.avatar,
+			caption: req.body.caption === 'enable' ? 'subtitle_on' : 'subtitle_off'
+		};
 
 		const payload = JSON.stringify({ gloss: req.body.gloss, options: videoParams });
 

@@ -7,7 +7,8 @@ const videoMakerRouter = express.Router();
 videoMakerRouter
 	.post('/video', [
 		check('gloss').not().isEmpty(), 
-		check('avatar').matches(/^icaro$|^hozana$/)], videoMaker)
+		check('avatar').matches(/^icaro$|^hozana$/),
+		check('caption').matches(/^enable$|^disable$/)], videoMaker)
 	.get('/video/status/:requestUID', check('requestUID').isUUID(4), videoStatus)
 	.get('/video/download/:requestUID', check('requestUID').isUUID(4), videoDownload);
 
