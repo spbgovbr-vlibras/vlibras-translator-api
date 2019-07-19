@@ -1,0 +1,50 @@
+apiVersion: extensions/v1beta1
+#kubectl expose deployment translatorapi --port=80 --type=LoadBalancer
+kind: Deployment
+metadata:
+  name: translatorapi
+  labels:
+    app: translatorapi
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: translatorapi
+  template:
+    metadata:
+      labels:
+        app: translatorapi
+    spec:
+      containers:
+        - image: vlibras/translator-api:1.1.0
+          name: translatorapi
+          env:
+            - name: AMQP_HOST
+              value: "10.0.146.134"
+            - name: AMQP_PORT
+              value: "5672"
+            - name: PORT
+              value: "80"
+            - name: DB_HOST
+              value: "10.0.27.166"
+            - name: DB_PORT
+              value: "27017"
+          stdin: true
+          tty: true
+          ports:
+            - containerPort: 80
+              name: vl-trasnlate
+          livenessProbe:
+            httpGet:
+              path: /healthcheck
+              port: 80
+            initialDelaySeconds: 60
+            periodSeconds: 20
+          volumeMounts:
+            - name: video-nfs
+              mountPath: /video/
+      volumes:
+        - name: video-nfs
+          persistentVolumeClaim:
+            claimName: nfs
+      hostNetwork: true
