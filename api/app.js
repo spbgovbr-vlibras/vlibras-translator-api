@@ -40,7 +40,7 @@ app.use((err, req, res, next) => {
 		console.error('\x1b[2m', err);
 		res.json({ error : err });
 	} else {
-		res.json({ error : err });
+		res.json({ error : err.message });
 	}
 });
 
