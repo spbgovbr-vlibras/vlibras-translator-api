@@ -116,9 +116,7 @@ To access the documentation and usage examples of the VLibras Translator API, st
 
 ## Deployment
 
-> In writting process
-
-<!-- These instructions will get you a copy of the project up and running on a live System.
+These instructions will get you a copy of the project up and running on a live System.
 
 ### Deploy Tools
 
@@ -203,7 +201,7 @@ sudo apt install -y kubectl
 ```
 
 ### Deploying
-
+Note: Vlibras Translator Api has some dependencies with other components. Make sure that you previously deployed Vlibras Translator Text Core and Vlibras Translator Video Core.  
 > Note: if you already have MongoDB and RabbitMQ running on your cluster, skip to the server configuration.
 
 Once kubectl is installed and set, run the following commands:
@@ -226,28 +224,28 @@ kubectl apply -f kubernetes/rabbitmq.yaml
 kubectl expose deployment rabbitmq --type=ClusterIP
 ```
 
-Then, open the server.yaml file and edit the environment variables below to match your settings.
+Then, open the translator-api-server-template.yaml file and edit the environment variables below to match your settings.
 
 ```sh
 - name: AMQP_HOST
-  value: "RabbitMQ-ClusterIP"
+  value: "RABBITMQ-IP"
 - name: AMQP_PORT
-  value: "RabbitMQ-Port"
+  value: "RABBITMQ-PORT"
 - name: DB_HOST
-  value: "MongoDB-ClusterIP"
+  value: "MONGODB-IP"
 - name: DB_PORT
-  value: "MongoDB-Port"
+  value: "MONGODB-PORT"
 ```
 
 Finally, starting the server by running the commands:
 
 ```sh
-kubectl apply -f kubernetes/server.yaml
+kubectl apply -f kubernetes/translator-api-server-template.yaml
 ```
 
 ```sh
 kubectl expose deployment translatorapi --port=80 --type=LoadBalancer
-``` -->
+```
 
 ## Contributors
 
