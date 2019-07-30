@@ -37,8 +37,14 @@ const translator = async function textTranslator(req, res, next) {
 		connectionChannel.consume(
 			env.API_CONSUMER_QUEUE,
 			(msg) => {
+				setTimeout(() => {
+					try {
+						connectionChannel.close();
+					} catch (channelAlreadyClosedError) {}
+				}, CHANNEL_CLOSE_TIMEOUT);
+
 				if (msg.properties.correlationId === uid) {
-					const content = JSON.parse(msg.content.toString())
+					const content = JSON.parse(msg.content.toString());
 
 					if (content.error !== undefined) {
 						return next(createError(500, content.error));
@@ -46,18 +52,12 @@ const translator = async function textTranslator(req, res, next) {
 					
 					res.status(200).send(content.translation);
 
-					setTimeout(() => { 
-						try {
-							connectionChannel.close();
-
-						} catch (channelAlreadyClosedError) {}
-
-					 }, CHANNEL_CLOSE_TIMEOUT);
-
 					Translation.findByIdAndUpdate(
 						translationRequest._id, 
 						{ translation: content.translation }
 					).exec();
+				} else {
+					next(createError(500, TRANSLATION_CORE_ERROR.wrongResponse));
 				}
 			},
 			{ noAck: true }

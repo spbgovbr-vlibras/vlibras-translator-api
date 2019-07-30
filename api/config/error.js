@@ -1,5 +1,6 @@
 export const TRANSLATION_CORE_ERROR = {
     unavailable: 'Translation Core Unavailable',
+    wrongResponse: 'Translation Core response message has invalid properties',
     timeout: 'Translation Core Timeout'
 };
 
