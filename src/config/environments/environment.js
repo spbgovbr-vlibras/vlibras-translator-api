@@ -2,16 +2,15 @@ import path from 'path';
 import dotenv from 'dotenv';
 
 const loadEnv = function loadEnviroment() {
-	const environmentType = /^dev$|^production$/
+  const environmentType = /^dev$|^production$/;
 
-	if (environmentType.test(process.env.NODE_ENV)) {
-		return path.join(__dirname, `.env.${process.env.NODE_ENV}`);
-	}
+  if (environmentType.test(process.env.NODE_ENV)) {
+    return path.join(__dirname, `.env.${process.env.NODE_ENV}`);
+  }
 
-	return path.join(__dirname, '.env.production');
-
+  return path.join(__dirname, '.env.production');
 };
 
-const env = dotenv.config({ path: loadEnv() }).parsed;
+const environment = dotenv.config({ path: loadEnv() }).parsed;
 
-export default env;
+export default environment;

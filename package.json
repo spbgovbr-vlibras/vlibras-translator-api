@@ -1,0 +1,44 @@
+{
+  "name": "vlibras-translator",
+  "description": "VLibras Translation Service API",
+  "version": "2.2.1",
+  "private": true,
+  "contributors": [
+    "Wesnydy Ribeiro <wesnydy@lavid.ufpb.br>"
+  ],
+  "dependencies": {
+    "amqplib": "^0.5.3",
+    "compression": "^1.7.4",
+    "cookie-parser": "~1.4.3",
+    "cors": "^2.8.5",
+    "debug": "~2.6.9",
+    "dotenv": "^6.2.0",
+    "express": "~4.16.0",
+    "express-validator": "^5.3.1",
+    "helmet": "^3.16.0",
+    "http-errors": "~1.6.2",
+    "mongoose": "^5.4.21",
+    "morgan": "~1.9.0",
+    "swagger-ui-express": "^4.0.2",
+    "uuid": "^3.3.2"
+  },
+  "devDependencies": {
+    "@babel/cli": "^7.6.2",
+    "@babel/core": "^7.6.2",
+    "@babel/plugin-transform-runtime": "^7.6.2",
+    "@babel/preset-env": "^7.6.2",
+    "@babel/runtime": "^7.6.2",
+    "babel-preset-airbnb": "^4.0.1",
+    "eslint": "^5.16.0",
+    "eslint-config-airbnb-base": "^14.0.0",
+    "eslint-plugin-import": "^2.18.2"
+  },
+  "engines": {
+    "node": "10.15.3"
+  },
+  "scripts": {
+    "build": "babel src --out-dir dist --copy-files --include-dotfiles --only src/config",
+    "dev": "npm run build && DEBUG=vlibras-translator:* NODE_ENV=dev node dist/index.js",
+    "start": "DEBUG=vlibras-translator:* NODE_ENV=production node dist/index.js"
+  }
+}
