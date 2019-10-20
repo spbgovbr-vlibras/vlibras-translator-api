@@ -1,15 +1,13 @@
 #!/usr/bin/env node
 
+import debug from 'debug';
 import http from 'http';
 import app from './app/app';
 import mongoConnection from './app/util/mongoConnection';
 // import redisConnection from './app/util/redisConnection';
-import {
-  serverInfo,
-  serverError,
-  // cacheError,
-  databaseError,
-} from './app/util/debugger';
+
+export const serverInfo = debug('vlibras-translator-api:info');
+export const serverError = debug('vlibras-translator-api:error');
 
 const normalizePort = function normalizeServerPort(portValue) {
   const port = parseInt(portValue, 10);
@@ -60,28 +58,19 @@ const onListening = function onListeningEvent() {
   serverInfo(`Listening on ${bind}`);
 };
 
-const connectDatabase = async function connectToServerDatabase() {
+const listen = async function startListening() {
   try {
     await mongoConnection();
     serverInfo(`Connected to ${process.env.DB_NAME}`);
+    // await redisConnection();
+    // serverLog(`Connected to ${process.env.CACHE_NAME}`);
+    server.listen(serverPort);
+    server.on('error', onError);
+    server.on('listening', onListening);
   } catch (error) {
-    databaseError(error.message);
+    serverError(error.message);
     process.exit(1);
   }
 };
 
-// const connectCache = async function connectToServerCache() {
-//   try {
-//     // await redisConnection();
-//     // serverLog(`Connected to ${process.env.CACHE_NAME}`);
-//   } catch (error) {
-//     cacheError(error.message);
-//     process.exit(1);
-//   }
-// };
-
-connectDatabase();
-// connectCache();
-server.listen(serverPort);
-server.on('error', onError);
-server.on('listening', onListening);
+listen();
