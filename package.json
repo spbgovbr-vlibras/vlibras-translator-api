@@ -8,6 +8,7 @@
     "Jonathan Brilhante <jonathan.brilhante@lavid.ufpb.br>"
   ],
   "dependencies": {
+    "@babel/runtime": "^7.6.2",
     "amqplib": "^0.5.3",
     "compression": "^1.7.4",
     "cookie-parser": "~1.4.3",
@@ -28,14 +29,13 @@
     "@babel/core": "^7.6.2",
     "@babel/plugin-transform-runtime": "^7.6.2",
     "@babel/preset-env": "^7.6.2",
-    "@babel/runtime": "^7.6.2",
     "babel-preset-airbnb": "^4.0.1",
     "eslint": "^5.16.0",
     "eslint-config-airbnb-base": "^14.0.0",
     "eslint-plugin-import": "^2.18.2"
   },
   "engines": {
-    "node": "10.15.3"
+    "node": "10.16"
   },
   "scripts": {
     "build": "babel src --out-dir dist --copy-files --include-dotfiles",

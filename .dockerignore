@@ -1,0 +1,32 @@
+# Compiled code
+dist/
+
+# Dependency directories
+node_modules/
+
+# Kubernetes files
+kubernetes/
+
+# VSCode settings
+.vscode/
+
+# License file
+LICENSE
+
+# Project guide
+README.md
+
+# Dokcer files
+Dockerfile
+docker-compose*
+.dockerignore
+
+# Git files
+.gitignore
+.git
+
+# Eslint configuration
+.eslintrc.js
+
+# Logs
+npm-debug.log

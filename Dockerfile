@@ -1,14 +1,21 @@
-FROM node
+FROM node:10.16-alpine AS build
 
-RUN apt-get update && apt-get install -y build-essential checkinstall \ 
-libreadline-gplv2-dev libncursesw5-dev \ 
-libssl-dev libsqlite3-dev tk-dev libgdbm-dev libc6-dev \
-libbz2-dev software-properties-common wget
+RUN apk --no-cache add python make g++
 
-ADD api translator-api
+COPY . /src
+WORKDIR /src
 
-WORKDIR translator-api/
+RUN npm ci \
+  && npm run build \
+  && npm prune --production
 
-RUN npm install && npm audit fix
+FROM node:10.16-alpine
 
-ENTRYPOINT npm start --silent
+COPY --from=build /src/node_modules node_modules
+COPY --from=build /src/dist dist
+
+ENV DEBUG vlibras-translator-*:*
+ENV NODE_ENV production
+
+USER node
+CMD ["node", "./dist/index.js"]
