@@ -1,8 +1,7 @@
 import mongoose from 'mongoose';
-import { databaseError } from './debugger';
 
 mongoose.connection.on('error', (err) => {
-  databaseError(err.message);
+  console.error('\x1b[2m', err);
 });
 
 const mongoConnection = function mongoDBConnection() {
