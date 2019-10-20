@@ -1,6 +1,6 @@
 import { Schema, model } from 'mongoose';
 
-import { VIDEO_STATUS, EXPIRATION_TIME } from '../../config/status';
+import { VIDEO_STATUS, VIDEO_EXPIRATION_TIME } from '../../config/status';
 
 const options = {
   timestamps: true,
@@ -39,7 +39,7 @@ const videoSchema = new Schema({
 
 videoSchema.virtual('expired').get(function isExpired() {
   const time = Math.abs(Date.now() - this.updatedAt);
-  return time > EXPIRATION_TIME;
+  return time > VIDEO_EXPIRATION_TIME;
 });
 
 const Video = model('Video', videoSchema);
