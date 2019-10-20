@@ -18,7 +18,7 @@ export const reviewValidationRules = [
     .isLength(VALIDATION_VALUES.textLength)
     .withMessage(VALIDATION_ERROR.translationLength),
   body('rating')
-    .matches(VALIDATION_VALUES.ratingOptions)
+    .isIn(VALIDATION_VALUES.ratingOptions)
     .withMessage(VALIDATION_ERROR.ratingOptions),
 ];
 
@@ -27,10 +27,10 @@ export const videoValidationRules = [
     .isLength(VALIDATION_VALUES.textLength)
     .withMessage(VALIDATION_ERROR.glossLength),
   body('avatar')
-    .matches(VALIDATION_VALUES.avatarOptions)
+    .isIn(VALIDATION_VALUES.avatarOptions)
     .withMessage(VALIDATION_ERROR.avatarOptions),
   body('caption')
-    .matches(VALIDATION_VALUES.captionOptions)
+    .isIn(VALIDATION_VALUES.captionOptions)
     .withMessage(VALIDATION_ERROR.captionOptions),
 ];
 
