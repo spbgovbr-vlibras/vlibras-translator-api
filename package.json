@@ -1,10 +1,11 @@
 {
-  "name": "vlibras-translator",
+  "name": "vlibras-translator-api",
   "description": "VLibras Translation Service API",
   "version": "2.2.1",
   "private": true,
   "contributors": [
-    "Wesnydy Ribeiro <wesnydy@lavid.ufpb.br>"
+    "Wesnydy Ribeiro <wesnydy@lavid.ufpb.br>",
+    "Jonathan Brilhante <jonathan.brilhante@lavid.ufpb.br>"
   ],
   "dependencies": {
     "amqplib": "^0.5.3",
@@ -37,8 +38,8 @@
     "node": "10.15.3"
   },
   "scripts": {
-    "build": "babel src --out-dir dist --copy-files --include-dotfiles --only src/config",
-    "dev": "npm run build && DEBUG=vlibras-translator:* NODE_ENV=dev node dist/index.js",
-    "start": "DEBUG=vlibras-translator:* NODE_ENV=production node dist/index.js"
+    "build": "babel src --out-dir dist --copy-files --include-dotfiles",
+    "dev": "npm run build && DEBUG=vlibras-translator-*:* NODE_ENV=dev node dist/index.js",
+    "start": "DEBUG=vlibras-translator-api:info NODE_ENV=production node dist/index.js"
   }
 }
