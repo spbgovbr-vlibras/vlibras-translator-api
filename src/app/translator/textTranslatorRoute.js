@@ -1,9 +1,9 @@
 import { Router } from 'express';
-import { textValidationRules, validate } from '../middlewares/validator';
+import { textValidationRules, checkValidation } from '../middlewares/validator';
 import textTranslator from './textTranslator';
 
 const textTranslatorRoute = Router();
 
-textTranslatorRoute.post('/translate', textValidationRules, validate, textTranslator);
+textTranslatorRoute.post('/translate', textValidationRules, checkValidation, textTranslator);
 
 export default textTranslatorRoute;

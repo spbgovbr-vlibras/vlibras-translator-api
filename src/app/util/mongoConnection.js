@@ -1,23 +1,25 @@
 import mongoose from 'mongoose';
+import { databaseError } from './debugger';
 
 mongoose.connection.on('error', (err) => {
-  console.error(err);
+  databaseError(err.message);
 });
 
-const uri = `mongodb://${process.env.DB_HOST}:${process.env.DB_PORT}/${process.env.DB_NAME}`;
-const options = {
-  useNewUrlParser: true,
-  useCreateIndex: true,
-  useFindAndModify: false,
-  keepAlive: true,
-  keepAliveInitialDelay: 300000, // ms
-  autoReconnect: true,
-  reconnectInterval: 500, // ms
-  reconnectTries: Number.MAX_VALUE, // Never stop
-};
-
 const mongoConnection = function mongoDBConnection() {
-  return mongoose.connect(uri, options);
+  return mongoose.connect(
+    `mongodb://${process.env.DB_HOST}:${process.env.DB_PORT}/${process.env.DB_NAME}`,
+    {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+      useCreateIndex: true,
+      useFindAndModify: false,
+      keepAlive: true,
+      keepAliveInitialDelay: 300000, // 5m in ms
+      autoReconnect: true,
+      reconnectInterval: 500, // ms
+      reconnectTries: Number.MAX_VALUE, // Never stop
+    },
+  );
 };
 
 export default mongoConnection;

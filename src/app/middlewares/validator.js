@@ -34,7 +34,7 @@ export const videoValidationRules = [
     .withMessage(VALIDATION_ERROR.captionOptions),
 ];
 
-export const validate = function validateRequestBody(req, _res, next) {
+export const checkValidation = function checkRequestValidation(req, _res, next) {
   const errors = validationResult(req);
   if (errors.isEmpty()) {
     return next();
