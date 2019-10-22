@@ -4,7 +4,7 @@ import debug from 'debug';
 import http from 'http';
 import app from './app/app';
 import mongoConnection from './app/util/mongoConnection';
-// import redisConnection from './app/util/redisConnection';
+import redisConnection from './app/util/redisConnection';
 
 export const serverInfo = debug('vlibras-translator-api:info');
 export const serverError = debug('vlibras-translator-api:error');
@@ -62,8 +62,8 @@ const listen = async function startListening() {
   try {
     await mongoConnection();
     serverInfo(`Connected to ${process.env.DB_NAME}`);
-    // await redisConnection();
-    // serverLog(`Connected to ${process.env.CACHE_NAME}`);
+    await redisConnection();
+    serverInfo(`Connected to ${process.env.CACHE_NAME}`);
     server.listen(serverPort);
     server.on('error', onError);
     server.on('listening', onListening);
