@@ -1,6 +1,6 @@
 import amqplib from 'amqplib';
 
-let connection;
+let AMQPConnection;
 
 const connectionURL = {
   protocol: process.env.AMQP_PROTOCOL,
@@ -12,17 +12,17 @@ const connectionURL = {
 
 const queueConnection = async function AMQPQueueConnection() {
   try {
-    if (connection === undefined) {
-      connection = await amqplib.connect(connectionURL);
-      connection.on('close', () => {
-        connection = undefined;
-        return setTimeout(() => { AMQPQueueConnection(); }, 500);
+    if (AMQPConnection === undefined) {
+      AMQPConnection = await amqplib.connect(connectionURL);
+      AMQPConnection.on('close', () => {
+        AMQPConnection = undefined;
+        return setTimeout(() => { queueConnection(); }, 500);
       });
     }
-    return connection;
+    return AMQPConnection;
   } catch (error) {
-    if (connection !== undefined) {
-      setTimeout(() => { connection.close(); }, 500);
+    if (AMQPConnection !== undefined) {
+      setTimeout(() => { AMQPConnection.close(); }, 500);
     }
     throw new Error(error);
   }
