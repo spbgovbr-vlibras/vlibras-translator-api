@@ -34,54 +34,104 @@ These instructions will get you a copy of the project up and running on your loc
 
 ### System Requirements
 
-* OS: Ubuntu 18.04.2 LTS (Bionic Beaver)
+* OS: Ubuntu 18.04.3 LTS (Bionic Beaver)
 
 ### Prerequisites
 
-Before starting the installation, you need to install some prerequisites:
+Before starting the installation, you need to install some prerequisites.
 
-[Node.js](https://nodejs.org/en/)
+##### [Node.js](https://nodejs.org/en/)
+
+Add NodeSource repository.
 
 ```sh
 curl -sL https://deb.nodesource.com/setup_10.x | sudo -E bash -
 ```
 
+Install Node.js.
+
 ```sh
 sudo apt install -y nodejs
 ```
-<br/>
 
-[MongoDB](https://www.mongodb.com/)
+##### [MongoDB](https://www.mongodb.com/)
 
-```sh
-sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv 9DA31620334BD75D9DCB49F368818C72E52529D4
-```
-
-```sh
-echo "deb [ arch=amd64 ] https://repo.mongodb.org/apt/ubuntu bionic/mongodb-org/4.0 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-4.0.list
-```
+Update local package database.
 
 ```sh
 sudo apt update
 ```
 
+Install required libraries.
+
+```sh
+sudo apt install -y wget gnupg
+```
+
+Import the public key used by the package management system.
+
+```sh
+wget -qO - https://www.mongodb.org/static/pgp/server-4.2.asc | sudo apt-key add -
+```
+
+Create a list file for MongoDB.
+
+```sh
+echo "deb [ arch=amd64 ] https://repo.mongodb.org/apt/ubuntu bionic/mongodb-org/4.2 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-4.2.list
+```
+
+Reload local package database.
+
+```sh
+sudo apt update
+```
+
+Install the MongoDB packages.
+
 ```sh
 sudo apt install -y mongodb-org
 ```
-<br/>
 
-[RabbitMQ](https://www.rabbitmq.com/)
+##### [RabbitMQ](https://www.rabbitmq.com/)
+
+Update package indices.
 
 ```sh
-wget -O - "https://packagecloud.io/rabbitmq/rabbitmq-server/gpgkey" | sudo apt-key add -
+sudo apt update
+```
+
+Install prerequisites.
+
+```sh
+sudo apt install -y curl gnupg apt-transport-https
+```
+
+Install RabbitMQ signing key.
+
+```sh
+curl -fsSL https://github.com/rabbitmq/signing-keys/releases/download/2.0/rabbitmq-release-signing-key.asc | sudo apt-key add -
+```
+
+Add Bintray repositories that provision latest RabbitMQ and Erlang 21.x releases.
+
+```sh
+echo "deb https://dl.bintray.com/rabbitmq-erlang/debian bionic erlang-21.x" | tee /etc/apt/sources.list.d/bintray.rabbitmq.list
 ```
 
 ```sh
-curl -s https://packagecloud.io/install/repositories/rabbitmq/rabbitmq-server/script.deb.sh | sudo bash
+echo "deb https://dl.bintray.com/rabbitmq/debian bionic main" | tee -a /etc/apt/sources.list.d/bintray.rabbitmq.list
 ```
 
+Update package indices.
+
 ```sh
-sudo apt install -y rabbitmq-server --fix-missing
+sudo apt update
+```
+
+Install rabbitmq-server and its dependencies.
+
+```sh
+sudo apt install rabbitmq-server -y --fix-missing
 ```
 
 ### Installing
@@ -89,18 +139,10 @@ sudo apt install -y rabbitmq-server --fix-missing
 After installing all the prerequisites, install the project by running the command:
 
 ```sh
-cd api/
-```
-
-```sh
 npm install
 ```
 
-To test the installation, simply start the translation API with the following command:
-
-```sh
-cd api/
-```
+To test the installation, build and start the translation API with the following command:
 
 ```sh
 npm run dev
@@ -110,9 +152,8 @@ npm run dev
 
 To access the documentation and usage examples of the VLibras Translator API, start the translation server in your localhost and open a browser with the following link:
 
-```sh
- http://localhost:3000/docs
-```
+[http://localhost:3000/docs](http://localhost:3000/docs)
+
 
 ## Deployment
 
@@ -122,86 +163,84 @@ These instructions will get you a copy of the project up and running on a live S
 
 To fully deployment of this project its necessary to have installed and configured the Docker Engine and Kubernetes Container Orchestration.
 
-[Docker](https://www.docker.com/)
+##### [Docker](https://www.docker.com/)
 
-Update the apt package index:
+Update the apt package index.
 
 ```sh
 sudo apt update
 ```
 
-Install packages to allow apt to use a repository over HTTPS:
+Install packages to allow apt to use a repository over HTTPS.
 
 ```sh
 sudo apt install -y apt-transport-https ca-certificates curl gnupg-agent software-properties-common
 ```
 
-Add Docker’s official GPG key:
+Add Docker’s official GPG key.
 
 ```sh
 curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
 ```
 
-Use the following command to set up the stable repository:
+Set up the stable repository.
 
 ```sh
 sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
 ```
 
-Update the apt package index:
+Update the apt package index.
 
 ```sh
 sudo apt update
 ```
 
-Install the latest version of Docker and containerd:
+Install the latest version of Docker and containerd.
 
 ```sh
 sudo apt install -y docker-ce docker-ce-cli containerd.io
 ```
 
-<br/>
+##### [Kubernetes](https://kubernetes.io/)
 
-[Kubernetes](https://kubernetes.io/)
-
-Update the apt package index:
+Update the apt package index.
 
 ```sh
 sudo apt update
 ```
 
-Install packages to allow apt to use a repository over HTTPS:
+Install packages to allow apt to use a repository over HTTPS.
 
 ```sh
 sudo apt install -y apt-transport-https
 ```
 
-Add Kubernetes’s official GPG key:
+Add Kubernetes’s official GPG key.
 
 ```sh
 curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
 ```
 
-Use the following command to set up the main repository:
+Set up the main repository.
 
 ```sh
 echo "deb https://apt.kubernetes.io/ kubernetes-bionic main" | sudo tee -a /etc/apt/sources.list.d/kubernetes.list
 ```
 
-Update the apt package index:
+Update the apt package index.
 
 ```sh
 sudo apt update
 ```
 
-Install the kubectl:
+Install the kubectl.
 
 ```sh
 sudo apt install -y kubectl
 ```
 
 ### Deploying
-Note: Vlibras Translator Api has some dependencies with other components. Make sure that you previously deployed Vlibras Translator Text Core and Vlibras Translator Video Core.  
+Note: Vlibras Translator Api has some dependencies with other components. Make sure that you previously deployed Vlibras Translator Text Core and Vlibras Translator Video Core.
 > Note: if you already have MongoDB and RabbitMQ running on your cluster, skip to the server configuration.
 
 Once kubectl is installed and set, run the following commands:
@@ -210,7 +249,7 @@ Once kubectl is installed and set, run the following commands:
 kubectl apply -f kubernetes/mongo.yaml
 ```
 
-```sh 
+```sh
 kubectl expose rc mongo-controller --type=ClusterIP
 ```
 
