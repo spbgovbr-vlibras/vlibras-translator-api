@@ -1,13 +1,10 @@
 #!/usr/bin/env node
 
-import debug from 'debug';
 import http from 'http';
 import app from './app/app';
 import mongoConnection from './app/util/mongoConnection';
 import redisConnection from './app/util/redisConnection';
-
-export const serverInfo = debug('vlibras-translator-api:info');
-export const serverError = debug('vlibras-translator-api:error');
+import { serverInfo, serverError } from './app/util/debugger';
 
 const normalizePort = function normalizeServerPort(portValue) {
   const port = parseInt(portValue, 10);

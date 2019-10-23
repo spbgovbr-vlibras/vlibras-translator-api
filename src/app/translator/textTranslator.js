@@ -3,6 +3,7 @@ import uuid from 'uuid/v4';
 import environment from '../../config/environments/environment';
 import queueConnection from '../util/queueConnection';
 import redisConnection from '../util/redisConnection';
+import { cacheError } from '../util/debugger';
 import Translation from './Translation';
 import { TRANSLATOR_ERROR } from '../../config/error';
 import {
@@ -60,7 +61,9 @@ const textTranslator = async function textTranslatorController(req, res, next) {
               'EX',
               environment.CACHE_EXP,
             );
-          } catch (error) { /* empty */ }
+          } catch (error) {
+            cacheError(`SET ${error.message}`);
+          }
         }
 
         return Translation.findByIdAndUpdate(
