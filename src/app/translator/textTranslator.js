@@ -2,6 +2,7 @@ import createError from 'http-errors';
 import uuid from 'uuid/v4';
 import environment from '../../config/environments/environment';
 import queueConnection from '../util/queueConnection';
+import redisConnection from '../util/redisConnection';
 import Translation from './Translation';
 import { TRANSLATOR_ERROR } from '../../config/error';
 import {
@@ -32,7 +33,7 @@ const textTranslator = async function textTranslatorController(req, res, next) {
 
     AMQPChannel.consume(
       environment.API_CONSUMER_QUEUE,
-      (message) => {
+      async (message) => {
         setTimeout(() => {
           try {
             AMQPChannel.close();
@@ -49,6 +50,18 @@ const textTranslator = async function textTranslatorController(req, res, next) {
         }
 
         res.status(200).send(content.translation);
+
+        if (req.body.textHash) {
+          try {
+            const redisClient = await redisConnection();
+            await redisClient.set(
+              req.body.textHash,
+              content.translation,
+              'EX',
+              environment.CACHE_EXP,
+            );
+          } catch (error) { /* empty */ }
+        }
 
         return Translation.findByIdAndUpdate(
           translationRequest._id,
