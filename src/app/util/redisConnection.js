@@ -15,11 +15,7 @@ const redisConnection = async function redisClientConnection() {
       });
 
       redisClient.on('error', (err) => {
-        if (redisClientError === undefined) {
-          redisClientError = err.message;
-        } else {
-          console.error('\x1b[2m', err.message);
-        }
+        redisClientError = err.message;
       });
 
       await redisClient.connect();

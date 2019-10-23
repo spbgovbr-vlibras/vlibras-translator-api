@@ -1,5 +1,6 @@
 import crypto from 'crypto';
 import redisConnection from '../util/redisConnection';
+import { cacheError } from '../util/debugger';
 
 const translationCache = async function getTranslationCache(req, res, next) {
   try {
@@ -15,6 +16,7 @@ const translationCache = async function getTranslationCache(req, res, next) {
 
     return res.status(200).send(cachedTranslation);
   } catch (error) {
+    cacheError(`GET ${error.message}`);
     return next();
   }
 };
