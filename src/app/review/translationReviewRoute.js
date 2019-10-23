@@ -4,6 +4,9 @@ import translationReview from './translationReview';
 
 const translationReviewRoute = Router();
 
-translationReviewRoute.post('/review', reviewValidationRules, checkValidation, translationReview);
+translationReviewRoute.post('/review',
+  reviewValidationRules,
+  checkValidation,
+  translationReview);
 
 export default translationReviewRoute;
