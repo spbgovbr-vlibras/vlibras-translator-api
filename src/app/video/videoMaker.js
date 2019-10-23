@@ -35,7 +35,7 @@ const videoMaker = async function videoMakerController(req, res, next) {
 
     const videoParams = {
       avatar: req.body.avatar,
-      caption: req.body.caption === 'enable' ? 'on' : 'off',
+      caption: req.body.caption,
     };
 
     const payload = JSON.stringify({ gloss: req.body.gloss, playerOptions: videoParams });

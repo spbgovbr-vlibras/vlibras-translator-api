@@ -2,7 +2,7 @@ export const VALIDATION_VALUES = {
   textLength: { min: 1, max: 5000 },
   ratingOptions: ['good', 'bad'],
   avatarOptions: ['icaro', 'hozana'],
-  captionOptions: ['enable', 'disable'],
+  captionOptions: ['on', 'off'],
 };
 
 export const VALIDATION_ERROR = {
