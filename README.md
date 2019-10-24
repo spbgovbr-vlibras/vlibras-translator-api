@@ -92,6 +92,20 @@ Install the MongoDB packages.
 sudo apt install -y mongodb-org
 ```
 
+##### [Redis](https://redis.io)
+
+Update local apt package.
+
+```sh
+sudo apt update
+```
+
+Install Redis.
+
+```sh
+sudo apt install redis-server
+```
+
 ##### [RabbitMQ](https://www.rabbitmq.com/)
 
 Update package indices.
