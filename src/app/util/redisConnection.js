@@ -19,10 +19,13 @@ const redisConnection = async function redisClientConnection() {
       });
 
       await redisClient.connect();
+      await redisClient.config('SET', 'maxmemory', process.env.CACHE_SIZE || 104857600);
+      await redisClient.config('SET', 'maxmemory-policy', 'allkeys-lfu');
+      await redisClient.config('REWRITE');
     }
     return redisClient;
   } catch (error) {
-    throw new Error(redisClientError);
+    throw new Error(redisClientError || error.message);
   }
 };
 
