@@ -1,7 +1,12 @@
 import mongoose from 'mongoose';
+import { databaseError } from './debugger';
 
 mongoose.connection.on('error', (err) => {
-  console.error('\x1b[2m', err);
+  databaseError(err);
+});
+
+mongoose.connection.on('disconnected', (err) => {
+  databaseError(err);
 });
 
 const mongoConnection = function mongoDBConnection() {

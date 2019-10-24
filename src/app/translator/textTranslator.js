@@ -66,10 +66,14 @@ const textTranslator = async function textTranslatorController(req, res, next) {
           }
         }
 
-        return Translation.findByIdAndUpdate(
-          translationRequest._id,
-          { translation: content.translation },
-        ).exec();
+        try {
+          await Translation.findByIdAndUpdate(
+            translationRequest._id,
+            { translation: content.translation },
+          ).exec();
+        } catch (mongoNetworkError) { /* empty */ }
+
+        return undefined;
       },
       { noAck: true },
     );
