@@ -22,6 +22,8 @@ const mongoConnection = function mongoDBConnection() {
       autoReconnect: true,
       reconnectInterval: 500, // ms
       reconnectTries: Number.MAX_VALUE, // Never stop
+      ...(process.env.DB_USER && { user: process.env.DB_USER }),
+      ...(process.env.DB_PASS && { pass: process.env.DB_PASS }),
     },
   );
 };
