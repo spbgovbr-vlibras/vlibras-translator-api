@@ -6,7 +6,7 @@ import cors from 'cors';
 import compression from 'compression';
 import helmet from 'helmet';
 
-import environment from '../config/environments/environment';
+import env from '../config/environments/environment';
 
 import apiDocRoute from './doc/apiDocRoute';
 import reviewRoute from './review/translationReviewRoute';
@@ -18,7 +18,7 @@ const app = express();
 app.use(cors());
 app.use(compression());
 app.use(helmet());
-app.use(logger(environment.LOGGER_FORMAT));
+app.use(logger(env.LOGGER_FORMAT || 'combined'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
@@ -27,6 +27,10 @@ app.use('/', apiDocRoute);
 app.use('/', reviewRoute);
 app.use('/', translatorRoute);
 app.use('/', videoMakerRoute);
+
+app.get('/healthcheck', (_req, res) => {
+  res.sendStatus(200);
+});
 
 app.use((_req, _res, next) => {
   next(createError(404));
