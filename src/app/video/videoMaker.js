@@ -1,6 +1,6 @@
 import createError from 'http-errors';
 import uuid from 'uuid/v4';
-import environment from '../../config/environments/environment';
+import env from '../../config/environments/environment';
 import queueConnection from '../util/queueConnection';
 import Video from './Video';
 import { VIDEOMAKER_ERROR } from '../../config/error';
@@ -18,7 +18,7 @@ const videoMaker = async function videoMakerController(req, res, next) {
     const AMQPChannel = await AMQPConnection.createChannel();
 
     const { consumerCount } = await AMQPChannel.assertQueue(
-      environment.VIDEOMAKER_QUEUE,
+      env.VIDEOMAKER_QUEUE,
       { durable: false },
     );
 
@@ -42,7 +42,7 @@ const videoMaker = async function videoMakerController(req, res, next) {
 
     await AMQPChannel.publish(
       '',
-      environment.VIDEOMAKER_QUEUE,
+      env.VIDEOMAKER_QUEUE,
       Buffer.from(payload),
       { correlationId: uid, expiration: VIDEOGENERATION_PAYLOAD_TTL },
     );

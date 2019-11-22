@@ -1,37 +1,37 @@
 import createError from 'http-errors';
 import { body, param, validationResult } from 'express-validator/check';
-import { VALIDATION_VALUES, VALIDATION_ERROR } from '../../config/validation';
+import { VALIDATION_VALUES, VALIDATION_ERRORS } from '../../config/validation';
 
 export const textValidationRules = body('text')
   .isLength(VALIDATION_VALUES.textLength)
-  .withMessage(VALIDATION_ERROR.textLength);
+  .withMessage(VALIDATION_ERRORS.textLength);
 
 export const idValidationRules = param('requestUID')
   .isUUID(4)
-  .withMessage(VALIDATION_ERROR.uuidVersion);
+  .withMessage(VALIDATION_ERRORS.uuidVersion);
 
 export const reviewValidationRules = [
   body('text')
     .isLength(VALIDATION_VALUES.textLength)
-    .withMessage(VALIDATION_ERROR.textLength),
+    .withMessage(VALIDATION_ERRORS.textLength),
   body('translation')
     .isLength(VALIDATION_VALUES.textLength)
-    .withMessage(VALIDATION_ERROR.translationLength),
+    .withMessage(VALIDATION_ERRORS.translationLength),
   body('rating')
     .isIn(VALIDATION_VALUES.ratingOptions)
-    .withMessage(VALIDATION_ERROR.ratingOptions),
+    .withMessage(VALIDATION_ERRORS.ratingOptions),
 ];
 
 export const videoValidationRules = [
   body('gloss')
     .isLength(VALIDATION_VALUES.textLength)
-    .withMessage(VALIDATION_ERROR.glossLength),
+    .withMessage(VALIDATION_ERRORS.glossLength),
   body('avatar')
     .isIn(VALIDATION_VALUES.avatarOptions)
-    .withMessage(VALIDATION_ERROR.avatarOptions),
+    .withMessage(VALIDATION_ERRORS.avatarOptions),
   body('caption')
     .isIn(VALIDATION_VALUES.captionOptions)
-    .withMessage(VALIDATION_ERROR.captionOptions),
+    .withMessage(VALIDATION_ERRORS.captionOptions),
 ];
 
 export const checkValidation = function checkRequestValidation(req, _res, next) {

@@ -1,6 +1,6 @@
 import createError from 'http-errors';
 import uuid from 'uuid/v4';
-import environment from '../../config/environments/environment';
+import env from '../../config/environments/environment';
 import queueConnection from '../util/queueConnection';
 import redisConnection from '../util/redisConnection';
 import { cacheError } from '../util/debugger';
@@ -19,7 +19,7 @@ const textTranslator = async function textTranslatorController(req, res, next) {
     const AMQPChannel = await AMQPConnection.createChannel();
 
     const { consumerCount } = await AMQPChannel.assertQueue(
-      environment.TRANSLATOR_QUEUE,
+      env.TRANSLATOR_QUEUE,
       { durable: false },
     );
 
@@ -33,7 +33,7 @@ const textTranslator = async function textTranslatorController(req, res, next) {
     });
 
     AMQPChannel.consume(
-      environment.API_CONSUMER_QUEUE,
+      env.API_CONSUMER_QUEUE,
       async (message) => {
         setTimeout(() => {
           try {
@@ -59,7 +59,7 @@ const textTranslator = async function textTranslatorController(req, res, next) {
               req.body.textHash,
               content.translation,
               'EX',
-              environment.CACHE_EXP,
+              env.CACHE_EXP,
             );
           } catch (error) {
             cacheError(`SET ${error.message}`);
@@ -92,11 +92,11 @@ const textTranslator = async function textTranslatorController(req, res, next) {
 
     await AMQPChannel.publish(
       '',
-      environment.TRANSLATOR_QUEUE,
+      env.TRANSLATOR_QUEUE,
       Buffer.from(payload),
       {
         correlationId: uid,
-        replyTo: environment.API_CONSUMER_QUEUE,
+        replyTo: env.API_CONSUMER_QUEUE,
         expiration: TRANSLATION_PAYLOAD_TTL,
       },
     );
