@@ -20,18 +20,14 @@ const normalizePort = function normalizeServerPort(portValue) {
   return false;
 };
 
-const serverPort = normalizePort(process.env.PORT || '3000');
-app.set('port', serverPort);
-const server = http.createServer(app);
-
-const onError = function onErrorEvent(error) {
+const onError = function onErrorEvent(error, port) {
   if (error.syscall !== 'listen') {
     throw error;
   }
 
-  const bind = typeof serverPort === 'string'
-    ? `Pipe ${serverPort}`
-    : `Port ${serverPort}`;
+  const bind = typeof port === 'string'
+    ? `Pipe ${port}`
+    : `Port ${port}`;
 
   switch (error.code) {
     case 'EACCES':
@@ -47,27 +43,30 @@ const onError = function onErrorEvent(error) {
   }
 };
 
-const onListening = function onListeningEvent() {
-  const addr = server.address();
+const onListening = function onListeningEvent(addr) {
   const bind = typeof addr === 'string'
     ? `pipe ${addr}`
     : `port ${addr.port}`;
   serverInfo(`Listening on ${bind}`);
 };
 
-const listen = async function startListening() {
+const startHTTPServer = async function startHTTPServerListen() {
   try {
+    serverInfo('Starting server');
     await mongoConnection();
     serverInfo(`Connected to ${process.env.DB_NAME}`);
     await redisConnection();
     serverInfo(`Connected to ${process.env.CACHE_NAME}`);
-    server.listen(serverPort);
-    server.on('error', onError);
-    server.on('listening', onListening);
+
+    const server = http.createServer(app);
+    server.listen(app.get('port'));
+    server.on('error', (err) => { onError(err, app.get('port')); });
+    server.on('listening', () => { onListening(server.address()); });
   } catch (error) {
-    serverError(error.message);
+    serverError('', error.stack);
     process.exit(1);
   }
 };
 
-listen();
+app.set('port', normalizePort(process.env.PORT || '3000'));
+startHTTPServer();
