@@ -9,8 +9,8 @@ export const VALIDATION_ERRORS = {
   textLength: `'text' exceeded ${VALIDATION_VALUES.textLength.max} characters limit.`,
   glossLength: `'gloss' exceeded ${VALIDATION_VALUES.textLength.max} characters limit.`,
   translationLength: `'translation' exceeded ${VALIDATION_VALUES.textLength.max} characters limit.`,
-  ratingOptions: `'rating' is not in valid values ${VALIDATION_VALUES.ratingOptions}.`,
-  avatarOptions: `'avatar' is not in valid values ${VALIDATION_VALUES.avatarOptions}.`,
-  captionOptions: `'caption' is not in valid values ${VALIDATION_VALUES.captionOptions}.`,
+  ratingOptions: `'rating' is not in valid values [${VALIDATION_VALUES.ratingOptions}].`,
+  avatarOptions: `'avatar' is not in valid values [${VALIDATION_VALUES.avatarOptions}].`,
+  captionOptions: `'caption' is not in valid values [${VALIDATION_VALUES.captionOptions}].`,
   uuidVersion: '\'requestUID\' must be a UUID version 4.',
 };
