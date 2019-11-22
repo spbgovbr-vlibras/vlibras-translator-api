@@ -5,7 +5,7 @@ export const VALIDATION_VALUES = {
   captionOptions: ['on', 'off'],
 };
 
-export const VALIDATION_ERROR = {
+export const VALIDATION_ERRORS = {
   textLength: `'text' exceeded ${VALIDATION_VALUES.textLength.max} characters limit.`,
   glossLength: `'gloss' exceeded ${VALIDATION_VALUES.textLength.max} characters limit.`,
   translationLength: `'translation' exceeded ${VALIDATION_VALUES.textLength.max} characters limit.`,
