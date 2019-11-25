@@ -21,7 +21,7 @@ const redisConnection = async function redisClientConnection() {
       await redisClient.connect();
       await redisClient.config('SET', 'maxmemory', process.env.CACHE_SIZE || 104857600);
       await redisClient.config('SET', 'maxmemory-policy', 'allkeys-lfu');
-      await redisClient.config('REWRITE');
+      await redisClient.config('SET', 'save', '86400 1');
     }
     return redisClient;
   } catch (error) {
