@@ -12,6 +12,7 @@ const redisConnection = async function redisClientConnection() {
         connectionName: process.env.CACHE_NAME,
         lazyConnect: true,
         maxRetriesPerRequest: 1,
+        ...(process.env.CACHE_PASS && { password: process.env.CACHE_PASS }),
       });
 
       redisClient.on('error', (err) => {
