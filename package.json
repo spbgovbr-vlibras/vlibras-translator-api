@@ -7,6 +7,27 @@
     "Wesnydy Ribeiro <wesnydy@lavid.ufpb.br>",
     "Jonathan Brilhante <jonathan.brilhante@lavid.ufpb.br>"
   ],
+  "scripts": {
+    "build": "babel src --out-dir dist --copy-files --include-dotfiles",
+    "dev": "npm run build && DEBUG=vlibras-translator-*:* NODE_ENV=dev node dist/index.js",
+    "start": "DEBUG=vlibras-translator-api:info NODE_ENV=production node dist/index.js"
+  },
+  "engines": {
+    "node": "10.16"
+  },
+  "husky": {
+    "hooks": {
+      "prepare-commit-msg": "exec < /dev/tty && git cz --hook || true",
+      "commit-msg": "commitlint -E HUSKY_GIT_PARAMS",
+      "pre-commit": "lint-staged"
+    }
+  },
+  "lint-staged": {
+    "*.js": [
+      "eslint --fix",
+      "git add"
+    ]
+  },
   "dependencies": {
     "@babel/runtime": "^7.6.2",
     "amqplib": "^0.5.3",
@@ -30,17 +51,20 @@
     "@babel/core": "^7.6.2",
     "@babel/plugin-transform-runtime": "^7.6.2",
     "@babel/preset-env": "^7.6.2",
+    "@commitlint/cli": "^8.3.5",
+    "@commitlint/config-conventional": "^8.3.4",
     "babel-preset-airbnb": "^4.0.1",
-    "eslint": "^5.16.0",
+    "commitizen": "^4.0.3",
+    "cz-conventional-changelog": "^3.0.2",
+    "eslint": "^6.8.0",
     "eslint-config-airbnb-base": "^14.0.0",
-    "eslint-plugin-import": "^2.18.2"
+    "eslint-plugin-import": "^2.20.0",
+    "husky": "^4.2.0",
+    "lint-staged": "^10.0.2"
   },
-  "engines": {
-    "node": "10.16"
-  },
-  "scripts": {
-    "build": "babel src --out-dir dist --copy-files --include-dotfiles",
-    "dev": "npm run build && DEBUG=vlibras-translator-*:* NODE_ENV=dev node dist/index.js",
-    "start": "DEBUG=vlibras-translator-api:info NODE_ENV=production node dist/index.js"
+  "config": {
+    "commitizen": {
+      "path": "./node_modules/cz-conventional-changelog"
+    }
   }
 }
