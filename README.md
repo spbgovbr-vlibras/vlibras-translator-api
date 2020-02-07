@@ -21,10 +21,11 @@ VLibras Translation Service API.
   - [System Requirements](#system-requirements)
   - [Prerequisites](#prerequisites)
   - [Installing](#installing)
+  - [API Documentation](#api-documentation)
 - **[Deployment](#deployment)**
   - [Deploy Tools](#deploy-tools)
   - [Deploying](#deploying)
-- **[Documentation](#documentation)**
+
 - **[Contributors](#contributors)**
 - **[License](#license)**
 
@@ -292,12 +293,6 @@ kubectl apply -f kubernetes/translator-api-server-template.yaml
 ```sh
 kubectl expose deployment translatorapi --port=80 --type=LoadBalancer
 ```
-
-## Documentation
-
-To access the documentation and usage examples of the VLibras Translator API, start the translation server in your localhost and open a browser with the following link:
-
-[http://localhost:3000/docs](http://localhost:3000/docs)
 
 ## Contributors
 
