@@ -1,7 +1,7 @@
 {
   "name": "vlibras-translator-api",
   "description": "VLibras Translation Service API",
-  "version": "2.2.1",
+  "version": "2.3.0",
   "private": true,
   "contributors": [
     "Wesnydy Ribeiro <wesnydy@lavid.ufpb.br>",
