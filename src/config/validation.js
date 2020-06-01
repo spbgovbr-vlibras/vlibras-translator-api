@@ -3,6 +3,7 @@ export const VALIDATION_VALUES = {
   ratingOptions: ['good', 'bad'],
   avatarOptions: ['icaro', 'hozana'],
   captionOptions: ['on', 'off'],
+  dateInterval: { min: 0, max: 8640000000000000 },
 };
 
 export const VALIDATION_ERRORS = {
@@ -13,4 +14,5 @@ export const VALIDATION_ERRORS = {
   avatarOptions: `'avatar' is not in valid values [${VALIDATION_VALUES.avatarOptions}].`,
   captionOptions: `'caption' is not in valid values [${VALIDATION_VALUES.captionOptions}].`,
   uuidVersion: '\'requestUID\' must be a UUID version 4.',
+  dateInterval: '\'timestamp\' is not in a valid date range.',
 };

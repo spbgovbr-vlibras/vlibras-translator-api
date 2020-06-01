@@ -40,12 +40,17 @@ app.use((_req, _res, next) => {
 
 app.use((err, _req, res, _next) => {
   res.status(err.status || 500);
+
   if (app.get('env') === 'dev') {
-    console.error('\x1b[2m', err);
-    res.json({ error: err });
-  } else {
-    res.json({ error: err.message });
+    console.error('\x1b[2m', err, '\x1b[0m');
+    return res.json({ error: err });
   }
+
+  if (err.status === 422) {
+    return res.json({ error: err.errors });
+  }
+
+  return res.json({ error: err.message });
 });
 
 export default app;
