@@ -1,5 +1,7 @@
 import createError from 'http-errors';
-import { body, param, validationResult } from 'express-validator/check';
+import {
+  body, param, query, validationResult,
+} from 'express-validator/check';
 import { VALIDATION_VALUES, VALIDATION_ERRORS } from '../../config/validation';
 
 export const textValidationRules = body('text')
@@ -9,6 +11,12 @@ export const textValidationRules = body('text')
 export const idValidationRules = param('requestUID')
   .isUUID(4)
   .withMessage(VALIDATION_ERRORS.uuidVersion);
+
+export const timestampValidationRules = query('timestamp')
+  .optional()
+  .isInt(VALIDATION_VALUES.dateInterval)
+  .toInt()
+  .withMessage(VALIDATION_ERRORS.dateInterval);
 
 export const reviewValidationRules = [
   body('text')
