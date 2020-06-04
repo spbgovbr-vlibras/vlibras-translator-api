@@ -12,11 +12,18 @@ export const idValidationRules = param('requestUID')
   .isUUID(4)
   .withMessage(VALIDATION_ERRORS.uuidVersion);
 
-export const timestampValidationRules = query('timestamp')
-  .optional()
-  .isInt(VALIDATION_VALUES.dateInterval)
-  .toInt()
-  .withMessage(VALIDATION_ERRORS.dateInterval);
+export const timestampValidationRules = [
+  query('startTime')
+    .optional()
+    .isInt(VALIDATION_VALUES.dateInterval)
+    .toInt()
+    .withMessage(VALIDATION_ERRORS.dateInterval),
+  query('endTime')
+    .optional()
+    .isInt(VALIDATION_VALUES.dateInterval)
+    .toInt()
+    .withMessage(VALIDATION_ERRORS.dateInterval),
+];
 
 export const reviewValidationRules = [
   body('text')
