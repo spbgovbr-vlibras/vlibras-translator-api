@@ -1,5 +1,6 @@
 import Translation from '../translator/Translation';
 import Review from '../review/Review';
+import Video from '../video/Video';
 
 const metrics = async function serviceMetrics(req, res, next) {
   try {
@@ -25,15 +26,39 @@ const metrics = async function serviceMetrics(req, res, next) {
         { $group: { _id: '$rating', count: { $sum: 1 } } },
         { $project: { rating: '$_id', count: 1, _id: 0 } },
       ],
+      videosCountQuery: [
+        { $match: { createdAt: { $gte: startTime, $lt: endTime } } },
+        { $group: { _id: '$status', count: { $sum: 1 } } },
+        { $project: { status: '$_id', count: 1, _id: 0 } },
+      ],
+      videosDurationSumQuery: [
+        { $match: { createdAt: { $gte: startTime, $lt: endTime } } },
+        { $group: { _id: '$duration', videosDurationSum: { $sum: '$duration' } } },
+        { $project: { videosDurationSum: 1, _id: 0 } },
+      ],
     };
 
-    const [translationsCount, reviewsCount, ratingsCounters] = await Promise.all([
+    const [
+      translationsCount,
+      reviewsCount,
+      ratingsCounters,
+      videosCounters,
+      [videosDurationSum],
+    ] = await Promise.all([
       Translation.countDocuments(queries.translationsCountQuery),
       Review.countDocuments(queries.reviewsCountQuery),
       Review.aggregate(queries.ratingsCountQuery),
+      Video.aggregate(queries.videosCountQuery),
+      Video.aggregate(queries.videosDurationSumQuery),
     ]);
 
-    return res.status(200).json({ translationsCount, reviewsCount, ratingsCounters });
+    return res.status(200).json({
+      translationsCount,
+      reviewsCount,
+      ratingsCounters,
+      ...videosDurationSum, // videos duration sum in ms
+      videosCounters,
+    });
   } catch (error) {
     return next(error);
   }
