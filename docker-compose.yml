@@ -31,35 +31,21 @@ services:
       - redis
       - mongo
       - rabbitmq
-      - translator-core
+
   redis:
     image: redis:alpine
     networks:
       - redis-net
     volumes:
       - redis-data:/data
-  translator-core:
-    image: vlibras/translator-text-dl:0.0.1
-    environment:
-      AMQP_HOST: rabbitmq
-      AMQP_USER: vlibras
-      AMQP_PASS: vlibras
-      AMQP_PORT: 5672
-      AMQP_PREFETCH_COUNT: 10
-      TRANSLATOR_QUEUE: "translate.to_text"
-    depends_on:
-      - redis
-      - mongo
-      - rabbitmq
-    networks:
-      - mongo-net
-      - rabbitmq-net
+
   mongo:
     image: mongo
     networks:
       - mongo-net
     volumes:
       - mongo-data:/data/db
+
   rabbitmq:
     image: rabbitmq:management-alpine
     networks:
@@ -69,10 +55,12 @@ services:
     environment:
       RABBITMQ_DEFAULT_USER: vlibras
       RABBITMQ_DEFAULT_PASS: vlibras
+
 networks:
   redis-net:
   mongo-net:
   rabbitmq-net:
+
 volumes:
   redis-data:
   mongo-data:
