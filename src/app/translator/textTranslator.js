@@ -5,12 +5,16 @@ import queueConnection from '../util/queueConnection';
 import redisConnection from '../util/redisConnection';
 import { cacheError } from '../util/debugger';
 import Translation from './Translation';
+import Hit from './Hit';
 import { TRANSLATOR_ERROR } from '../../config/error';
 import {
   CHANNEL_CLOSE_TIMEOUT,
   TRANSLATION_TIMEOUT,
   TRANSLATION_PAYLOAD_TTL,
 } from '../../config/timeout';
+
+
+import phraseBreaker from '../util/phraseBreaker';
 
 const textTranslator = async function textTranslatorController(req, res, next) {
   try {
@@ -26,6 +30,31 @@ const textTranslator = async function textTranslatorController(req, res, next) {
     if (consumerCount === 0) {
       return next(createError(500, TRANSLATOR_ERROR.unavailable));
     }
+
+    const phrases = await phraseBreaker(req.body.text);
+
+
+    // Arrumar
+    phrases.forEach(async (phrase) => {
+      const translationAlreadyExists = await Hit.findOne({ text: phrase });
+
+      if (translationAlreadyExists) {
+        const translationHit = new Hit({
+          text: translationAlreadyExists.text,
+          hits: translationAlreadyExists.hits + 1,
+        });
+        await translationHit.save();
+        return translationHit;
+      }
+
+      const translationHit = new Hit({
+        text: phrase,
+        hits: 1,
+      });
+      await translationHit.save();
+      return translationHit;
+    });
+
 
     const translationRequest = new Translation({
       text: req.body.text,
@@ -49,7 +78,6 @@ const textTranslator = async function textTranslatorController(req, res, next) {
         if (content.error !== undefined) {
           return next(createError(500, content.error));
         }
-
         res.status(200).send(content.translation);
 
         if (req.body.textHash) {
