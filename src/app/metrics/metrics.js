@@ -1,6 +1,7 @@
 import Translation from '../translator/Translation';
 import Review from '../review/Review';
 import Video from '../video/Video';
+import Hit from '../translator/Hit';
 
 const metrics = async function serviceMetrics(req, res, next) {
   try {
@@ -36,16 +37,27 @@ const metrics = async function serviceMetrics(req, res, next) {
         { $group: { _id: '$duration', videosDurationSum: { $sum: '$duration' } } },
         { $project: { videosDurationSum: 1, _id: 0 } },
       ],
+      hitsCountQuery: [
+        {
+          $project: {
+            text: 1, hits: 1,
+          },
+        },
+        { $sort: { hits: -1 } },
+        { $limit: 10 },
+      ],
     };
 
     const [
       translationsCount,
+      translationsHits,
       reviewsCount,
       ratingsCounters,
       videosCounters,
       [videosDurationSum],
     ] = await Promise.all([
       Translation.countDocuments(queries.translationsCountQuery),
+      Hit.aggregate(queries.hitsCountQuery),
       Review.countDocuments(queries.reviewsCountQuery),
       Review.aggregate(queries.ratingsCountQuery),
       Video.aggregate(queries.videosCountQuery),
@@ -56,6 +68,7 @@ const metrics = async function serviceMetrics(req, res, next) {
       translationsCount,
       reviewsCount,
       ratingsCounters,
+      translationsHits,
       ...videosDurationSum, // videos duration sum in ms
       videosCounters,
     });
