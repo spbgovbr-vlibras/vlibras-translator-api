@@ -33,11 +33,9 @@ const textTranslator = async function textTranslatorController(req, res, next) {
 
     const phrases = await phraseBreaker(req.body.text);
 
-
-    // Arrumar
     phrases.forEach(async (phrase) => {
       const translationAlreadyExists = await Hit.findOne({ text: phrase });
-      console.log('entrou');
+
       if (translationAlreadyExists) {
         const translationHit = new Hit({
           text: translationAlreadyExists.text,
@@ -51,11 +49,11 @@ const textTranslator = async function textTranslatorController(req, res, next) {
         text: phrase,
         hits: 1,
       });
-      const test = await translationHit.save();
-      console.log(test);
+
+      await translationHit.save();
+
       return translationHit;
     });
-
 
     const translationRequest = new Translation({
       text: req.body.text,
