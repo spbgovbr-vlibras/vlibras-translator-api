@@ -43,6 +43,7 @@ const metrics = async function serviceMetrics(req, res, next) {
             text: 1, hits: 1,
           },
         },
+        { $group: { _id: '$text', hits: { $sum: 1 } } },
         { $sort: { hits: -1 } },
         { $limit: 10 },
       ],
