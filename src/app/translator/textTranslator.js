@@ -33,7 +33,6 @@ const textTranslator = async function textTranslatorController(req, res, next) {
 
     const phrases = await phraseBreaker(req.body.text);
 
-    // Arrumar
     phrases.forEach(async (phrase) => {
       const translationAlreadyExists = await Hit.findOne({ text: phrase });
 

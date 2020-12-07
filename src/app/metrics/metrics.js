@@ -1,6 +1,7 @@
 import Translation from '../translator/Translation';
 import Review from '../review/Review';
 import Video from '../video/Video';
+import VideoStatus from '../video/VideoStatus';
 import Hit from '../translator/Hit';
 
 const metrics = async function serviceMetrics(req, res, next) {
@@ -61,7 +62,7 @@ const metrics = async function serviceMetrics(req, res, next) {
       Hit.aggregate(queries.hitsCountQuery),
       Review.countDocuments(queries.reviewsCountQuery),
       Review.aggregate(queries.ratingsCountQuery),
-      Video.aggregate(queries.videosCountQuery),
+      VideoStatus.aggregate(queries.videosCountQuery),
       Video.aggregate(queries.videosDurationSumQuery),
     ]);
 
