@@ -35,8 +35,8 @@ const metrics = async function serviceMetrics(req, res, next) {
       ],
       videosDurationSumQuery: [
         { $match: { createdAt: { $gte: startTime, $lt: endTime } } },
-        { $group: { _id: '$duration', videosDurationSum: { $sum: '$duration' } } },
-        { $project: { videosDurationSum: 1, _id: 0 } },
+        { $group: { _id: null, count: { $sum: '$duration' } } },
+        { $project: { count: 1, _id: 0 } },
       ],
       hitsCountQuery: [
         {
@@ -56,7 +56,7 @@ const metrics = async function serviceMetrics(req, res, next) {
       reviewsCount,
       ratingsCounters,
       videosCounters,
-      [videosDurationSum],
+      videosDurationSum,
     ] = await Promise.all([
       Translation.countDocuments(queries.translationsCountQuery),
       Hit.aggregate(queries.hitsCountQuery),
@@ -66,12 +66,17 @@ const metrics = async function serviceMetrics(req, res, next) {
       Video.aggregate(queries.videosDurationSumQuery),
     ]);
 
+    let count = 0;
+    if (videosDurationSum.length > 0) {
+      count = videosDurationSum[0].count;
+    }
+
     return res.status(200).json({
       translationsCount,
       reviewsCount,
       ratingsCounters,
       translationsHits,
-      ...videosDurationSum, // videos duration sum in ms
+      videosDurationSum: count, // videos duration sum in ms
       videosCounters,
     });
   } catch (error) {
