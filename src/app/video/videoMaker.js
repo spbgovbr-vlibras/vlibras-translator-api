@@ -35,7 +35,6 @@ const videoMaker = async function videoMakerController(req, res, next) {
     });
 
     const videoStatus = new VideoStatus({
-      translation: videoGenRequest,
       status: VIDEO_STATUS.queued,
     });
 
@@ -66,14 +65,15 @@ const videoMaker = async function videoMakerController(req, res, next) {
       const query = { uid, status: { $ne: VIDEO_STATUS.generated } };
       const update = { $set: { status: VIDEO_STATUS.failed } };
 
+
+      // VER COM WESNYDY
       try {
-        Video.findOneAndUpdate(query, update).exec();
         // update status for failed
-        const videoStatusFailed = new VideoStatus({
-          translation: videoGenRequest,
-          status: VIDEO_STATUS.queued,
-        });
-        await videoStatusFailed.save();
+        Video.findOneAndUpdate(query, update).exec();
+        // const videoStatusFailed = new VideoStatus({
+        //   status: VIDEO_STATUS.failed,
+        // });
+        // await videoStatusFailed.save();
       } catch (mongoNetworkError) { /* empty */ }
     }, VIDEOGENERATION_TIMEOUT);
 

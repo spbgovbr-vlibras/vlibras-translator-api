@@ -8,11 +8,6 @@ const options = {
 };
 
 const videoStatus = new Schema({
-  translation: {
-    type: Schema.Types.ObjectId,
-    ref: 'Video',
-    required: true,
-  },
   status: {
     type: String,
     enum: Object.values(VIDEO_STATUS),
@@ -23,6 +18,7 @@ const videoStatus = new Schema({
 videoStatus.pre(/^find/, function populateSignerSchema() {
   this.populate({ path: 'videos' });
 });
+
 
 // model created on video core
 const VideoStatus = model('status_videos_translations', videoStatus);
