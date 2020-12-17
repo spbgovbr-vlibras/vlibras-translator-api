@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import Translation from '../translator/Translation';
 import Review from '../review/Review';
 import Video from '../video/Video';
@@ -68,9 +69,14 @@ const metrics = async function serviceMetrics(req, res, next) {
 
     let count = 0;
 
+    console.log(`\n${startTime.toString()}`);
+
     if (Array.isArray(videosDurationSum) && videosDurationSum.length > 0) {
       count = videosDurationSum[0].count;
     }
+    console.log(`videoDurationSum: ${count}`);
+
+    console.log(`${endTime.toString()}\n`);
 
     return res.status(200).json({
       translationsCount,
