@@ -67,7 +67,8 @@ const metrics = async function serviceMetrics(req, res, next) {
     ]);
 
     let count = 0;
-    if (videosDurationSum.length > 0) {
+
+    if (Array.isArray(videosDurationSum) && videosDurationSum.length > 0) {
       count = videosDurationSum[0].count;
     }
 
