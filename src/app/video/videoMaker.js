@@ -36,6 +36,7 @@ const videoMaker = async function videoMakerController(req, res, next) {
 
     const videoStatus = new VideoStatus({
       status: VIDEO_STATUS.queued,
+      duration: 0,
     });
 
     const videoParams = {

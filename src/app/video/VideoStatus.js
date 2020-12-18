@@ -13,11 +13,11 @@ const videoStatus = new Schema({
     enum: Object.values(VIDEO_STATUS),
     required: true,
   },
+  duration: {
+    type: Number,
+    required: true,
+  },
 }, options);
-
-videoStatus.pre(/^find/, function populateSignerSchema() {
-  this.populate({ path: 'videos' });
-});
 
 
 // model created on video core
