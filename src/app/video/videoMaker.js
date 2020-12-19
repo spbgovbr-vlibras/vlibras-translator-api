@@ -3,6 +3,7 @@ import uuid from 'uuid/v4';
 import env from '../../config/environments/environment';
 import queueConnection from '../util/queueConnection';
 import Video from './Video';
+import VideoStatus from './VideoStatus';
 import { VIDEOMAKER_ERROR } from '../../config/error';
 import { VIDEO_STATUS } from '../../config/status';
 import {
@@ -33,6 +34,11 @@ const videoMaker = async function videoMakerController(req, res, next) {
       requester: req.headers['x-forwarded-for'] || req.connection.remoteAddress,
     });
 
+    const videoStatus = new VideoStatus({
+      status: VIDEO_STATUS.queued,
+      duration: 0,
+    });
+
     const videoParams = {
       avatar: req.body.avatar,
       caption: req.body.caption,
@@ -54,13 +60,21 @@ const videoMaker = async function videoMakerController(req, res, next) {
     }, CHANNEL_CLOSE_TIMEOUT);
 
     await videoGenRequest.save();
+    await videoStatus.save();
 
-    setTimeout(() => {
+    setTimeout(async () => {
       const query = { uid, status: { $ne: VIDEO_STATUS.generated } };
       const update = { $set: { status: VIDEO_STATUS.failed } };
 
+
+      // VER COM WESNYDY
       try {
+        // update status for failed
         Video.findOneAndUpdate(query, update).exec();
+        // const videoStatusFailed = new VideoStatus({
+        //   status: VIDEO_STATUS.failed,
+        // });
+        // await videoStatusFailed.save();
       } catch (mongoNetworkError) { /* empty */ }
     }, VIDEOGENERATION_TIMEOUT);
 
