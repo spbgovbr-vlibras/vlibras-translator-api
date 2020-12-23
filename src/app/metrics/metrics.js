@@ -1,6 +1,7 @@
+/* eslint-disable no-console */
 import Translation from '../translator/Translation';
 import Review from '../review/Review';
-import Video from '../video/Video';
+import VideoStatus from '../video/VideoStatus';
 import Hit from '../translator/Hit';
 
 const metrics = async function serviceMetrics(req, res, next) {
@@ -34,8 +35,8 @@ const metrics = async function serviceMetrics(req, res, next) {
       ],
       videosDurationSumQuery: [
         { $match: { createdAt: { $gte: startTime, $lt: endTime } } },
-        { $group: { _id: '$duration', videosDurationSum: { $sum: '$duration' } } },
-        { $project: { videosDurationSum: 1, _id: 0 } },
+        { $group: { _id: null, count: { $sum: '$duration' } } },
+        { $project: { count: 1, _id: 0 } },
       ],
       hitsCountQuery: [
         {
@@ -43,6 +44,7 @@ const metrics = async function serviceMetrics(req, res, next) {
             text: 1, hits: 1,
           },
         },
+        { $group: { _id: '$text', hits: { $sum: 1 } } },
         { $sort: { hits: -1 } },
         { $limit: 10 },
       ],
@@ -54,22 +56,30 @@ const metrics = async function serviceMetrics(req, res, next) {
       reviewsCount,
       ratingsCounters,
       videosCounters,
-      [videosDurationSum],
+      videosDurationSum,
     ] = await Promise.all([
       Translation.countDocuments(queries.translationsCountQuery),
       Hit.aggregate(queries.hitsCountQuery),
       Review.countDocuments(queries.reviewsCountQuery),
       Review.aggregate(queries.ratingsCountQuery),
-      Video.aggregate(queries.videosCountQuery),
-      Video.aggregate(queries.videosDurationSumQuery),
+      VideoStatus.aggregate(queries.videosCountQuery),
+      VideoStatus.aggregate(queries.videosDurationSumQuery),
     ]);
+
+    let count = 0;
+
+
+    if (Array.isArray(videosDurationSum) && videosDurationSum.length > 0) {
+      count = videosDurationSum[0].count;
+    }
+    console.log(videosDurationSum);
 
     return res.status(200).json({
       translationsCount,
       reviewsCount,
       ratingsCounters,
       translationsHits,
-      ...videosDurationSum, // videos duration sum in ms
+      videosDurationSum: count, // videos duration sum in ms
       videosCounters,
     });
   } catch (error) {
