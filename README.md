@@ -1,5 +1,5 @@
 <div align="center">
-  <a href="http://www.vlibras.gov.br/">
+  <a href="https://www.vlibras.gov.br/">
     <img
       alt="VLibras"
       src="https://vlibras.gov.br/assets/imgs/IcaroGrande.png"
@@ -21,10 +21,11 @@ VLibras Translation Service API.
   - [System Requirements](#system-requirements)
   - [Prerequisites](#prerequisites)
   - [Installing](#installing)
+  - [API Documentation](#api-documentation)
 - **[Deployment](#deployment)**
   - [Deploy Tools](#deploy-tools)
   - [Deploying](#deploying)
-- **[Documentation](#documentation)**
+
 - **[Contributors](#contributors)**
 - **[License](#license)**
 
@@ -162,142 +163,79 @@ To test the installation, build and start the translation API with the following
 npm run dev
 ```
 
-## Deployment
-
-These instructions will get you a copy of the project up and running on a live System.
-
-### Deploy Tools
-
-To fully deployment of this project its necessary to have installed and configured the Docker Engine and Kubernetes Container Orchestration.
-
-##### [Docker](https://www.docker.com/)
-
-Update the apt package index.
-
-```sh
-sudo apt update
-```
-
-Install packages to allow apt to use a repository over HTTPS.
-
-```sh
-sudo apt install -y apt-transport-https ca-certificates curl gnupg-agent software-properties-common
-```
-
-Add Docker’s official GPG key.
-
-```sh
-curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
-```
-
-Set up the stable repository.
-
-```sh
-sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
-```
-
-Update the apt package index.
-
-```sh
-sudo apt update
-```
-
-Install the latest version of Docker and containerd.
-
-```sh
-sudo apt install -y docker-ce docker-ce-cli containerd.io
-```
-
-##### [Kubernetes](https://kubernetes.io/)
-
-Update the apt package index.
-
-```sh
-sudo apt update
-```
-
-Install packages to allow apt to use a repository over HTTPS.
-
-```sh
-sudo apt install -y apt-transport-https
-```
-
-Add Kubernetes’s official GPG key.
-
-```sh
-curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
-```
-
-Set up the main repository.
-
-```sh
-echo "deb https://apt.kubernetes.io/ kubernetes-bionic main" | sudo tee -a /etc/apt/sources.list.d/kubernetes.list
-```
-
-Update the apt package index.
-
-```sh
-sudo apt update
-```
-
-Install the kubectl.
-
-```sh
-sudo apt install -y kubectl
-```
-
-### Deploying
-Note: Vlibras Translator Api has some dependencies with other components. Make sure that you previously deployed Vlibras Translator Text Core and Vlibras Translator Video Core.
-> Note: if you already have MongoDB and RabbitMQ running on your cluster, skip to the server configuration.
-
-Once kubectl is installed and set, run the following commands:
-
-```sh
-kubectl apply -f kubernetes/mongo.yaml
-```
-
-```sh
-kubectl expose rc mongo-controller --type=ClusterIP
-```
-
-The commands above will start the MongoDB pods. You must configure a volume set to be used by it. By default it set to be used in a Google Cloud Platform (GCP). Following, the commands bellow starts up the RabbitMQ pod. As it happened to MongoDB, you must configure a volume set or use the default of a GCP.
-
-```sh
-kubectl apply -f kubernetes/rabbitmq.yaml
-```
-
-```sh
-kubectl expose deployment rabbitmq --type=ClusterIP
-```
-
-Then, open the translator-api-server-template.yaml file and edit the environment variables below to match your settings.
-
-```sh
-- name: AMQP_HOST
-  value: "RABBITMQ-IP"
-- name: AMQP_PORT
-  value: "RABBITMQ-PORT"
-- name: DB_HOST
-  value: "MONGODB-IP"
-- name: DB_PORT
-  value: "MONGODB-PORT"
-```
-
-Finally, starting the server by running the commands:
-
-```sh
-kubectl apply -f kubernetes/translator-api-server-template.yaml
-```
-
-```sh
-kubectl expose deployment translatorapi --port=80 --type=LoadBalancer
-```
-
-## Documentation
+### API Documentation
 
 To access the documentation and usage examples of the VLibras Translator API, start the translation server in your localhost and open a browser with the following link:
 
 [http://localhost:3000/docs](http://localhost:3000/docs)
+
+## Deployment
+
+These instructions will get you a copy of the project up and running on a live System.
+
+### Deployment Tools
+
+To fully deployment of this project its necessary to have installed and configured the Docker Engine and Docker Compose.
+
+##### [Docker](https://www.docker.com/)
+
+Download get-docker script.
+
+```sh
+curl -fsSL https://get.docker.com -o get-docker.sh
+```
+
+Install the latest version of Docker.
+
+```sh
+sudo sh get-docker.sh
+```
+
+##### [Docker Compose](https://docs.docker.com/compose/)
+
+Download the current stable release of Docker Compose.
+
+```sh
+sudo curl -L "https://github.com/docker/compose/releases/download/1.25.3/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+```
+
+Apply executable permissions to the binary.
+
+```sh
+sudo chmod +x /usr/local/bin/docker-compose
+```
+
+### Deploying
+
+Before deploying the project, check the [docker-compose.yml](docker-compose.yml) file and review the following environment variables:
+
+```yml
+PORT: 3000
+DB_HOST: mongo
+DB_PORT: 27017
+DB_NAME: "vlibras-db"
+CACHE_HOST: redis
+CACHE_PORT: 6379
+CACHE_NAME: "vlibras-cache"
+CACHE_SIZE: 104857600
+CACHE_EXP: 604800
+AMQP_PROTOCOL: amqp
+AMQP_HOST: rabbitmq
+AMQP_PORT: 5672
+AMQP_USER: vlibras
+AMQP_PASS: vlibras
+TRANSLATOR_QUEUE: "translate.to_text"
+VIDEOMAKER_QUEUE: "translate.to_video"
+API_CONSUMER_QUEUE: "amq.rabbitmq.reply-to"
+```
+
+> Note: information about these environment variables can be found in [.env.dev](/src/config/environments/.env.dev) file.
+
+Finally, deploy the project by running:
+
+```sh
+sudo docker-compose up
+```
 
 ## Contributors
 
