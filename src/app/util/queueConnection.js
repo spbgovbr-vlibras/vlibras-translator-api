@@ -1,7 +1,5 @@
 import amqplib from 'amqplib';
 
-let AMQPConnection;
-
 const connectionURL = {
   protocol: process.env.AMQP_PROTOCOL,
   hostname: process.env.AMQP_HOST,
@@ -10,22 +8,32 @@ const connectionURL = {
   password: process.env.AMQP_PASS,
 };
 
-const queueConnection = async function AMQPQueueConnection() {
-  try {
-    if (AMQPConnection === undefined) {
-      AMQPConnection = await amqplib.connect(connectionURL);
-      AMQPConnection.on('close', () => {
-        AMQPConnection = undefined;
-        return setTimeout(() => { queueConnection(); }, 500);
-      });
-    }
-    return AMQPConnection;
-  } catch (error) {
-    if (AMQPConnection !== undefined) {
-      setTimeout(() => { AMQPConnection.close(); }, 500);
-    }
-    throw new Error(error);
+
+/**
+ * @var {Promise<MessageBroker>}
+ */
+let instance;
+
+class MessageBroker {
+  async init() {
+    this.connection = await amqplib.connect(connectionURL);
+    this.channel = await this.connection.createChannel();
+
+    return this;
   }
+}
+
+/**
+ * @return {Promise<MessageBroker>}
+ */
+MessageBroker.getInstance = async () => {
+  if (!instance) {
+    const broker = new MessageBroker();
+    instance = await broker.init();
+  }
+
+  return instance;
 };
 
-export default queueConnection;
+
+export default MessageBroker;
