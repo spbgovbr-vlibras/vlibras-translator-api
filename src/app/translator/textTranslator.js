@@ -23,12 +23,13 @@ let consumidor;
 
 class TextTranslatorController {
   async textTranslatorController(req, res, next) {
+    const uid = await uuid();
     try {
       const callbackProperties = async () => {
         try {
           this.req = req;
+          this.uid = uid;
           this.res = res;
-          this.uid = uuid();
           this.next = next;
           this.TRANSLATOR_ERROR = TRANSLATOR_ERROR;
           return null;
@@ -42,6 +43,7 @@ class TextTranslatorController {
 
       const amqpCallback = async (message) => {
         try {
+          // await callbackProperties();
           if (message.properties.correlationId !== this.uid) {
             return this.next(createError(500, TRANSLATOR_ERROR.wrongResponse));
           }
