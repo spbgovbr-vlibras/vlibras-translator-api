@@ -59,11 +59,11 @@ const metrics = async function serviceMetrics(req, res, next) {
       videosDurationSum,
     ] = await Promise.all([
       Translation.countDocuments(queries.translationsCountQuery),
-      Hit.aggregate(queries.hitsCountQuery),
+      Hit.aggregate(queries.hitsCountQuery).allowDiskUse(true),
       Review.countDocuments(queries.reviewsCountQuery),
-      Review.aggregate(queries.ratingsCountQuery),
-      VideoStatus.aggregate(queries.videosCountQuery),
-      VideoStatus.aggregate(queries.videosDurationSumQuery),
+      Review.aggregate(queries.ratingsCountQuery).allowDiskUse(true),
+      VideoStatus.aggregate(queries.videosCountQuery).allowDiskUse(true),
+      VideoStatus.aggregate(queries.videosDurationSumQuery).allowDiskUse(true),
     ]);
 
     let count = 0;
