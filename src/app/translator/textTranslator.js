@@ -24,7 +24,12 @@ const textTranslator = async function textTranslatorController(req, res, next) {
 
     const { consumerCount } = await AMQPChannel.assertQueue(
       env.TRANSLATOR_QUEUE,
-      { durable: false },
+      {
+        durable: true,
+        arguments: { 'x-queue-type': 'quorum' },
+      },
+
+
     );
 
     if (consumerCount === 0) {

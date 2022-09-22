@@ -20,7 +20,10 @@ const videoMaker = async function videoMakerController(req, res, next) {
 
     const { consumerCount } = await AMQPChannel.assertQueue(
       env.VIDEOMAKER_QUEUE,
-      { durable: false },
+      {
+        durable: true,
+        arguments: { 'x-queue-type': 'quorum' },
+      },
     );
 
     if (consumerCount === 0) {
