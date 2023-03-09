@@ -24,6 +24,6 @@ const accessSchema = new Schema({
   },
 }, options);
 
-const AccessSchema = model('DailyAccess', accessSchema);
+const DailyAccess = model('DailyAccess', accessSchema);
 
-export default AccessSchema;
+export default DailyAccess;

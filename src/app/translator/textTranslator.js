@@ -6,6 +6,7 @@ import redisConnection from '../util/redisConnection';
 import { cacheError } from '../util/debugger';
 import Translation from './Translation';
 import Hit from './Hit';
+import DailyAccess from './DailyAccess';
 import { TRANSLATOR_ERROR } from '../../config/error';
 import {
   CHANNEL_CLOSE_TIMEOUT,
@@ -15,6 +16,7 @@ import {
 
 
 import phraseBreaker from '../util/phraseBreaker';
+import wordCounter from '../util/wordCounter';
 
 const textTranslator = async function textTranslatorController(req, res, next) {
   try {
@@ -31,7 +33,10 @@ const textTranslator = async function textTranslatorController(req, res, next) {
       return next(createError(500, TRANSLATOR_ERROR.unavailable));
     }
 
-    const phrases = await phraseBreaker(req.body.text);
+    const { text, textHash, domain } = req.body;
+
+    const phrases = await phraseBreaker(text);
+    const wordCount = wordCounter(text);
 
     phrases.forEach(async (phrase) => {
       const translationAlreadyExists = await Hit.findOne({ text: phrase });
@@ -56,7 +61,7 @@ const textTranslator = async function textTranslatorController(req, res, next) {
     });
 
     const translationRequest = new Translation({
-      text: req.body.text,
+      text,
       requester: req.headers['x-forwarded-for'] || req.connection.remoteAddress,
     });
 
@@ -79,11 +84,11 @@ const textTranslator = async function textTranslatorController(req, res, next) {
         }
         res.status(200).send(content.translation);
 
-        if (req.body.textHash) {
+        if (textHash) {
           try {
             const redisClient = await redisConnection();
             await redisClient.set(
-              req.body.textHash,
+              textHash,
               content.translation,
               'EX',
               env.CACHE_EXP,
@@ -115,7 +120,7 @@ const textTranslator = async function textTranslatorController(req, res, next) {
       return undefined;
     }, TRANSLATION_TIMEOUT);
 
-    const payload = JSON.stringify({ text: req.body.text });
+    const payload = JSON.stringify({ text });
 
     await AMQPChannel.publish(
       '',
@@ -127,6 +132,26 @@ const textTranslator = async function textTranslatorController(req, res, next) {
         expiration: TRANSLATION_PAYLOAD_TTL,
       },
     );
+
+    if (domain) {
+      const now = new Date();
+      const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+      let todayAccess = await DailyAccess.findOne({
+        site: domain,
+        createdAt: { $gte: startOfToday },
+      });
+
+      if (!todayAccess) {
+        todayAccess = await DailyAccess.create({
+          wordsAmount: 0,
+          requestsAmount: 0,
+          site: domain,
+        });
+      }
+
+      await todayAccess.updateOne({ $inc: { requestsAmount: 1, wordsAmount: wordCount } });
+    }
 
     return await translationRequest.save();
   } catch (error) {
