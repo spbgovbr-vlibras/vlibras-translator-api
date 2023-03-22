@@ -3,6 +3,7 @@ import Translation from '../translator/Translation';
 import Review from '../review/Review';
 import VideoStatus from '../video/VideoStatus';
 import Hit from '../translator/Hit';
+import DailyAccess from '../translator/DailyAccess';
 
 const metrics = async function serviceMetrics(req, res, next) {
   try {
@@ -23,6 +24,9 @@ const metrics = async function serviceMetrics(req, res, next) {
         review: { $exists: true },
         createdAt: { $gte: startTime, $lt: endTime },
       },
+      dailyAccessQuery: [
+        { $match: { createdAt: { $gte: startTime, $lt: endTime } } },
+      ],
       ratingsCountQuery: [
         { $match: { createdAt: { $gte: startTime, $lt: endTime } } },
         { $group: { _id: '$rating', count: { $sum: 1 } } },
@@ -52,6 +56,7 @@ const metrics = async function serviceMetrics(req, res, next) {
 
     const [
       translationsCount,
+      dailyAccesses,
       translationsHits,
       reviewsCount,
       ratingsCounters,
@@ -59,6 +64,7 @@ const metrics = async function serviceMetrics(req, res, next) {
       videosDurationSum,
     ] = await Promise.all([
       Translation.countDocuments(queries.translationsCountQuery),
+      DailyAccess.aggregate(queries.dailyAccessQuery).allowDiskUse(true),
       Hit.aggregate(queries.hitsCountQuery).allowDiskUse(true),
       Review.countDocuments(queries.reviewsCountQuery),
       Review.aggregate(queries.ratingsCountQuery).allowDiskUse(true),
@@ -76,6 +82,7 @@ const metrics = async function serviceMetrics(req, res, next) {
 
     return res.status(200).json({
       translationsCount,
+      dailyAccesses,
       reviewsCount,
       ratingsCounters,
       translationsHits,
