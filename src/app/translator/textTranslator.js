@@ -31,29 +31,7 @@ const textTranslator = async function textTranslatorController(req, res, next) {
       return next(createError(500, TRANSLATOR_ERROR.unavailable));
     }
 
-    const phrases = await phraseBreaker(req.body.text);
-
-    phrases.forEach(async (phrase) => {
-      const translationAlreadyExists = await Hit.findOne({ text: phrase });
-
-      if (translationAlreadyExists) {
-        const translationHit = new Hit({
-          text: translationAlreadyExists.text,
-          hits: translationAlreadyExists.hits + 1,
-        });
-        await translationHit.save();
-        return translationHit;
-      }
-
-      const translationHit = new Hit({
-        text: phrase,
-        hits: 1,
-      });
-
-      await translationHit.save();
-
-      return translationHit;
-    });
+    storeStats(req); // NOTE. Dont't use await here.
 
     const translationRequest = new Translation({
       text: req.body.text,
@@ -133,5 +111,36 @@ const textTranslator = async function textTranslatorController(req, res, next) {
     return next(error);
   }
 };
+
+/**
+ * Asynchronous stores the statistics of the traslator at the DB.
+ *
+ * @param {Request} req - The http(s) request.
+ */
+ const storeStats = async function storeStatsController(req) {
+  const phrases = await phraseBreaker(req.body.text);
+
+  phrases.forEach(async (phrase) => {
+    const translationAlreadyExists = await Hit.findOne({ text: phrase });
+
+    if (translationAlreadyExists) {
+      const translationHit = new Hit({
+        text: translationAlreadyExists.text,
+        hits: translationAlreadyExists.hits + 1,
+      });
+      await translationHit.save();
+      return translationHit;
+    }
+
+    const translationHit = new Hit({
+      text: phrase,
+      hits: 1,
+    });
+
+    await translationHit.save();
+
+    return translationHit;
+  });
+}
 
 export default textTranslator;
