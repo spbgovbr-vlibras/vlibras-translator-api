@@ -31,7 +31,7 @@ const textTranslator = async function textTranslatorController(req, res, next) {
       return next(createError(500, TRANSLATOR_ERROR.unavailable));
     }
 
-    storeStats(req); // NOTE. Dont't use await here.
+    setTimeout(storeStats, 10, req); // 10miliseconds means now.
 
     const translationRequest = new Translation({
       text: req.body.text,
