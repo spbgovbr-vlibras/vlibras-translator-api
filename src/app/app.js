@@ -14,6 +14,10 @@ import translatorRoute from './translator/textTranslatorRoute';
 import videoMakerRoute from './video/videoMakerRoute';
 import metricsRoute from './metrics/metricsRoute';
 
+import mongoConnection from './util/mongoConnection';
+
+const packageJson = require('../../package.json');
+
 const app = express();
 
 app.use(cors());
@@ -32,6 +36,25 @@ app.use('/', metricsRoute);
 
 app.get('/healthcheck', (_req, res) => {
   res.sendStatus(200);
+});
+
+app.get('/health', (_req, res) => {
+  mongoConnection()
+    .then(() => {
+      const response = {
+        status: 'up',
+        version: packageJson.version,
+        database: 'up',
+      };
+      res.status(200).json(response);
+    })
+    .catch(() => {
+      res.status(500).json({
+        status: 'up',
+        version: packageJson.version,
+        database: 'down',
+      });
+    });
 });
 
 app.use((_req, _res, next) => {
