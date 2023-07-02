@@ -13,6 +13,7 @@ import reviewRoute from './review/translationReviewRoute';
 import translatorRoute from './translator/textTranslatorRoute';
 import videoMakerRoute from './video/videoMakerRoute';
 import metricsRoute from './metrics/metricsRoute';
+import healthRouter from './health/healthRoutes';
 
 const app = express();
 
@@ -29,6 +30,7 @@ app.use('/', reviewRoute);
 app.use('/', translatorRoute);
 app.use('/', videoMakerRoute);
 app.use('/', metricsRoute);
+app.use('/', healthRouter);
 
 app.get('/healthcheck', (_req, res) => {
   res.sendStatus(200);
