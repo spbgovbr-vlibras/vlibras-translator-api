@@ -1,4 +1,5 @@
 /* eslint-disable linebreak-style */
+import env from '../../config/environments/environment';
 import mongoConnection from '../util/mongoConnection';
 import queueConnection from '../util/queueConnection';
 import redisConnection from '../util/redisConnection';
@@ -37,15 +38,32 @@ const checkRedisConnection = () => new Promise((resolve) => {
     })
     .catch(() => {
       resolve({ service: 'redis', status: 'down' });
+    })
+    .finally(() => {
+      if (redisClient && typeof redisClient.disconnect === 'function') {
+        redisClient.disconnect();
+      }
     });
 });
 
+const checkConsumerCount = async () => {
+  const connection = await queueConnection();
+  const channel = await connection.createChannel();
+  const result = await channel.assertQueue(
+    env.TRANSLATOR_QUEUE,
+    { durable: true },
+  );
+  const { consumerCount } = result;
+  return consumerCount;
+};
+
 const health = async (req, res) => {
   try {
-    const [database, queue, redis] = await Promise.all([
+    const [database, queue, redis, queueConsumerCount] = await Promise.all([
       checkDatabaseConnection().catch((error) => ({ service: 'database', status: 'down', error })),
       checkQueueConnection().catch((error) => ({ service: 'queue', status: 'down', error })),
       checkRedisConnection().catch((error) => ({ service: 'redis', status: 'down', error })),
+      checkConsumerCount().catch((error) => ({ error })),
     ]);
 
     const response = {
@@ -54,6 +72,7 @@ const health = async (req, res) => {
       database: database.status === 'up' ? 'up' : 'down',
       queue: queue.status === 'up' ? 'up' : 'down',
       redis: redis.status === 'up' ? 'up' : 'down',
+      consumerCount: queueConsumerCount,
     };
 
     res.status(200).json(response);
