@@ -25,6 +25,16 @@ export const timestampValidationRules = [
     .withMessage(VALIDATION_ERRORS.dateInterval),
 ];
 
+export const filterTextTranslateRules = [
+  query('days')
+    .isInt(VALIDATION_VALUES.dateInterval)
+    .toInt()
+    .withMessage(VALIDATION_ERRORS.dateInterval),
+  query('domain')
+    .isLength(VALIDATION_VALUES.textLength)
+    .withMessage(VALIDATION_ERRORS.textLength),
+];
+
 export const reviewValidationRules = [
   body('text')
     .isLength(VALIDATION_VALUES.textLength)
