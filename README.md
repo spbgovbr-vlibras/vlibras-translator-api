@@ -34,7 +34,7 @@ These instructions will get you a copy of the project up and running on your loc
 
 ### System Requirements
 
-* OS: Ubuntu 18.04.3 LTS (Bionic Beaver)
+* OS: Ubuntu 22.04 LTS (Jammy Jellyfish)
 
 ### Prerequisites
 
@@ -42,42 +42,33 @@ Before starting the installation, you need to install some prerequisites.
 
 ##### [Node.js](https://nodejs.org/en/)
 
-Add NodeSource repository.
+Use [nvm](https://github.com/nvm-sh/nvm) to install node (relogin to finish the installation).
 
 ```sh
-curl -sL https://deb.nodesource.com/setup_10.x | sudo -E bash -
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.4/install.sh | bash
 ```
 
-Install Node.js.
+Install Node.js 12.
 
 ```sh
-sudo apt install -y nodejs
+nvm install 12
 ```
 
 ##### [MongoDB](https://www.mongodb.com/)
 
-Update local package database.
-
-```sh
-sudo apt update
-```
-
-Install required libraries.
-
-```sh
-sudo apt install -y wget gnupg
-```
 
 Import the public key used by the package management system.
 
 ```sh
-wget -qO - https://www.mongodb.org/static/pgp/server-4.2.asc | sudo apt-key add -
+curl -fsSL https://pgp.mongodb.com/server-6.0.asc | \
+   sudo gpg -o /usr/share/keyrings/mongodb-server-6.0.gpg \
+   --dearmor
 ```
 
 Create a list file for MongoDB.
 
 ```sh
-echo "deb [ arch=amd64 ] https://repo.mongodb.org/apt/ubuntu bionic/mongodb-org/4.2 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-4.2.list
+echo "deb [signed-by=/usr/share/keyrings/mongodb-server-6.0.gpg] https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/6.0 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-6.0.list
 ```
 
 Reload local package database.
@@ -106,46 +97,48 @@ Install Redis.
 sudo apt install redis-server
 ```
 
+
 ##### [RabbitMQ](https://www.rabbitmq.com/)
 
-Update package indices.
+Follow the [Quick Start script](https://www.rabbitmq.com/install-debian.html#apt-quick-start-cloudsmith) from RabbitMQ:
 
 ```sh
-sudo apt update
-```
+#!/bin/sh
 
-Install prerequisites.
+sudo apt-get install curl gnupg apt-transport-https -y
 
-```sh
-sudo apt install -y curl gnupg apt-transport-https
-```
+## Team RabbitMQ's main signing key
+curl -1sLf "https://keys.openpgp.org/vks/v1/by-fingerprint/0A9AF2115F4687BD29803A206B73A36E6026DFCA" | sudo gpg --dearmor | sudo tee /usr/share/keyrings/com.rabbitmq.team.gpg > /dev/null
+## Community mirror of Cloudsmith: modern Erlang repository
+curl -1sLf https://ppa1.novemberain.com/gpg.E495BB49CC4BBE5B.key | sudo gpg --dearmor | sudo tee /usr/share/keyrings/rabbitmq.E495BB49CC4BBE5B.gpg > /dev/null
+## Community mirror of Cloudsmith: RabbitMQ repository
+curl -1sLf https://ppa1.novemberain.com/gpg.9F4587F226208342.key | sudo gpg --dearmor | sudo tee /usr/share/keyrings/rabbitmq.9F4587F226208342.gpg > /dev/null
 
-Install RabbitMQ signing key.
+## Add apt repositories maintained by Team RabbitMQ
+sudo tee /etc/apt/sources.list.d/rabbitmq.list <<EOF
+## Provides modern Erlang/OTP releases
+##
+deb [signed-by=/usr/share/keyrings/rabbitmq.E495BB49CC4BBE5B.gpg] https://ppa1.novemberain.com/rabbitmq/rabbitmq-erlang/deb/ubuntu jammy main
+deb-src [signed-by=/usr/share/keyrings/rabbitmq.E495BB49CC4BBE5B.gpg] https://ppa1.novemberain.com/rabbitmq/rabbitmq-erlang/deb/ubuntu jammy main
 
-```sh
-curl -fsSL https://github.com/rabbitmq/signing-keys/releases/download/2.0/rabbitmq-release-signing-key.asc | sudo apt-key add -
-```
+## Provides RabbitMQ
+##
+deb [signed-by=/usr/share/keyrings/rabbitmq.9F4587F226208342.gpg] https://ppa1.novemberain.com/rabbitmq/rabbitmq-server/deb/ubuntu jammy main
+deb-src [signed-by=/usr/share/keyrings/rabbitmq.9F4587F226208342.gpg] https://ppa1.novemberain.com/rabbitmq/rabbitmq-server/deb/ubuntu jammy main
+EOF
 
-Add Bintray repositories that provision latest RabbitMQ and Erlang 21.x releases.
+## Update package indices
+sudo apt-get update -y
 
-```sh
-echo "deb https://dl.bintray.com/rabbitmq-erlang/debian bionic erlang-21.x" | tee /etc/apt/sources.list.d/bintray.rabbitmq.list
-```
+## Install Erlang packages
+sudo apt-get install -y erlang-base \
+                        erlang-asn1 erlang-crypto erlang-eldap erlang-ftp erlang-inets \
+                        erlang-mnesia erlang-os-mon erlang-parsetools erlang-public-key \
+                        erlang-runtime-tools erlang-snmp erlang-ssl \
+                        erlang-syntax-tools erlang-tftp erlang-tools erlang-xmerl
 
-```sh
-echo "deb https://dl.bintray.com/rabbitmq/debian bionic main" | tee -a /etc/apt/sources.list.d/bintray.rabbitmq.list
-```
-
-Update package indices.
-
-```sh
-sudo apt update
-```
-
-Install rabbitmq-server and its dependencies.
-
-```sh
-sudo apt install rabbitmq-server -y --fix-missing
+## Install rabbitmq-server and its dependencies
+sudo apt-get install rabbitmq-server -y --fix-missing
 ```
 
 ### Installing
