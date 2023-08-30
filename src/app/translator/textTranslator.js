@@ -28,6 +28,10 @@ const textTranslator = async function textTranslatorController(req, res, next) {
     );
 
     if (consumerCount === 0) {
+      try {
+        AMQPChannel.close();
+      } catch (channelAlreadyClosedError) { /* empty */ }
+
       return next(createError(500, TRANSLATOR_ERROR.unavailable));
     }
 
@@ -117,7 +121,7 @@ const textTranslator = async function textTranslatorController(req, res, next) {
  *
  * @param {Request} req - The http(s) request.
  */
- const storeStats = async function storeStatsController(req) {
+const storeStats = async function storeStatsController(req) {
   const phrases = await phraseBreaker(req.body.text);
 
   phrases.forEach(async (phrase) => {
