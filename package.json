@@ -10,7 +10,8 @@
   "scripts": {
     "build": "babel src --out-dir dist --copy-files --include-dotfiles",
     "dev": "npm run build && DEBUG=vlibras-translator-*:* NODE_ENV=dev node dist/index.js",
-    "start": "DEBUG=vlibras-translator-api:info NODE_ENV=production node dist/index.js"
+    "start": "DEBUG=vlibras-translator-api:info NODE_ENV=production node dist/index.js",
+    "metricsPerf": "npm run build && DEBUG=vlibras-translator-*:* NODE_ENV=dev node dist/test/metricsPerf.js"
   },
   "engines": {
     "node": "10.16"
