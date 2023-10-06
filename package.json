@@ -43,9 +43,10 @@
     "ioredis": "^4.17.1",
     "mongoose": "^5.9.16",
     "morgan": "~1.9.0",
+    "pg": "^8.11.3",
+    "sequelize": "^6.33.0",
     "swagger-ui-express": "^4.1.4",
-    "uuid": "^3.4.0",
-    "sequelize": "^6.33.0"
+    "uuid": "^3.4.0"
   },
   "devDependencies": {
     "@babel/cli": "^7.8.4",
