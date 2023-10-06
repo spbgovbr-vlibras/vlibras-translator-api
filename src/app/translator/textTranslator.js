@@ -4,8 +4,10 @@ import env from '../../config/environments/environment';
 import queueConnection from '../util/queueConnection';
 import redisConnection from '../util/redisConnection';
 import { cacheError } from '../util/debugger';
-import Translation from './Translation';
-import Hit from './Hit';
+//import Translation from './Translation';
+//import Hit from './Hit';
+import { Translation } from '../db/models'
+import { Hit } from '../db/models'
 import { TRANSLATOR_ERROR } from '../../config/error';
 import {
   CHANNEL_CLOSE_TIMEOUT,
@@ -72,11 +74,22 @@ const textTranslator = async function textTranslatorController(req, res, next) {
         }
 
         try {
-          await Translation.findByIdAndUpdate(
-            translationRequest._id,
-            { translation: content.translation },
-          ).exec();
-        } catch (mongoNetworkError) { /* empty */ }
+          // await Translation.findByIdAndUpdate(
+          //   translationRequest._id,
+          //   { translation: content.translation },
+          // ).exec();
+
+          const translation = await Translation.findByPk(translationRequest._id);
+          translation.translation = content.translation;
+          await translation.save();
+
+          //const translation = await Translation.findOneAndUpdate(
+          //  { _id: translationRequest._id },
+          //  { translation: content.translation },
+          //  { upsert: true },
+          //);
+
+        } catch (mongoNetworkError) { /* empty */ } // fix TODO
 
         return undefined;
       },
@@ -117,7 +130,7 @@ const textTranslator = async function textTranslatorController(req, res, next) {
  *
  * @param {Request} req - The http(s) request.
  */
- const storeStats = async function storeStatsController(req) {
+const storeStats = async function storeStatsController(req) {
   const phrases = await phraseBreaker(req.body.text);
 
   phrases.forEach(async (phrase) => {
