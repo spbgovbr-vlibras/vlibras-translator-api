@@ -88,6 +88,12 @@ Install the MongoDB packages.
 sudo apt install -y mongodb-org
 ```
 
+You can start the mongod process by issuing the following command:
+
+```sh
+sudo systemctl start mongod
+```
+
 ##### [PostgreSQL](https://www.postgresql.org/)
 
 Update local package database.
@@ -152,11 +158,12 @@ CREATE DATABASE vlibras;
 \c vlibras
 ```
 
-Loading Database
+Loading Database Migrations
 
 ```sh
 npx sequelize-cli db:migrate
 ```
+
 
 ##### [Redis](https://redis.io)
 
