@@ -92,6 +92,13 @@ Install the MongoDB packages.
 sudo apt install -y mongodb-org
 ```
 
+You can start the mongod process by issuing the following command:
+
+```sh
+sudo systemctl start mongod
+```
+
+
 ##### [Redis](https://redis.io)
 
 Update local apt package.
