@@ -5,8 +5,8 @@ const path = require('path');
 const Sequelize = require('sequelize');
 const process = require('process');
 const basename = path.basename(__filename);
-const env = process.env.NODE_ENV || 'development';
-const config = require('/home/andre/Code/lavid/servico-tradutor/vlibras-translator-api/dist/app/db/config/config.js')[env];
+const env = process.env.NODE_ENV || 'dev';
+const config = require('../config/config.js')[env];
 const db = {};
 
 console.log(config);
