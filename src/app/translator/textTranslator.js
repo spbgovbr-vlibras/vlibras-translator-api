@@ -35,10 +35,10 @@ const textTranslator = async function textTranslatorController(req, res, next) {
 
     setTimeout(storeStats, 10, req); // 10miliseconds means now.
 
-    const translationRequest = new Translation({
-      text: req.body.text,
-      requester: req.headers['x-forwarded-for'] || req.connection.remoteAddress,
-    });
+    // const translationRequest = new Translation({
+    //   text: req.body.text,
+    //   requester: req.headers['x-forwarded-for'] || req.connection.remoteAddress,
+    // });
 
     AMQPChannel.consume(
       env.API_CONSUMER_QUEUE,
@@ -79,9 +79,15 @@ const textTranslator = async function textTranslatorController(req, res, next) {
           //   { translation: content.translation },
           // ).exec();
 
-          const translation = await Translation.findByPk(translationRequest._id);
-          translation.translation = content.translation;
+          const translation = new Translation( {
+            text: req.body.text,
+            translation: content.translation,
+            requester: req.headers['x-forwarded-for'] || req.connection.remoteAddress,
+          } )
           await translation.save();
+          
+          // await Translation.findByPk(translationRequest._id);
+          // translation.translation = content.translation;
 
           //const translation = await Translation.findOneAndUpdate(
           //  { _id: translationRequest._id },
@@ -119,7 +125,7 @@ const textTranslator = async function textTranslatorController(req, res, next) {
       },
     );
 
-    return await translationRequest.save();
+    // return await translationRequest.save();
   } catch (error) {
     return next(error);
   }

@@ -15,17 +15,17 @@ import {
 const videoMaker = async function videoMakerController(req, res, next) {
   try {
     const uid = uuid();
-    const AMQPConnection = await queueConnection();
-    const AMQPChannel = await AMQPConnection.createChannel();
+    // const AMQPConnection = await queueConnection();
+    // const AMQPChannel = await AMQPConnection.createChannel();
 
-    const { consumerCount } = await AMQPChannel.assertQueue(
-      env.VIDEOMAKER_QUEUE,
-      { durable: false },
-    );
+    // const { consumerCount } = await AMQPChannel.assertQueue(
+    //   env.VIDEOMAKER_QUEUE,
+    //   { durable: false },
+    // );
 
-    if (consumerCount === 0) {
-      return next(createError(500, VIDEOMAKER_ERROR.unavailable));
-    }
+    // if (consumerCount === 0) {
+    //   return next(createError(500, VIDEOMAKER_ERROR.unavailable));
+    // }
 
     const videoGenRequest = new Video({
       gloss: req.body.gloss,
@@ -46,18 +46,18 @@ const videoMaker = async function videoMakerController(req, res, next) {
 
     const payload = JSON.stringify({ gloss: req.body.gloss, playerOptions: videoParams });
 
-    await AMQPChannel.publish(
-      '',
-      env.VIDEOMAKER_QUEUE,
-      Buffer.from(payload),
-      { correlationId: uid, expiration: VIDEOGENERATION_PAYLOAD_TTL },
-    );
+    // await AMQPChannel.publish(
+    //   '',
+    //   env.VIDEOMAKER_QUEUE,
+    //   Buffer.from(payload),
+    //   { correlationId: uid, expiration: VIDEOGENERATION_PAYLOAD_TTL },
+    // );
 
-    setTimeout(() => {
-      try {
-        AMQPChannel.close();
-      } catch (channelAlreadyClosedError) { /* empty */ }
-    }, CHANNEL_CLOSE_TIMEOUT);
+    // setTimeout(() => {
+    //   try {
+    //     AMQPChannel.close();
+    //   } catch (channelAlreadyClosedError) { /* empty */ }
+    // }, CHANNEL_CLOSE_TIMEOUT);
 
     await videoGenRequest.save();
     await videoStatus.save();
