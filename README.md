@@ -53,6 +53,11 @@ Install Node.js.
 ```sh
 sudo apt install -y nodejs
 ```
+Install Sequelize.
+
+```sh
+npm install sequelize
+```
 
 ##### [MongoDB](https://www.mongodb.com/)
 
@@ -90,6 +95,76 @@ Install the MongoDB packages.
 
 ```sh
 sudo apt install -y mongodb-org
+```
+
+##### [PostgreSQL](https://www.postgresql.org/)
+
+Update local package database.
+
+```sh
+sudo apt update
+```
+
+Install required libraries.
+
+```sh
+sudo sh -c 'echo "deb http://apt.postgresql.org/pub/respos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pdgd.list'
+```
+
+Import the public key used by the package management system.
+
+```sh
+wget -qO- https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo tee /etc/apt/trusted.gpg.d/pgdg.asc &>/dev/null
+```
+
+Update local package database.
+
+```sh
+sudo apt update
+```
+
+Install the PostgreSQL packages.
+
+```sh
+sudo apt install install postgresql-15
+```
+
+Verifying the installation
+
+```sh
+sudo systemctl status postgresql.service
+```
+
+Connecting and configuring postgreSQL
+
+```sh
+sudo -u postgresql psql
+```
+
+```sh
+alter user postgres password 'senha';
+```
+
+```sh
+\q
+```
+
+```sh
+psql -h localhost -U postgres
+```
+
+```sh
+CREATE DATABASE vlibras;
+```
+
+```sh
+\c vlibras
+```
+
+Loading Database
+
+```sh
+npx sequelize-cli db:migrate
 ```
 
 ##### [Redis](https://redis.io)

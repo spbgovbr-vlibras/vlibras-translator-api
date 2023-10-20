@@ -1,86 +1,79 @@
-/* eslint-disable no-console */
-import Translation from '../translator/Translation';
-import Review from '../review/Review';
-import VideoStatus from '../video/VideoStatus';
-import Hit from '../translator/Hit';
+import db from '../db/models';
 
 const metrics = async function serviceMetrics(req, res, next) {
   try {
-    const startTime = req.query.startTime
-      ? new Date(req.query.startTime)
-      : new Date(0);
+    const startTime = req.query.startTime ? new Date(req.query.startTime) : new Date(0);
+    const endTime = req.query.endTime ? new Date(req.query.endTime) : new Date(8640000000000000);
 
-    const endTime = req.query.endTime
-      ? new Date(req.query.endTime)
-      : new Date(8640000000000000);
-
-    const queries = {
-      translationsCountQuery: {
-        translation: { $exists: true },
-        createdAt: { $gte: startTime, $lt: endTime },
-      },
-      reviewsCountQuery: {
-        review: { $exists: true },
-        createdAt: { $gte: startTime, $lt: endTime },
-      },
-      ratingsCountQuery: [
-        { $match: { createdAt: { $gte: startTime, $lt: endTime } } },
-        { $group: { _id: '$rating', count: { $sum: 1 } } },
-        { $project: { rating: '$_id', count: 1, _id: 0 } },
-      ],
-      videosCountQuery: [
-        { $match: { createdAt: { $gte: startTime, $lt: endTime } } },
-        { $group: { _id: '$status', count: { $sum: 1 } } },
-        { $project: { status: '$_id', count: 1, _id: 0 } },
-      ],
-      videosDurationSumQuery: [
-        { $match: { createdAt: { $gte: startTime, $lt: endTime } } },
-        { $group: { _id: null, count: { $sum: '$duration' } } },
-        { $project: { count: 1, _id: 0 } },
-      ],
-      hitsCountQuery: [
-        {
-          $project: {
-            text: 1, hits: 1,
-          },
+    const result = await db.sequelize.transaction(async (t) => {
+      const translations = await db.Translation.count({
+        where: {
+          translation: { [db.Sequelize.Op.not]: null },
+          createdAt: { [db.Sequelize.Op.between]: [startTime, endTime] },
         },
-        { $group: { _id: '$text', hits: { $sum: 1 } } },
-        { $sort: { hits: -1 } },
-        { $limit: 10 },
-      ],
-    };
+        transaction: t,
+      });
 
-    const [
-      translationsCount,
-      translationsHits,
-      reviewsCount,
-      ratingsCounters,
-      videosCounters,
-      videosDurationSum,
-    ] = await Promise.all([
-      Translation.countDocuments(queries.translationsCountQuery),
-      Hit.aggregate(queries.hitsCountQuery).allowDiskUse(true),
-      Review.countDocuments(queries.reviewsCountQuery),
-      Review.aggregate(queries.ratingsCountQuery).allowDiskUse(true),
-      VideoStatus.aggregate(queries.videosCountQuery).allowDiskUse(true),
-      VideoStatus.aggregate(queries.videosDurationSumQuery).allowDiskUse(true),
-    ]);
+      const reviews = await db.Review.count({
+        where: {
+          review: { [db.Sequelize.Op.not]: null },
+          createdAt: { [db.Sequelize.Op.between]: [startTime, endTime] },
+        },
+        transaction: t,
+      });
 
-    let count = 0;
+      const ratings = await db.Review.findAll({
+        attributes: ['rating', [db.Sequelize.fn('COUNT', db.sequelize.col('rating')), 'count']],
+        where: {
+          createdAt: { [db.Sequelize.Op.between]: [startTime, endTime] },
+        },
+        group: ['rating'],
+        transaction: t,
+      });
 
+      const videos = await db.VideoStatus.count({
+        where: {
+          createdAt: { [db.Sequelize.Op.between]: [startTime, endTime] },
+        },
+        group: ['status'],
+        transaction: t,
+      });
 
-    if (Array.isArray(videosDurationSum) && videosDurationSum.length > 0) {
-      count = videosDurationSum[0].count;
-    }
-    console.log(videosDurationSum);
+      const videosDuration = await db.VideoStatus.sum('duration', {
+        where: {
+          createdAt: { [db.Sequelize.Op.between]: [startTime, endTime] },
+        },
+        transaction: t,
+      });
+
+      const hits = await db.Hit.findAll({
+        attributes: [
+          [db.sequelize.col('text'), '_id'], 
+          [db.sequelize.fn('SUM', db.sequelize.col('hits')), 'hits']
+        ],
+        group: ['text'],
+        order: [[db.sequelize.fn('SUM', db.sequelize.col('hits')), 'DESC']],
+        limit: 10,
+        transaction: t,
+      });
+
+      return {
+        translations,
+        reviews,
+        ratings,
+        videosResult,
+        videosDuration,
+        hits,
+      };
+    });
 
     return res.status(200).json({
-      translationsCount,
-      reviewsCount,
-      ratingsCounters,
-      translationsHits,
-      videosDurationSum: count, // videos duration sum in ms
-      videosCounters,
+      translationsCount: result.translations,
+      translationsHits: result.hits,
+      reviewsCount: result.reviews,
+      ratingsCounters: result.ratings.rows,
+      videosCounters: result.videos.rows,
+      videosDurationSum: result.videosDuration || 0,
     });
   } catch (error) {
     return next(error);
