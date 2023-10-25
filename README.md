@@ -158,10 +158,13 @@ CREATE DATABASE vlibras;
 \c vlibras
 ```
 
-Loading Database Migrations
-
-```sh
-npx sequelize-cli db:migrate
+Update the dabase configuration at [.env.dev](src/config/environments/.env.dev)
+```
+DBSQL_USER=postgres
+DBSQL_PASS=
+DBSQL_HOST=localhost
+DBSQL_PORT=5432
+DBSQL_NAME=vlibras
 ```
 
 
@@ -229,6 +232,12 @@ After installing all the prerequisites, install the project by running the comma
 
 ```sh
 npm install
+```
+
+Load Sequelize Migrations
+
+```sh
+npx sequelize-cli db:migrate
 ```
 
 To test the installation, build and start the translation API with the following command:
