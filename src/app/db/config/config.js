@@ -1,10 +1,3 @@
-
-// DBSQL_USER=postgres
-// DBSQL_PASS=lucas0123
-// DBSQL_HOST=localhost
-// DBSQL_PORT=5432
-// DBSQL_NAME=vlibras
-
 const env = require('../../../config/environments/environment').default;
 
 module.exports = {

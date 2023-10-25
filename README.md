@@ -102,7 +102,7 @@ sudo apt install -y mongodb-org
 Update local package database.
 
 ```sh
-sudo apt update
+sudo apt-get update
 ```
 
 Install required libraries.
@@ -126,7 +126,7 @@ sudo apt update
 Install the PostgreSQL packages.
 
 ```sh
-sudo apt install install postgresql-15
+sudo apt-get install postgresql-15
 ```
 
 Verifying the installation
