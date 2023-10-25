@@ -5,10 +5,18 @@ import db from '../db/models';
 const translationReview = async function translationReviewController(req, res, next) {
   try {
     await db.sequelize.transaction(async (t) => {
-      const translation = await Translation.findOne({
-        where: { translation: req.body.translation }, 
-        transaction: t 
+      let translation = await Translation.findOne({
+        where: { translation: req.body.translation },
+        transaction: t
       });
+
+      if (!translation) {
+        translation = Translation.build({
+          text: req.body.text,
+          translation: req.body.translation
+        });
+      }
+
       const reviewRequest = Review.build({
         translationId: translation.id,
         rating: req.body.rating === 'good',
