@@ -4,8 +4,8 @@ import env from '../../config/environments/environment';
 import queueConnection from '../util/queueConnection';
 import redisConnection from '../util/redisConnection';
 import { cacheError } from '../util/debugger';
-import { Translation } from '../db/models'
-import { Hit } from '../db/models'
+import { Translation, Hit } from '../db/models'
+import db from '../db/models';
 import { TRANSLATOR_ERROR } from '../../config/error';
 import {
   CHANNEL_CLOSE_TIMEOUT,
@@ -115,28 +115,33 @@ const textTranslator = async function textTranslatorController(req, res, next) {
  */
 const storeStats = async function storeStatsController(req) {
   const phrases = await phraseBreaker(req.body.text);
-
-  phrases.forEach(async (phrase) => {
-    const translationAlreadyExists = await Hit.findOne({ text: phrase });
-
-    if (translationAlreadyExists) {
-      const translationHit = Hit.build({
-        text: translationAlreadyExists.text,
-        hits: translationAlreadyExists.hits + 1,
+  await db.sequelize.transaction(async (t) => {
+    for (let i = 0; i < phrases.length; i++) {
+      const phrase = phrases[i];
+      const translationAlreadyExists = await Hit.findOne({
+        where: {
+          text: phrase
+        },
+        transaction: t
       });
-      await translationHit.save();
-      return translationHit;
+
+      let translationHit = undefined;
+      if (translationAlreadyExists) {
+        translationHit = Hit.build({
+          text: translationAlreadyExists.text,
+          hits: translationAlreadyExists.hits + 1,
+        });
+      } else {
+        translationHit = Hit.build({
+          text: phrase,
+          hits: 1,
+        });
+      }
+
+      await translationHit.save({ transaction: t });
     }
-
-    const translationHit = Hit.build({
-      text: phrase,
-      hits: 1,
-    });
-
-    await translationHit.save();
-
-    return translationHit;
   });
 }
+
 
 export default textTranslator;
