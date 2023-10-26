@@ -24,7 +24,7 @@ const translationReview = async function translationReviewController(req, res, n
         requester: req.headers['x-forwarded-for'] || req.connection.remoteAddress,
       });
 
-      await reviewRequest.save();
+      await reviewRequest.save({ transaction: t });
     });
     return res.sendStatus(200);
   } catch (error) {
