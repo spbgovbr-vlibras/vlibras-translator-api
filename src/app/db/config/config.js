@@ -7,7 +7,7 @@ module.exports = {
     "database": env.DBSQL_NAME,
     "host": env.DBSQL_HOST,
     "port": env.DBSQL_PORT,
-    dialect: "postgres"
+    "dialect": "postgres"
   },
   "test": {
     "username": process.env.DB_USER,
