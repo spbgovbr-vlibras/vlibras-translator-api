@@ -135,7 +135,7 @@ sudo systemctl status postgresql.service
 Connecting and configuring postgreSQL
 
 ```sh
-sudo -u postgresql psql
+sudo -u postgres psql
 ```
 
 ```sh
