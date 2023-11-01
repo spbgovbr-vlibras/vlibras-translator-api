@@ -1,4 +1,4 @@
-import Translation from "../translator/Translation";
+import { Translation } from "../db/models";
 import { cacheError } from "../util/debugger";
 import crypto from "crypto";
 import redisConnection from "../util/redisConnection";
@@ -36,7 +36,7 @@ const translationCache = async function getTranslationCache(req, res, next) {
 };
 
 const countCachedTranslation = async function (text, translation, requester) {
-  const translationRequest = new Translation({
+  const translationRequest = Translation.build({
     text,
     translation,
     requester,
