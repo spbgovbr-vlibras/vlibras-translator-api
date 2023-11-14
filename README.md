@@ -53,46 +53,6 @@ Install Node.js 12.
 ```sh
 nvm install 12
 ```
-Install Sequelize.
-
-```sh
-npm install sequelize
-```
-
-##### [MongoDB](https://www.mongodb.com/)
-
-
-Import the public key used by the package management system.
-
-```sh
-curl -fsSL https://pgp.mongodb.com/server-6.0.asc | \
-   sudo gpg -o /usr/share/keyrings/mongodb-server-6.0.gpg \
-   --dearmor
-```
-
-Create a list file for MongoDB.
-
-```sh
-echo "deb [signed-by=/usr/share/keyrings/mongodb-server-6.0.gpg] https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/6.0 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-6.0.list
-```
-
-Reload local package database.
-
-```sh
-sudo apt update
-```
-
-Install the MongoDB packages.
-
-```sh
-sudo apt install -y mongodb-org
-```
-
-You can start the mongod process by issuing the following command:
-
-```sh
-sudo systemctl start mongod
-```
 
 ##### [PostgreSQL](https://www.postgresql.org/)
 
@@ -102,16 +62,16 @@ Update local package database.
 sudo apt-get update
 ```
 
-Install required libraries.
-
-```sh
-sudo sh -c 'echo "deb http://apt.postgresql.org/pub/respos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pdgd.list'
-```
-
 Import the public key used by the package management system.
 
 ```sh
-wget -qO- https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo tee /etc/apt/trusted.gpg.d/pgdg.asc &>/dev/null
+curl -fSsL https://www.postgresql.org/media/keys/ACCC4CF8.asc | gpg --dearmor | sudo tee /usr/share/keyrings/postgresql.gpg > /dev/null
+```
+
+Configure repository.
+
+```sh
+echo deb [arch=amd64,arm64,ppc64el signed-by=/usr/share/keyrings/postgresql.gpg] http://apt.postgresql.org/pub/repos/apt/ $(lsb_release -cs)-pgdg main | sudo tee /etc/apt/sources.list.d/postgresql.list
 ```
 
 Update local package database.
