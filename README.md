@@ -197,7 +197,11 @@ npm install
 Load Sequelize Migrations
 
 ```sh
-npx sequelize-cli db:migrate
+npm run build
+```
+
+```sh
+NODE_ENV=dev npx sequelize db:migrate
 ```
 
 To test the installation, build and start the translation API with the following command:
