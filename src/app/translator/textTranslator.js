@@ -4,8 +4,8 @@ import env from '../../config/environments/environment';
 import queueConnection from '../util/queueConnection';
 import redisConnection from '../util/redisConnection';
 import { cacheError } from '../util/debugger';
-import { Translation } from '../db/models'
-import { Hit } from '../db/models'
+import Translation from './Translation';
+import Hit from './Hit';
 import { TRANSLATOR_ERROR } from '../../config/error';
 import {
   CHANNEL_CLOSE_TIMEOUT,
@@ -33,10 +33,10 @@ const textTranslator = async function textTranslatorController(req, res, next) {
 
     setTimeout(storeStats, 10, req); // 10miliseconds means now.
 
-    const translation = Translation.build({
+    const translationRequest = new Translation({
       text: req.body.text,
       requester: req.headers['x-forwarded-for'] || req.connection.remoteAddress,
-    })
+    });
 
     AMQPChannel.consume(
       env.API_CONSUMER_QUEUE,
@@ -71,8 +71,12 @@ const textTranslator = async function textTranslatorController(req, res, next) {
           }
         }
 
-        translation.set({ translation: content.translation });
-        await translation.save();
+        try {
+          await Translation.findByIdAndUpdate(
+            translationRequest._id,
+            { translation: content.translation },
+          ).exec();
+        } catch (mongoNetworkError) { /* empty */ }
 
         return undefined;
       },
@@ -102,7 +106,7 @@ const textTranslator = async function textTranslatorController(req, res, next) {
       },
     );
 
-    return await translation.save();
+    return await translationRequest.save();
   } catch (error) {
     return next(error);
   }
@@ -113,14 +117,14 @@ const textTranslator = async function textTranslatorController(req, res, next) {
  *
  * @param {Request} req - The http(s) request.
  */
-const storeStats = async function storeStatsController(req) {
+ const storeStats = async function storeStatsController(req) {
   const phrases = await phraseBreaker(req.body.text);
 
   phrases.forEach(async (phrase) => {
     const translationAlreadyExists = await Hit.findOne({ text: phrase });
 
     if (translationAlreadyExists) {
-      const translationHit = Hit.build({
+      const translationHit = new Hit({
         text: translationAlreadyExists.text,
         hits: translationAlreadyExists.hits + 1,
       });
@@ -128,7 +132,7 @@ const storeStats = async function storeStatsController(req) {
       return translationHit;
     }
 
-    const translationHit = Hit.build({
+    const translationHit = new Hit({
       text: phrase,
       hits: 1,
     });
