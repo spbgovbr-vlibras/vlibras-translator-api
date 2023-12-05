@@ -16,6 +16,38 @@ import {
 
 import phraseBreaker from '../util/phraseBreaker';
 
+/**
+ * Asynchronous stores the statistics of the traslator at the DB.
+ *
+ * @param {Request} req - The http(s) request.
+ */
+const storeStats = async function storeStatsController(req) {
+  const phrases = await phraseBreaker(req.body.text);
+  await db.sequelize.transaction(async (t) => {
+    for (let i = 0; i < phrases.length; i = i + 1) {
+      const phrase = phrases[i].trim();
+      const translationAlreadyExists = await Hit.findOne({
+        where: {
+          text: phrase
+        },
+        transaction: t
+      });
+
+      let translationHit = undefined;
+      if (translationAlreadyExists) {
+        translationAlreadyExists.set({hits: translationAlreadyExists.hits + 1});
+        await translationAlreadyExists.save({ transaction: t });
+      } else {
+        translationHit = Hit.build({
+          text: phrase,
+          hits: 1,
+        });
+        await translationHit.save({ transaction: t });
+      }
+    }
+  });
+}
+
 const textTranslator = async function textTranslatorController(req, res, next) {
   try {
     const uid = uuid();
@@ -107,41 +139,5 @@ const textTranslator = async function textTranslatorController(req, res, next) {
     return next(error);
   }
 };
-
-/**
- * Asynchronous stores the statistics of the traslator at the DB.
- *
- * @param {Request} req - The http(s) request.
- */
-const storeStats = async function storeStatsController(req) {
-  const phrases = await phraseBreaker(req.body.text);
-  await db.sequelize.transaction(async (t) => {
-    for (let i = 0; i < phrases.length; i++) {
-      const phrase = phrases[i];
-      const translationAlreadyExists = await Hit.findOne({
-        where: {
-          text: phrase
-        },
-        transaction: t
-      });
-
-      let translationHit = undefined;
-      if (translationAlreadyExists) {
-        translationHit = Hit.build({
-          text: translationAlreadyExists.text,
-          hits: translationAlreadyExists.hits + 1,
-        });
-      } else {
-        translationHit = Hit.build({
-          text: phrase,
-          hits: 1,
-        });
-      }
-
-      await translationHit.save({ transaction: t });
-    }
-  });
-}
-
 
 export default textTranslator;

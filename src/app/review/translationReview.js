@@ -13,8 +13,11 @@ const translationReview = async function translationReviewController(req, res, n
       if (!translation) {
         translation = Translation.build({
           text: req.body.text,
-          translation: req.body.translation
+          translation: req.body.translation,
+          requester: req.headers['x-forwarded-for'] || req.connection.remoteAddress,
         });
+
+        await translation.save({ transaction: t });
       }
 
       const reviewRequest = Review.build({
