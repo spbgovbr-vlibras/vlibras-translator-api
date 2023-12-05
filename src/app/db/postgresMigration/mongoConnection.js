@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import { databaseError } from './debugger';
+import { databaseError } from '../../util/debugger';
 
 mongoose.connection.on('error', (err) => {
   databaseError(err);
@@ -10,8 +10,11 @@ mongoose.connection.on('disconnected', (err) => {
 });
 
 const mongoConnection = function mongoDBConnection() {
+  // return mongoose.connect(
+  //   `mongodb://${process.env.DB_HOST}:${process.env.DB_PORT}/${process.env.DB_NAME}`
   return mongoose.connect(
-    `mongodb://${process.env.DB_HOST}:${process.env.DB_PORT}/${process.env.DB_NAME}`,
+      "mongodb+srv://madhiker123:$sd93rwl@cluster0.wvjrphs.mongodb.net/?retryWrites=true&w=majority"
+    ,
     {
       useNewUrlParser: true,
       useUnifiedTopology: true,

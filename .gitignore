@@ -83,3 +83,8 @@ typings/
 
 # Compiled code
 dist/
+
+#temp files
+hitOffset.txt
+translationOffset.txt
+reviewOffset.txt
