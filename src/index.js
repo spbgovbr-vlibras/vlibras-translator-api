@@ -2,6 +2,7 @@
 
 import http from 'http';
 import app from './app/app';
+import db from './app/db/models';
 import redisConnection from './app/util/redisConnection';
 import { serverInfo, serverError } from './app/util/debugger';
 
@@ -52,7 +53,9 @@ const onListening = function onListeningEvent(addr) {
 const startHTTPServer = async function startHTTPServerListen() {
   try {
     serverInfo('Starting server');
-    serverInfo(`Connected to ${process.env.DB_NAME}`);
+    await db.sequelize.authenticate();
+    serverInfo(`Connected to database ${process.env.DBSQL_NAME}`);
+
     await redisConnection();
     serverInfo(`Connected to ${process.env.CACHE_NAME}`);
 
