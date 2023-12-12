@@ -34,22 +34,7 @@ const metrics = async function serviceMetrics(req, res, next) {
       for (const rating of ratings) {
         rating.rating = rating.rating ? "good" : "bad";
       }
-
-      const videos = await db.VideoStatus.count({
-        where: {
-          createdAt: { [db.Sequelize.Op.between]: [startTime, endTime] },
-        },
-        group: ['status'],
-        transaction: t,
-      });
-
-      const videosDuration = await db.VideoStatus.sum('duration', {
-        where: {
-          createdAt: { [db.Sequelize.Op.between]: [startTime, endTime] },
-        },
-        transaction: t,
-      });
-
+      
       const hits = await db.Hit.findAll({
         attributes: [
           [db.sequelize.col('text'), '_id'],
@@ -65,8 +50,6 @@ const metrics = async function serviceMetrics(req, res, next) {
         translations,
         reviews,
         ratings,
-        videos,
-        videosDuration,
         hits,
       };
     });
@@ -76,8 +59,6 @@ const metrics = async function serviceMetrics(req, res, next) {
       reviewsCount: result.reviews,
       ratingsCounters: result.ratings,
       translationsHits: result.hits,
-      videosDurationSum: result.videosDuration || 0,
-      videosCounters: result.videos.rows,
     });
   } catch (error) {
     return next(error);
