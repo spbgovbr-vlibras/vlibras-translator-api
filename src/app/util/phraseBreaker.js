@@ -1,6 +1,5 @@
 function PhraseBreaker(phrases) {
-  const phrase = phrases.trim().split('.');
-  return phrase;
+  return phrases.trim().split('.').filter(s => s);
 }
 
 export default PhraseBreaker;
