@@ -10,7 +10,8 @@
   "scripts": {
     "build": "babel src --out-dir dist --copy-files --include-dotfiles",
     "dev": "npm run build && DEBUG=vlibras-translator-*:* NODE_ENV=dev node dist/index.js",
-    "start": "DEBUG=vlibras-translator-api:info NODE_ENV=production node dist/index.js"
+    "start": "DEBUG=vlibras-translator-api:info NODE_ENV=production node dist/index.js",
+    "migration": "npm run build && DEBUG=vlibras-migration:info NODE_ENV=dev node dist/app/db/postgresMigration/migration.js"
   },
   "engines": {
     "node": "10.16"
@@ -43,6 +44,8 @@
     "ioredis": "^4.17.1",
     "mongoose": "^5.9.16",
     "morgan": "~1.9.0",
+    "pg": "^8.11.3",
+    "sequelize": "^6.33.0",
     "swagger-ui-express": "^4.1.4",
     "uuid": "^3.4.0"
   },
@@ -60,7 +63,8 @@
     "eslint-config-airbnb-base": "^14.1.0",
     "eslint-plugin-import": "^2.20.2",
     "husky": "^4.2.5",
-    "lint-staged": "^10.2.6"
+    "lint-staged": "^10.2.6",
+    "sequelize-cli": "^6.6.1"
   },
   "config": {
     "commitizen": {

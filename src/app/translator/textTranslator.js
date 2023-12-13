@@ -4,8 +4,8 @@ import env from '../../config/environments/environment';
 import queueConnection from '../util/queueConnection';
 import redisConnection from '../util/redisConnection';
 import { cacheError } from '../util/debugger';
-import Translation from './Translation';
-import Hit from './Hit';
+import { Translation, Hit } from '../db/models'
+import db from '../db/models';
 import { TRANSLATOR_ERROR } from '../../config/error';
 import {
   CHANNEL_CLOSE_TIMEOUT,
@@ -15,6 +15,38 @@ import {
 
 
 import phraseBreaker from '../util/phraseBreaker';
+
+/**
+ * Asynchronous stores the statistics of the traslator at the DB.
+ *
+ * @param {Request} req - The http(s) request.
+ */
+const storeStats = async function storeStatsController(req) {
+  const phrases = await phraseBreaker(req.body.text);
+  await db.sequelize.transaction(async (t) => {
+    for (let i = 0; i < phrases.length; i = i + 1) {
+      const phrase = phrases[i].trim();
+      const translationAlreadyExists = await Hit.findOne({
+        where: {
+          text: phrase
+        },
+        transaction: t
+      });
+
+      let translationHit = undefined;
+      if (translationAlreadyExists) {
+        translationAlreadyExists.set({hits: translationAlreadyExists.hits + 1});
+        await translationAlreadyExists.save({ transaction: t });
+      } else {
+        translationHit = Hit.build({
+          text: phrase,
+          hits: 1,
+        });
+        await translationHit.save({ transaction: t });
+      }
+    }
+  });
+}
 
 const textTranslator = async function textTranslatorController(req, res, next) {
   try {
@@ -33,10 +65,10 @@ const textTranslator = async function textTranslatorController(req, res, next) {
 
     setTimeout(storeStats, 10, req); // 10miliseconds means now.
 
-    const translationRequest = new Translation({
+    const translation = Translation.build({
       text: req.body.text,
       requester: req.headers['x-forwarded-for'] || req.connection.remoteAddress,
-    });
+    })
 
     AMQPChannel.consume(
       env.API_CONSUMER_QUEUE,
@@ -71,12 +103,8 @@ const textTranslator = async function textTranslatorController(req, res, next) {
           }
         }
 
-        try {
-          await Translation.findByIdAndUpdate(
-            translationRequest._id,
-            { translation: content.translation },
-          ).exec();
-        } catch (mongoNetworkError) { /* empty */ }
+        translation.set({ translation: content.translation });
+        await translation.save();
 
         return undefined;
       },
@@ -106,41 +134,10 @@ const textTranslator = async function textTranslatorController(req, res, next) {
       },
     );
 
-    return await translationRequest.save();
+    return await translation.save();
   } catch (error) {
     return next(error);
   }
 };
-
-/**
- * Asynchronous stores the statistics of the traslator at the DB.
- *
- * @param {Request} req - The http(s) request.
- */
- const storeStats = async function storeStatsController(req) {
-  const phrases = await phraseBreaker(req.body.text);
-
-  phrases.forEach(async (phrase) => {
-    const translationAlreadyExists = await Hit.findOne({ text: phrase });
-
-    if (translationAlreadyExists) {
-      const translationHit = new Hit({
-        text: translationAlreadyExists.text,
-        hits: translationAlreadyExists.hits + 1,
-      });
-      await translationHit.save();
-      return translationHit;
-    }
-
-    const translationHit = new Hit({
-      text: phrase,
-      hits: 1,
-    });
-
-    await translationHit.save();
-
-    return translationHit;
-  });
-}
 
 export default textTranslator;
