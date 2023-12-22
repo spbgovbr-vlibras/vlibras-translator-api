@@ -45,6 +45,7 @@
     "mongoose": "^5.9.16",
     "morgan": "~1.9.0",
     "pg": "^8.11.3",
+    "python": "0.0.4",
     "sequelize": "^6.33.0",
     "swagger-ui-express": "^4.1.4",
     "uuid": "^3.4.0"
