@@ -1,0 +1,73 @@
+version: '3'
+services:
+  vlibras-translator-api:
+    build: .
+    image: vlibras_translator/api:2.4.0
+    ports:
+      - "3000:3000"
+    networks:
+      - redis-net
+      - postgres-net
+      - rabbitmq-net
+    environment:
+      PORT: 3000
+      DBSQL_USER: vlibras
+      DBSQL_PASS: vlibras
+      DBSQL_HOST: postgres
+      DBSQL_PORT: 5432
+      DBSQL_NAME: vlibrasdb
+      CACHE_HOST: redis
+      CACHE_PORT: 6379
+      CACHE_NAME: "vlibras-cache"
+      CACHE_SIZE: 104857600
+      CACHE_EXP: 604800
+      AMQP_PROTOCOL: amqp
+      AMQP_HOST: rabbitmq
+      AMQP_PORT: 5672
+      AMQP_USER: vlibras
+      AMQP_PASS: vlibras
+      TRANSLATOR_QUEUE: "translate.to_text"
+      VIDEOMAKER_QUEUE: "translate.to_video"
+      API_CONSUMER_QUEUE: "amq.rabbitmq.reply-to"
+    depends_on:
+      - redis
+      - postgres
+      - rabbitmq
+
+  redis:
+    image: redis:alpine
+    networks:
+      - redis-net
+    volumes:
+      - redis-data:/data
+
+  postgresdb:
+    image: postgres:15-alpine
+    networks:
+      - postgres-net
+    volumes:
+      - postgres-data:/data/postgres
+    environment:
+      - POSTGRES_PASSWORD=vlibras
+      - POSTGRES_USER=vlibras
+      - POSTGRES_DB=vlibrasdb
+
+  rabbitmq:
+    image: rabbitmq:management-alpine
+    networks:
+      - rabbitmq-net
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: vlibras
+      RABBITMQ_DEFAULT_PASS: vlibras
+
+networks:
+  redis-net:
+  postgres-net:
+  rabbitmq-net:
+
+volumes:
+  redis-data:
+  postgres-data:
+  rabbitmq-data:
