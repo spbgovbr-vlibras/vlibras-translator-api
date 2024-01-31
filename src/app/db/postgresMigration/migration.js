@@ -46,6 +46,12 @@ const HitPostgres = db.Hit;
 const ReviewPostgres = db.Review;
 const TranslationPostgres = db.Translation;
 
+
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+
 // Função para migrar dados do MongoDB para o PostgreSQL
 async function migrateData() {
   // Tamanho do lote (quantidade de documentos processados por vez)
@@ -104,6 +110,7 @@ async function migrateCollection(SourceModel, DestinationModel, batchSize, lastI
     dadosMigradosCount = dadosMigradosCount + items.length
     saveData(dataCountFileName, dadosMigradosCount);
     migrationInfo(" Dados migrados até o momento: " + dadosMigradosCount);
+    sleep(1000);
   }
 }
 
