@@ -127,6 +127,33 @@ DBSQL_PORT=5432
 DBSQL_NAME=vlibras
 ```
 
+##### [Locust](https://docs.locust.io/en/stable/index.html)
+
+Update local apt package.
+
+```sh
+sudo apt update
+```
+
+Install Locust.
+
+```sh
+pip install locust
+```
+
+Validate your installation.
+
+```sh
+locust -V
+```
+Open the test folder in the terminal and run
+
+```sh
+locust
+```
+
+Access the link in the terminal
+
 
 ##### [Redis](https://redis.io)
 
