@@ -13,8 +13,10 @@ FROM node:dubnium-alpine
 
 COPY --from=build /src/node_modules node_modules
 COPY --from=build /src/dist dist
+COPY --from=build /src/bootstrap.sh bootstrap.sh
+COPY --from=build /src/.sequelizerc .sequelizerc
 
 ENV DEBUG vlibras-translator-*:*
 ENV NODE_ENV production
 
-CMD ["node", "./dist/index.js"]
+CMD ["sh", "bootstrap.sh"]
