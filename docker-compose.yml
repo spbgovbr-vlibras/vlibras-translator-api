@@ -13,7 +13,7 @@ services:
       PORT: 3000
       DBSQL_USER: vlibras
       DBSQL_PASS: vlibras
-      DBSQL_HOST: postgres
+      DBSQL_HOST: postgresdb
       DBSQL_PORT: 5432
       DBSQL_NAME: vlibrasdb
       CACHE_HOST: redis
@@ -31,7 +31,7 @@ services:
       API_CONSUMER_QUEUE: "amq.rabbitmq.reply-to"
     depends_on:
       - redis
-      - postgres
+      - postgresdb
       - rabbitmq
 
   redis:
