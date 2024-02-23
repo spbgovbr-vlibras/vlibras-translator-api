@@ -127,6 +127,32 @@ DBSQL_PORT=5432
 DBSQL_NAME=vlibras
 ```
 
+##### [Jest And Supertest]()
+
+Update local apt package.
+
+```sh
+sudo apt update
+```
+
+Install Jest and SuperTeste.
+
+```sh
+npm install --save-exact jest@27.5.1
+```
+
+```sh
+npm install supertest
+```
+
+Running tests.
+
+```sh
+npm run test
+```
+
+
+
 
 ##### [Redis](https://redis.io)
 
