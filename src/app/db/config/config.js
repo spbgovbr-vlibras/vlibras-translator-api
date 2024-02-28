@@ -7,7 +7,7 @@ module.exports = {
     database: env.DBSQL_NAME,
     host: env.DBSQL_HOST,
     port: env.DBSQL_PORT,
-    dialect: 'postgres',
+    dialect: 'postgres'
   },
   test: {
     username: process.env.DBSQL_USER,
@@ -16,6 +16,12 @@ module.exports = {
     host: process.env.DBSQL_HOST,
     port: process.env.DBSQL_PORT,
     dialect: 'postgres',
+    dialectOptions: {
+      ssl: {
+        require: true,
+        rejectUnauthorized: false // Importante para conexão com RDS da AWS
+      }
+    },
     logging: false,
   },
   production: {
@@ -25,6 +31,12 @@ module.exports = {
     host: process.env.DBSQL_HOST,
     port: process.env.DBSQL_PORT,
     dialect: 'postgres',
+    dialectOptions: {
+      ssl: {
+        require: true,
+        rejectUnauthorized: false // Importante para conexão com RDS da AWS
+      }
+    },
     logging: false,
   },
 };
