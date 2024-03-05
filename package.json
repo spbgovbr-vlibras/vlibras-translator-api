@@ -14,8 +14,8 @@
     "migration": "npm run build && DEBUG=vlibras-migration:info NODE_ENV=dev node dist/app/db/postgresMigration/migration.js"
   },
   "engines": {
-    "node": "10.16"
-  },
+    "node": "v18.19.1"
+  },  
   "husky": {
     "hooks": {
       "prepare-commit-msg": "exec < /dev/tty && git cz --hook || true",
@@ -31,7 +31,7 @@
   },
   "dependencies": {
     "@babel/runtime": "^7.9.6",
-    "amqplib": "^0.5.6",
+    "amqplib": "^0.10.3",
     "compression": "^1.7.4",
     "cookie-parser": "^1.4.5",
     "cors": "^2.8.5",
