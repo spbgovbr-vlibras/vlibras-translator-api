@@ -16,8 +16,8 @@ module.exports = (sequelize, DataTypes) => {
     }
   }
   Translation.init({
-    text: DataTypes.STRING,
-    translation: DataTypes.STRING,
+    text: DataTypes.STRING(5000),
+    translation: DataTypes.STRING(5000),
     requester: DataTypes.STRING
   }, {
     sequelize,
