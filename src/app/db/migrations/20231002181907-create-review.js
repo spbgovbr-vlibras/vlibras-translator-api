@@ -20,7 +20,7 @@ module.exports = {
         type: Sequelize.BOOLEAN,
       },
       review: {
-        type: Sequelize.STRING,
+        type: Sequelize.STRING(5000),
       },
       requester: {
         type: Sequelize.STRING,

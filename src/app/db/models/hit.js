@@ -14,7 +14,7 @@ module.exports = (sequelize, DataTypes) => {
     }
   }
   Hit.init({
-    text: DataTypes.STRING,
+    text: DataTypes.STRING(5000),
     hits: DataTypes.INTEGER
   }, {
     sequelize,

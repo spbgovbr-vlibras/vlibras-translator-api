@@ -10,7 +10,7 @@ module.exports = {
         type: Sequelize.INTEGER
       },
       text: {
-        type: Sequelize.STRING
+        type: Sequelize.STRING(5000)
       },
       hits: {
         type: Sequelize.INTEGER
