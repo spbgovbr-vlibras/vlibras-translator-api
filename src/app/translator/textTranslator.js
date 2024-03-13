@@ -1,20 +1,19 @@
 import createError from 'http-errors';
 import { v4 as uuid } from 'uuid';
-import env from '../../config/environments/environment';
-import queueConnection from '../util/queueConnection';
-import redisConnection from '../util/redisConnection';
-import { cacheError } from '../util/debugger';
-import { Translation, Hit } from '../db/models'
-import db from '../db/models';
-import { TRANSLATOR_ERROR } from '../../config/error';
+import env from '../../config/environments/environment.js';
+import queueConnection from '../util/queueConnection.js';
+import redisConnection from '../util/redisConnection.js';
+import { cacheError } from '../util/debugger.js';
+import db from '../db/models/index.js';
+import { TRANSLATOR_ERROR } from '../../config/error.js';
 import {
   CHANNEL_CLOSE_TIMEOUT,
   TRANSLATION_TIMEOUT,
   TRANSLATION_PAYLOAD_TTL,
-} from '../../config/timeout';
+} from '../../config/timeout.js';
 
 
-import phraseBreaker from '../util/phraseBreaker';
+import phraseBreaker from '../util/phraseBreaker.js';
 
 /**
  * Asynchronous stores the statistics of the traslator at the DB.
@@ -26,7 +25,7 @@ const storeStats = async function storeStatsController(req) {
   await db.sequelize.transaction(async (t) => {
     for (let i = 0; i < phrases.length; i = i + 1) {
       const phrase = phrases[i].trim();
-      const translationAlreadyExists = await Hit.findOne({
+      const translationAlreadyExists = await db.Hit.findOne({
         where: {
           text: phrase
         },
@@ -38,7 +37,7 @@ const storeStats = async function storeStatsController(req) {
         translationAlreadyExists.set({hits: translationAlreadyExists.hits + 1});
         await translationAlreadyExists.save({ transaction: t });
       } else {
-        translationHit = Hit.build({
+        translationHit = db.Hit.build({
           text: phrase,
           hits: 1,
         });
@@ -65,7 +64,7 @@ const textTranslator = async function textTranslatorController(req, res, next) {
 
     setTimeout(storeStats, 10, req); // 10miliseconds means now.
 
-    const translation = Translation.build({
+    const translation = db.Translation.build({
       text: req.body.text,
       requester: req.headers['x-forwarded-for'] || req.connection.remoteAddress,
     })

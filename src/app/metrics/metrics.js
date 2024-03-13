@@ -1,4 +1,4 @@
-import db from '../db/models';
+import db from '../db/models/index.js';
 
 const metrics = async function serviceMetrics(req, res, next) {
   try {

@@ -1,16 +1,16 @@
 import createError from 'http-errors';
 import { v4 as uuid } from 'uuid';
-import env from '../../config/environments/environment';
-import queueConnection from '../util/queueConnection';
-import Video from './Video';
-import VideoStatus from './VideoStatus';
-import { VIDEOMAKER_ERROR } from '../../config/error';
-import { VIDEO_STATUS } from '../../config/status';
+import env from '../../config/environments/environment.js';
+import queueConnection from '../util/queueConnection.js';
+import Video from './Video.js';
+import VideoStatus from './VideoStatus.js';
+import { VIDEOMAKER_ERROR } from '../../config/error.js';
+import { VIDEO_STATUS } from '../../config/status.js';
 import {
   CHANNEL_CLOSE_TIMEOUT,
   VIDEOGENERATION_TIMEOUT,
   VIDEOGENERATION_PAYLOAD_TTL,
-} from '../../config/timeout';
+} from '../../config/timeout.js';
 
 const videoMaker = async function videoMakerController(req, res, next) {
   try {

@@ -6,13 +6,13 @@ import cors from 'cors';
 import compression from 'compression';
 import helmet from 'helmet';
 
-import env from '../config/environments/environment';
+import env from '../config/environments/environment.js';
 
-import apiDocRoute from './doc/apiDocRoute';
-import reviewRoute from './review/translationReviewRoute';
-import translatorRoute from './translator/textTranslatorRoute';
-import videoMakerRoute from './video/videoMakerRoute';
-import metricsRoute from './metrics/metricsRoute';
+import apiDocRoute from './doc/apiDocRoute.js';
+import reviewRoute from './review/translationReviewRoute.js';
+import translatorRoute from './translator/textTranslatorRoute.js';
+import videoMakerRoute from './video/videoMakerRoute.js';
+import metricsRoute from './metrics/metricsRoute.js';
 
 const app = express();
 

@@ -1,6 +1,6 @@
-const env = require('../../../config/environments/environment').default;
+import env from '../../../config/environments/environment.js';
 
-module.exports = {
+export default {
   dev: {
     username: env.DBSQL_USER,
     password: env.DBSQL_PASS,

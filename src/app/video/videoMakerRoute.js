@@ -1,6 +1,6 @@
 import { Router } from 'express';
-import { videoValidationRules, idValidationRules, checkValidation } from '../middlewares/validator';
-import { videoMaker, videoStatus, videoDownload } from './videoMaker';
+import { videoValidationRules, idValidationRules, checkValidation } from '../middlewares/validator.js';
+import { videoMaker, videoStatus, videoDownload } from './videoMaker.js';
 
 const videoMakerRouter = Router();
 

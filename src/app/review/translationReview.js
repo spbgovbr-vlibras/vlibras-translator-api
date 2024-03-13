@@ -1,17 +1,17 @@
-import { Review } from "../db/models"
-import { Translation } from "../db/models"
-import db from '../db/models';
+// import {Review,} from "../db/models/index.js"
+// import { Translation } from "../db/models/index.js"
+import db from '../db/models/index.js';
 
 const translationReview = async function translationReviewController(req, res, next) {
   try {
     await db.sequelize.transaction(async (t) => {
-      let translation = await Translation.findOne({
+      let translation = await db.Translation.findOne({
         where: { translation: req.body.translation },
         transaction: t
       });
 
       if (!translation) {
-        translation = Translation.build({
+        translation = db.Translation.build({
           text: req.body.text,
           translation: req.body.translation,
           requester: req.headers['x-forwarded-for'] || req.connection.remoteAddress,
@@ -20,7 +20,7 @@ const translationReview = async function translationReviewController(req, res, n
         await translation.save({ transaction: t });
       }
 
-      const reviewRequest = Review.build({
+      const reviewRequest = db.Review.build({
         translationId: translation.id,
         rating: req.body.rating === 'good',
         review: req.body.review || '',

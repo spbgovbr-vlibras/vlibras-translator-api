@@ -1,6 +1,7 @@
-import { Schema, model } from 'mongoose';
+import mongoose from 'mongoose';
+const {Schema, model} = mongoose;
 
-import { VIDEO_STATUS, VIDEO_EXPIRATION_TIME } from '../../config/status';
+import { VIDEO_STATUS, VIDEO_EXPIRATION_TIME } from '../../config/status.js';
 
 const options = {
   timestamps: true,

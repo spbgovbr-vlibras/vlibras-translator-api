@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 
 import http from 'http';
-import app from './app/app';
-import db from './app/db/models';
-import redisConnection from './app/util/redisConnection';
-import { serverInfo, serverError } from './app/util/debugger';
+import app from './app/app.js';
+import db from './app/db/models/index.js';
+import redisConnection from './app/util/redisConnection.js';
+import { serverInfo, serverError } from './app/util/debugger.js';
 
 const normalizePort = function normalizeServerPort(portValue) {
   const port = parseInt(portValue, 10);
