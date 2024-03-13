@@ -1,7 +1,7 @@
 import createError from 'http-errors';
 import {
   body, param, query, validationResult,
-} from 'express-validator/check';
+} from 'express-validator';
 import { VALIDATION_VALUES, VALIDATION_ERRORS } from '../../config/validation';
 
 export const textValidationRules = body('text')

@@ -14,7 +14,7 @@
     "migration": "npm run build && DEBUG=vlibras-migration:info NODE_ENV=dev node dist/app/db/postgresMigration/migration.js"
   },
   "engines": {
-    "node": "v18.19.1"
+    "node": ">=18.0.0"
   },  
   "husky": {
     "hooks": {
@@ -33,12 +33,12 @@
     "@babel/runtime": "^7.9.6",
     "amqplib": "^0.10.3",
     "compression": "^1.7.4",
-    "cookie-parser": "^1.4.5",
+    "cookie-parser": "^1.4.6",
     "cors": "^2.8.5",
-    "debug": "~2.6.9",
+    "debug": "~4.3.4",
     "dotenv": "^6.2.0",
     "express": "~4.16.0",
-    "express-validator": "^5.3.1",
+    "express-validator": "^7.0.0",
     "helmet": "^3.22.0",
     "http-errors": "~1.6.2",
     "ioredis": "^4.17.1",
