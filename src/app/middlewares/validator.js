@@ -5,6 +5,8 @@ import {
 import { VALIDATION_VALUES, VALIDATION_ERRORS } from '../../config/validation';
 
 export const textValidationRules = body('text')
+  .exists()
+  .withMessage(VALIDATION_ERRORS.notFoundText) // TODO: update express validator to 7.0 and add .bail()
   .isLength(VALIDATION_VALUES.textLength)
   .withMessage(VALIDATION_ERRORS.textLength);
 

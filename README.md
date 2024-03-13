@@ -129,26 +129,15 @@ DBSQL_NAME=vlibras
 
 ##### [Jest And Supertest]()
 
-Update local apt package.
+Configure env file
 
-```sh
-sudo apt update
-```
-
-Install Jest and SuperTeste.
-
-```sh
-npm install --save-exact jest@27.5.1
-```
-
-```sh
-npm install supertest
-```
+1. Create a env test file at [.env.test](src/config/environments/). Use [.env.example](src/config/environments/.env.example) as example.
+2. Configure environments variable according your infrastructure (ex: database, redis, rabbitmq, vlibras-text-core, etc) 
 
 Running tests.
 
 ```sh
-npm run test
+npm run test:watch
 ```
 
 
