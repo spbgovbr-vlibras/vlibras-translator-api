@@ -1,5 +1,5 @@
 import createError from 'http-errors';
-import uuid from 'uuid/v4';
+import { v4 as uuid } from 'uuid';
 import env from '../../config/environments/environment';
 import queueConnection from '../util/queueConnection';
 import Video from './Video';
