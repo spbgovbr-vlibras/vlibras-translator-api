@@ -8,6 +8,7 @@ export const VALIDATION_VALUES = {
 
 export const VALIDATION_ERRORS = {
   textLength: `'text' exceeded ${VALIDATION_VALUES.textLength.max} characters limit.`,
+  notFoundText: `'text' field is required.`,
   glossLength: `'gloss' exceeded ${VALIDATION_VALUES.textLength.max} characters limit.`,
   translationLength: `'translation' exceeded ${VALIDATION_VALUES.textLength.max} characters limit.`,
   ratingOptions: `'rating' is not in valid values [${VALIDATION_VALUES.ratingOptions}].`,

@@ -127,6 +127,21 @@ DBSQL_PORT=5432
 DBSQL_NAME=vlibras
 ```
 
+##### [Jest And Supertest]()
+
+Configure env file
+
+1. Create a env test file at [.env.test](src/config/environments/). Use [.env.example](src/config/environments/.env.example) as example.
+2. Configure environments variable according your infrastructure (ex: database, redis, rabbitmq, vlibras-text-core, etc) 
+
+Running tests.
+
+```sh
+npm run test:watch
+```
+
+
+
 
 ##### [Redis](https://redis.io)
 
