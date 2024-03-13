@@ -14,11 +14,12 @@
     "migration": "npm run build && DEBUG=vlibras-migration:info NODE_ENV=dev node dist/app/db/postgresMigration/migration.js",
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
     "test:watch": "node --experimental-vm-modules node_modules/jest/bin/jest.js --detectOpenHandles --watch",
-    "test:coverage": "node --experimental-vm-modules node_modules/jest/bin/jest.js --detectOpenHandles --coverage"
+    "test:coverage": "node --experimental-vm-modules node_modules/jest/bin/jest.js --detectOpenHandles --coverage",
+    "prepare": "husky"
   },
   "engines": {
-    "node": ">=18.0.0"
-  },  
+    "node": ">=v18.0.0"
+  },
   "husky": {
     "hooks": {
       "prepare-commit-msg": "exec < /dev/tty && git cz --hook || true",
@@ -28,51 +29,50 @@
   },
   "lint-staged": {
     "*.js": [
-      "eslint --fix",
-      "git add"
+      "eslint"
     ]
   },
   "dependencies": {
-    "@babel/runtime": "^7.9.6",
+    "@babel/runtime": "^7.24.0",
     "amqplib": "^0.10.3",
     "compression": "^1.7.4",
     "cookie-parser": "^1.4.6",
     "cors": "^2.8.5",
     "debug": "~4.3.4",
-    "dotenv": "^6.2.0",
-    "express": "~4.16.0",
+    "dotenv": "^16.4.5",
+    "express": "~4.18.3",
     "express-validator": "^7.0.0",
-    "helmet": "^3.22.0",
-    "http-errors": "~1.6.2",
-    "ioredis": "^4.17.1",
+    "helmet": "^7.1.0",
+    "http-errors": "~2.0.0",
+    "ioredis": "^5.3.2",
     "mongoose": "^5.9.16",
-    "morgan": "~1.9.0",
+    "morgan": "~1.10.0",
     "node-fetch": "^3.3.2",
     "pg": "^8.11.3",
     "sequelize": "^6.33.0",
     "sequelize-cli": "^6.6.1",
     "supertest": "^6.3.4",
-    "swagger-ui-express": "^4.1.4",
-    "uuid": "^3.4.0"
+    "swagger-ui-express": "^5.0.0",
+    "uuid": "^9.0.1"
   },
   "devDependencies": {
-    "@babel/cli": "^7.8.4",
-    "@babel/core": "^7.9.6",
-    "@babel/plugin-transform-runtime": "^7.9.6",
-    "@babel/preset-env": "^7.9.6",
-    "@commitlint/cli": "^8.3.5",
-    "@commitlint/config-conventional": "^8.3.4",
+    "@babel/cli": "^7.23.9",
+    "@babel/core": "^7.24.0",
+    "@babel/plugin-transform-runtime": "^7.24.0",
+    "@babel/preset-env": "^7.24.0",
+    "@commitlint/cli": "^19.1.0",
+    "@commitlint/config-conventional": "^19.1.0",
     "@jest/globals": "^29.7.0",
-    "babel-preset-airbnb": "^4.5.0",
-    "commitizen": "^4.2.2",
-    "cz-conventional-changelog": "^3.2.0",
-    "eslint": "^6.8.0",
-    "eslint-config-airbnb-base": "^14.1.0",
-    "eslint-plugin-import": "^2.20.2",
-    "husky": "^4.2.5",
-    "jest": "27.5.1",
-    "lint-staged": "^10.2.6",
-    "sequelize-cli": "^6.6.1"
+    "babel-preset-airbnb": "^5.0.0",
+    "commitizen": "^4.3.0",
+    "cz-conventional-changelog": "^3.3.0",
+    "eslint": "^8.57.0",
+    "eslint-config-airbnb-base": "^15.0.0",
+    "eslint-plugin-import": "^2.29.1",
+    "husky": "^9.0.11",
+    "jest": "^29.7.0",
+    "lint-staged": "^15.2.2",
+    "sequelize-cli": "^6.6.2"
   },
   "config": {
     "commitizen": {
