@@ -10,8 +10,6 @@ const env = process.env.NODE_ENV || 'dev';
 const sequelizeConfig = config[env];
 const db = {};
 
-
-
 let sequelize;
 if (sequelizeConfig.use_env_variable) {
   sequelize = new Sequelize(process.env[sequelizeConfig.use_env_variable], sequelizeConfig);

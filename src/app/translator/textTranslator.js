@@ -3,7 +3,7 @@ import { v4 as uuid } from 'uuid';
 import env from '../../config/environments/environment.js';
 import queueConnection from '../util/queueConnection.js';
 import redisConnection from '../util/redisConnection.js';
-import { cacheError } from '../util/debugger.js';
+import { cacheError, serverError } from '../util/debugger.js';
 import db from '../db/models/index.js';
 import { TRANSLATOR_ERROR } from '../../config/error.js';
 import {
@@ -21,30 +21,36 @@ import phraseBreaker from '../util/phraseBreaker.js';
  * @param {Request} req - The http(s) request.
  */
 const storeStats = async function storeStatsController(req) {
-  const phrases = await phraseBreaker(req.body.text);
-  await db.sequelize.transaction(async (t) => {
-    for (let i = 0; i < phrases.length; i = i + 1) {
-      const phrase = phrases[i].trim();
-      const translationAlreadyExists = await db.Hit.findOne({
-        where: {
-          text: phrase
-        },
-        transaction: t
-      });
 
-      let translationHit = undefined;
-      if (translationAlreadyExists) {
-        translationAlreadyExists.set({hits: translationAlreadyExists.hits + 1});
-        await translationAlreadyExists.save({ transaction: t });
-      } else {
-        translationHit = db.Hit.build({
-          text: phrase,
-          hits: 1,
+  try {
+    
+    const phrases = await phraseBreaker(req.body.text);
+    await db.sequelize.transaction(async (t) => {
+      for (let i = 0; i < phrases.length; i = i + 1) {
+        const phrase = phrases[i].trim();
+        const translationAlreadyExists = await db.Hit.findOne({
+          where: {
+            text: phrase
+          },
+          transaction: t
         });
-        await translationHit.save({ transaction: t });
+  
+        let translationHit = undefined;
+        if (translationAlreadyExists) {
+          translationAlreadyExists.set({hits: translationAlreadyExists.hits + 1});
+          await translationAlreadyExists.save({ transaction: t });
+        } else {
+          translationHit = db.Hit.build({
+            text: phrase,
+            hits: 1,
+          });
+          await translationHit.save({ transaction: t });
+        }
       }
-    }
-  });
+    });
+  } catch (error) {
+    serverError('Text translator failed storing stats')
+  }
 }
 
 const textTranslator = async function textTranslatorController(req, res, next) {

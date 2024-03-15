@@ -1,4 +1,5 @@
 import amqplib from 'amqplib';
+import { serverError } from './app/util/debugger.js';
 
 let AMQPConnection;
 
@@ -15,12 +16,12 @@ const queueConnection = async function AMQPQueueConnection() {
     if (AMQPConnection === undefined) {
       AMQPConnection = await amqplib.connect(connectionURL);
       AMQPConnection.on('close', () => {
-        AMQPConnection = undefined;
-        return setTimeout(() => { queueConnection(); }, 500);
+        AMQPConnection = undefined;    
       });
     }
     return AMQPConnection;
   } catch (error) {
+    serverError('Queue connection failed. Reason: ', error)
     if (AMQPConnection !== undefined) {
       setTimeout(() => { AMQPConnection.close(); }, 500);
     }

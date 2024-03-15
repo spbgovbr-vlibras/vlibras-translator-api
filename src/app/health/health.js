@@ -1,10 +1,9 @@
-import env from '../../config/environments/environment';
+import env from '../../config/environments/environment.js';
 import db from '../db/models/index.js';
-import queueConnection from '../util/queueConnection';
-import redisConnection from '../util/redisConnection';
+import queueConnection from '../util/queueConnection.js';
+import redisConnection from '../util/redisConnection.js';
 
-
-const packageJson = require('../../../package.json');
+import packageJson from '../../../package.json' assert { type: 'json' };
 
 const checkDatabaseConnection = () => new Promise((resolve, reject) => {
   db.sequelize.authenticate()
@@ -47,14 +46,19 @@ const checkRedisConnection = () => new Promise((resolve) => {
 });
 
 const checkConsumerCount = async () => {
-  const connection = await queueConnection();
-  const channel = await connection.createChannel();
-  const result = await channel.assertQueue(
-    env.TRANSLATOR_QUEUE,
-    { durable: true },
-  );
-  const { consumerCount } = result;
-  return consumerCount;
+
+  try {
+    const connection = await queueConnection();
+    const channel = await connection.createChannel();
+    const result = await channel.assertQueue(
+      env.TRANSLATOR_QUEUE,
+      { durable: false },
+    );
+    const { consumerCount } = result;
+    return consumerCount;
+  } catch (error) {
+    return error;
+  }
 };
 
 const health = async (req, res) => {
