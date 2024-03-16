@@ -1,20 +1,19 @@
 import createError from 'http-errors';
 import { v4 as uuid } from 'uuid';
-import env from '../../config/environments/environment';
-import queueConnection from '../util/queueConnection';
-import redisConnection from '../util/redisConnection';
-import { cacheError } from '../util/debugger';
-import { Translation, Hit } from '../db/models'
-import db from '../db/models';
-import { TRANSLATOR_ERROR } from '../../config/error';
+import env from '../../config/environments/environment.js';
+import queueConnection from '../util/queueConnection.js';
+import redisConnection from '../util/redisConnection.js';
+import { cacheError, databaseError, serverError } from '../util/debugger.js';
+import db from '../db/models/index.js';
+import { TRANSLATOR_ERROR } from '../../config/error.js';
 import {
   CHANNEL_CLOSE_TIMEOUT,
   TRANSLATION_TIMEOUT,
   TRANSLATION_PAYLOAD_TTL,
-} from '../../config/timeout';
+} from '../../config/timeout.js';
 
 
-import phraseBreaker from '../util/phraseBreaker';
+import phraseBreaker from '../util/phraseBreaker.js';
 
 /**
  * Asynchronous stores the statistics of the traslator at the DB.
@@ -22,30 +21,36 @@ import phraseBreaker from '../util/phraseBreaker';
  * @param {Request} req - The http(s) request.
  */
 const storeStats = async function storeStatsController(req) {
-  const phrases = await phraseBreaker(req.body.text);
-  await db.sequelize.transaction(async (t) => {
-    for (let i = 0; i < phrases.length; i = i + 1) {
-      const phrase = phrases[i].trim();
-      const translationAlreadyExists = await Hit.findOne({
-        where: {
-          text: phrase
-        },
-        transaction: t
-      });
 
-      let translationHit = undefined;
-      if (translationAlreadyExists) {
-        translationAlreadyExists.set({hits: translationAlreadyExists.hits + 1});
-        await translationAlreadyExists.save({ transaction: t });
-      } else {
-        translationHit = Hit.build({
-          text: phrase,
-          hits: 1,
+  try {
+    
+    const phrases = await phraseBreaker(req.body.text);
+    await db.sequelize.transaction(async (t) => {
+      for (let i = 0; i < phrases.length; i = i + 1) {
+        const phrase = phrases[i].trim();
+        const translationAlreadyExists = await db.Hit.findOne({
+          where: {
+            text: phrase
+          },
+          transaction: t
         });
-        await translationHit.save({ transaction: t });
+  
+        let translationHit = undefined;
+        if (translationAlreadyExists) {
+          translationAlreadyExists.set({hits: translationAlreadyExists.hits + 1});
+          await translationAlreadyExists.save({ transaction: t });
+        } else {
+          translationHit = db.Hit.build({
+            text: phrase,
+            hits: 1,
+          });
+          await translationHit.save({ transaction: t });
+        }
       }
-    }
-  });
+    });
+  } catch (error) {
+    serverError('Text translator failed storing stats')
+  }
 }
 
 const textTranslator = async function textTranslatorController(req, res, next) {
@@ -65,7 +70,7 @@ const textTranslator = async function textTranslatorController(req, res, next) {
 
     setTimeout(storeStats, 10, req); // 10miliseconds means now.
 
-    const translation = Translation.build({
+    const translation = db.Translation.build({
       text: req.body.text,
       requester: req.headers['x-forwarded-for'] || req.connection.remoteAddress,
     })
@@ -79,33 +84,44 @@ const textTranslator = async function textTranslatorController(req, res, next) {
           } catch (channelAlreadyClosedError) { /* empty */ }
         }, CHANNEL_CLOSE_TIMEOUT);
 
-        if (message.properties.correlationId !== uid) {
-          return next(createError(500, TRANSLATOR_ERROR.wrongResponse));
-        }
-
-        const content = JSON.parse(message.content.toString());
-        if (content.error !== undefined) {
-          return next(createError(500, content.error));
-        }
-        res.status(200).send(content.translation);
-
-        if (req.body.textHash) {
-          try {
-            const redisClient = await redisConnection();
-            await redisClient.set(
-              req.body.textHash,
-              content.translation,
-              'EX',
-              env.CACHE_EXP,
-            );
-          } catch (error) {
-            cacheError(`SET ${error.message}`);
+        try {
+          if (message.properties.correlationId !== uid ) {
+            if(!res.headersSent)
+              return next(createError(500, TRANSLATOR_ERROR.wrongResponse));
+            else
+              return undefined
           }
+  
+          const content = JSON.parse(message.content.toString());
+          if (content.error !== undefined) {
+            if(!res.headersSent)
+              return next(createError(500, content.error));
+            return undefined
+          }
+  
+          if(!res.headersSent)
+            res.status(200).send(content.translation);
+  
+          if (req.body.textHash) {
+            try {
+              const redisClient = await redisConnection();
+              await redisClient.set(
+                req.body.textHash,
+                content.translation,
+                'EX',
+                env.CACHE_EXP,
+              );
+            } catch (error) {
+              cacheError(`SET ${error.message}`);
+            }
+          }
+
+          translation.set({ translation: content.translation });
+          await translation.save();
+        } catch (error) {
+          serverError(error.message)
         }
-
-        translation.set({ translation: content.translation });
-        await translation.save();
-
+       
         return undefined;
       },
       { noAck: true },
@@ -133,10 +149,11 @@ const textTranslator = async function textTranslatorController(req, res, next) {
         expiration: TRANSLATION_PAYLOAD_TTL,
       },
     );
-
+console.log('aquiiiiiiii')
     return await translation.save();
   } catch (error) {
-    return next(error);
+    if (!res.headersSent)
+      return next(createError(500,TRANSLATOR_ERROR.translationError));
   }
 };
 

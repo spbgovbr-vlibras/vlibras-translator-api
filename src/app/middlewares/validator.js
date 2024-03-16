@@ -2,7 +2,7 @@ import createError from 'http-errors';
 import {
   body, param, query, validationResult,
 } from 'express-validator';
-import { VALIDATION_VALUES, VALIDATION_ERRORS } from '../../config/validation';
+import { VALIDATION_VALUES, VALIDATION_ERRORS } from '../../config/validation.js';
 
 export const textValidationRules = body('text')
   .exists()
