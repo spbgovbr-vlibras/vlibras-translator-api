@@ -1,5 +1,5 @@
 import amqplib from 'amqplib';
-import { serverError } from './app/util/debugger.js';
+import { serverError } from './debugger.js';
 
 let AMQPConnection;
 

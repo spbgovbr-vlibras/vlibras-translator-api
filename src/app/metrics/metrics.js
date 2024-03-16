@@ -1,4 +1,7 @@
+import createError from 'http-errors';
 import db from '../db/models/index.js';
+import { serverError } from '../util/debugger.js';
+import { METRICS_ERROR } from '../../config/error.js';
 
 const metrics = async function serviceMetrics(req, res, next) {
   try {
@@ -61,7 +64,8 @@ const metrics = async function serviceMetrics(req, res, next) {
       translationsHits: result.hits,
     });
   } catch (error) {
-    return next(error);
+    serverError(error.message)
+    return next(createError(500, METRICS_ERROR.metricsError));
   }
 };
 

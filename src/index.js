@@ -53,8 +53,13 @@ const onListening = function onListeningEvent(addr) {
 const startHTTPServer = async function startHTTPServerListen() {
   try {
     serverInfo('Starting server');
-    await db.sequelize.authenticate();
-    serverInfo(`Connected to database ${process.env.DBSQL_NAME}`);
+
+    try {
+      await db.sequelize.authenticate();
+      serverInfo(`Connected to database ${process.env.DBSQL_NAME}`);
+    } catch (error) {
+      databaseError('Failed connecting to database')
+    }
     
     try {
       await redisConnection();

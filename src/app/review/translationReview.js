@@ -1,5 +1,6 @@
-// import {Review,} from "../db/models/index.js"
-// import { Translation } from "../db/models/index.js"
+import createError from 'http-errors';
+import { serverError } from '../util/debugger.js';
+import { REVIEW_ERROR } from '../../config/error.js';
 import db from '../db/models/index.js';
 
 const translationReview = async function translationReviewController(req, res, next) {
@@ -31,7 +32,8 @@ const translationReview = async function translationReviewController(req, res, n
     });
     return res.sendStatus(200);
   } catch (error) {
-    return next(error);
+    serverError(error.message)
+    return next(createError(500, REVIEW_ERROR.reviewError));
   }
 };
 
