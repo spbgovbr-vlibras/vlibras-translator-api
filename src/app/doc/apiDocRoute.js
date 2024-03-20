@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import swaggerUi from 'swagger-ui-express';
-import swaggerDoc from './openapi.json';
+import swaggerDoc from './openapi.json' assert { type: 'json' };
 
 const options = {
   customCss: '.swagger-ui .topbar { display: none }',

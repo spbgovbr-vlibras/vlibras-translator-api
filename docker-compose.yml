@@ -2,7 +2,7 @@ version: '3'
 services:
   vlibras-translator-api:
     build: .
-    image: vlibras_translator/api:2.4.0
+    image: vlibras_translator/api:3.0.0
     ports:
       - "3000:3000"
     networks:

@@ -1,6 +1,6 @@
 import { Router } from 'express';
-import { timestampValidationRules, checkValidation } from '../middlewares/validator';
-import metrics from './metrics';
+import { timestampValidationRules, checkValidation } from '../middlewares/validator.js';
+import metrics from './metrics.js';
 
 const metricsRouter = Router();
 
