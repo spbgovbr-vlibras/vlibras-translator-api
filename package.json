@@ -1,7 +1,7 @@
 {
   "name": "vlibras-translator-api",
   "description": "VLibras Translation Service API",
-  "version": "2.4.0",
+  "version": "3.0.0",
   "private": true,
   "contributors": [
     "Wesnydy Ribeiro <wesnydy@lavid.ufpb.br>",
@@ -10,7 +10,11 @@
   "scripts": {
     "build": "babel src --out-dir dist --copy-files --include-dotfiles",
     "dev": "npm run build && DEBUG=vlibras-translator-*:* NODE_ENV=dev node dist/index.js",
-    "start": "DEBUG=vlibras-translator-api:info NODE_ENV=production node dist/index.js"
+    "start": "DEBUG=vlibras-translator-api:info NODE_ENV=production node dist/index.js",
+    "migration": "npm run build && DEBUG=vlibras-migration:info NODE_ENV=dev node dist/app/db/postgresMigration/migration.js",
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
+    "test:watch": "node --experimental-vm-modules node_modules/jest/bin/jest.js --detectOpenHandles --watch",
+    "test:coverage": "node --experimental-vm-modules node_modules/jest/bin/jest.js --detectOpenHandles --coverage"
   },
   "engines": {
     "node": "10.16"
@@ -43,6 +47,11 @@
     "ioredis": "^4.17.1",
     "mongoose": "^5.9.16",
     "morgan": "~1.9.0",
+    "node-fetch": "^3.3.2",
+    "pg": "^8.11.3",
+    "sequelize": "^6.33.0",
+    "sequelize-cli": "^6.6.1",
+    "supertest": "^6.3.4",
     "swagger-ui-express": "^4.1.4",
     "uuid": "^3.4.0"
   },
@@ -53,6 +62,7 @@
     "@babel/preset-env": "^7.9.6",
     "@commitlint/cli": "^8.3.5",
     "@commitlint/config-conventional": "^8.3.4",
+    "@jest/globals": "^29.7.0",
     "babel-preset-airbnb": "^4.5.0",
     "commitizen": "^4.2.2",
     "cz-conventional-changelog": "^3.2.0",
@@ -60,7 +70,9 @@
     "eslint-config-airbnb-base": "^14.1.0",
     "eslint-plugin-import": "^2.20.2",
     "husky": "^4.2.5",
-    "lint-staged": "^10.2.6"
+    "jest": "27.5.1",
+    "lint-staged": "^10.2.6",
+    "sequelize-cli": "^6.6.1"
   },
   "config": {
     "commitizen": {

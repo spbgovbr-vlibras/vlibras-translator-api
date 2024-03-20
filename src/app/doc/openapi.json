@@ -10,7 +10,7 @@
       "name": "GNU Lesser General Public License v3.0",
       "url": "https://www.gnu.org/licenses/lgpl-3.0.html"
     },
-    "version": "2.4.0"
+    "version": "3.0.0"
   },
   "servers": [
     {
@@ -30,10 +30,6 @@
     {
       "name": "reviews",
       "description": "Human revision of VLibras Translator translations"
-    },
-    {
-      "name": "videos",
-      "description": "Automatic generation of LIBRAS videos"
     }
   ],
   "paths": {
@@ -142,179 +138,6 @@
           }
         }
       }
-    },
-    "/video": {
-      "post": {
-        "tags": [
-          "videos"
-        ],
-        "summary": "Generates a LIBRAS video",
-        "description": "Generates a LIBRAS video from a previously translated text.",
-        "operationId": "videoGeneration",
-        "requestBody": {
-          "description": "Translated text and parameters to generate the video",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/Video"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Generating video",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/VideoGenerationRequest"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Received an invalid body param",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/InvalidParams"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal processing error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/InternalError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/video/status/{requestUID}": {
-      "get": {
-        "tags": [
-          "videos"
-        ],
-        "summary": "Gets the status of a LIBRAS video generation",
-        "description": "Gets the current status of a LIBRAS video generation process.",
-        "operationId": "videoGenerationStatus",
-        "parameters": [
-          {
-            "name": "requestUID",
-            "in": "path",
-            "description": "Request unique identifier",
-            "required": true,
-            "schema": {
-              "$ref": "#/components/schemas/requestUID"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Video generation status",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/VideoGenerationStatus"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Process not found with the UID",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/InvalidRequestUID"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Received an invalid url param",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/InvalidParams"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/video/download/{requestUID}": {
-      "get": {
-        "tags": [
-          "videos"
-        ],
-        "summary": "Downloads a generated LIBRAS video",
-        "description": "Downloads a generated LIBRAS video, the file will be available for 1 hour.",
-        "operationId": "downloadGeneratedVideo",
-        "parameters": [
-          {
-            "name": "requestUID",
-            "in": "path",
-            "description": "Request unique identifier",
-            "required": true,
-            "schema": {
-              "$ref": "#/components/schemas/requestUID"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Video file downloaded",
-            "content": {
-              "application/octet-stream": {
-                "schema": {
-                  "$ref": "#/components/schemas/File"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Video not found",
-            "content": {
-              "application/json": {
-                "examples": {
-                  "VideoNotfound": {
-                    "value": {
-                      "error": "There is no video with the received UID"
-                    }
-                  },
-                  "VideoNotGenerated": {
-                    "value": {
-                      "error": "Video not generated"
-                    }
-                  },
-                  "VideoExpired": {
-                    "value": {
-                      "error": "Video expired"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Received an invalid url param",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/InvalidParams"
-                }
-              }
-            }
-          }
-        }
-      }
     }
   },
   "components": {
@@ -368,70 +191,6 @@
       "ReviewSubmited": {
         "type": "string",
         "example": "OK"
-      },
-      "Video": {
-        "required": [
-          "gloss",
-          "avatar",
-          "caption"
-        ],
-        "type": "object",
-        "properties": {
-          "gloss": {
-            "type": "string",
-            "example": "RATO ROER ROUPA REI ROMA"
-          },
-          "avatar": {
-            "type": "string",
-            "example": "icaro",
-            "enum": [
-              "icaro",
-              "hozana"
-            ]
-          },
-          "caption": {
-            "type": "string",
-            "example": "enable",
-            "enum": [
-              "enable",
-              "disable"
-            ]
-          }
-        }
-      },
-      "VideoGenerationRequest": {
-        "required": [
-          "requestUID"
-        ],
-        "type": "object",
-        "properties": {
-          "requestUID": {
-            "type": "string",
-            "example": "c6730846-5d8e-4803-a38a-9cac921c9a04"
-          }
-        }
-      },
-      "VideoGenerationStatus": {
-        "required": [
-          "status"
-        ],
-        "type": "object",
-        "properties": {
-          "status": {
-            "type": "string",
-            "example": "generated",
-            "enum": [
-              "queued",
-              "processing",
-              "generated",
-              "failed"
-            ]
-          },
-          "size": {
-            "type": "integer",
-            "example": 483214
-          }
-        }
       },
       "requestUID": {
         "type": "string",

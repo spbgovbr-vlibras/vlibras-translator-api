@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import { databaseError } from './debugger';
+import { databaseError } from '../../util/debugger';
 
 mongoose.connection.on('error', (err) => {
   databaseError(err);
@@ -11,7 +11,8 @@ mongoose.connection.on('disconnected', (err) => {
 
 const mongoConnection = function mongoDBConnection() {
   return mongoose.connect(
-    `mongodb://${process.env.DB_HOST}:${process.env.DB_PORT}/${process.env.DB_NAME}`,
+    `mongodb://${process.env.DB_HOST}:${process.env.DB_PORT}/${process.env.DB_NAME}`
+    ,
     {
       useNewUrlParser: true,
       useUnifiedTopology: true,

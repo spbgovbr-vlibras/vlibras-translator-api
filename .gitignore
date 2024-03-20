@@ -56,6 +56,8 @@ typings/
 
 # dotenv environment variables file
 .env
+.env.dev
+.env.test
 
 # parcel-bundler cache (https://parceljs.org/)
 .cache
@@ -83,3 +85,8 @@ typings/
 
 # Compiled code
 dist/
+
+#temp files
+hitOffset.txt
+translationOffset.txt
+reviewOffset.txt
