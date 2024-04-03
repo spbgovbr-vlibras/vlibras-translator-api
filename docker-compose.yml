@@ -27,7 +27,6 @@ services:
       AMQP_USER: vlibras
       AMQP_PASS: vlibras
       TRANSLATOR_QUEUE: "translate.to_text"
-      VIDEOMAKER_QUEUE: "translate.to_video"
       API_CONSUMER_QUEUE: "amq.rabbitmq.reply-to"
     depends_on:
       - redis
