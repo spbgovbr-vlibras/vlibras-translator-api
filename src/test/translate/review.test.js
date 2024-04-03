@@ -1,4 +1,3 @@
-import app from 'vlibras-translator-api/src/app/app.js'
 import request from 'supertest'
 import { beforeEach, afterEach, describe, it } from '@jest/globals';
 
@@ -7,20 +6,10 @@ texto += "voluptates et quod nesciunt sed cupiditate sint. Sed enim laborum hic 
 texto += "ducimus. Et consequatur assumenda eos cumque dolor eos fugit autem et molestiae molestiae ea ratione inventore est aliquam voluptatem vel itaque eaque. Aut exercitationem doloremque in quis vitae et fugiat Quis hic quas maxime. Non beatae itaque 33 consequatur velit non similique galisum qui maxime voluptatem."
 texto += "nesciunt. Est officia obcaecati et assumenda quae vel labore internos et modi sunt quo voluptas quae sed sunt voluptatem? Id assumenda iusto a reiciendis galisum est beatae architecto ad iste nihil qui delectus necessitatibus est nobis voluptatum et sint nulla. Vel expedita veritatis est repellendus atque est quis minus et rerum quas est internos dolores ut provident totam! </p><p>Aut optio omnis id quidem ullam id libero quos sit numquam accusamus At voluptates quam. Qui facere earum aut eaque harum et tenetur molestias et consequatur doloremque aut aspernatur placeat. Eos recusandae quos et distinctio eveniet ut cupiditate quia a quis dolor et omnis dolores! Non aperiam dolor sed quia eius qui atque mollitia et atque commodi et vero laudantium ut minima autem. Nam ullam quasi At nihil nihil sit unde exercitationem At iste veniam ea ratione itaque et veritatis placeat est tempore modi. Aut iure repudiandae quo voluptates dolorum ea aperiam Quis et libero delectus aut rerum obcaecati et voluptas eligendi et consequuntur nemo? At perferendis esse ut cumque nesciunt ab aliquam illum. </p><p>Non commodi placeat ea quasi"
 
-let server;
 
-beforeEach(() => {
-    const port = 2999;
-    server = app.listen(port);
-});
-
-afterEach(() => {
-    server.close();
-});
-
-describe('POST em /review', () => {
-    it('Deve realizar uma review', async () => {
-        await request(app)
+describe('POST in /review', () => {
+    it('Must carry out a review', async () => {
+        await request('http://localhost:3000')
             .post('/review')
             .send({
                 text: 'o rato roeu a roupa do rei de roma',
@@ -31,8 +20,8 @@ describe('POST em /review', () => {
             .expect(200);
     });
 
-    it('Deve realizar uma review no formato errado de rating', async () => {
-        await request(app)
+    it('Must perform a review in the wrong rating format', async () => {
+        await request('http://localhost:3000')
             .post('/review')
             .send({
                 text: "o rato roeu a roupa do rei de roma",
@@ -43,8 +32,8 @@ describe('POST em /review', () => {
             .expect(422);
     });
 
-    it('Deve realizar uma review com translation mais de 5000 caracteres', async () => {
-        await request(app)
+    it('Must carry out a review with a translation of more than 5000 characters', async () => {
+        await request('http://localhost:3000')
             .post('/review')
             .send({
                 text: "o rato roeu a roupa do rei de roma",
@@ -56,8 +45,8 @@ describe('POST em /review', () => {
             .timeout(5000); // Timeout de 5 segundos
     });
 
-    it('Deve realizar uma review com text mais de 5000 caracteres', async () => {
-        await request(app)
+    it('Must carry out a review with text over 5000 characters', async () => {
+        await request('http://localhost:3000')
             .post('/review')
             .send({
                 text: texto,
