@@ -120,11 +120,11 @@ CREATE DATABASE vlibras;
 
 Update the dabase configuration at [.env.dev](src/config/environments/.env.dev)
 ```
-DBSQL_USER=postgres
-DBSQL_PASS=
-DBSQL_HOST=localhost
-DBSQL_PORT=5432
-DBSQL_NAME=vlibras
+POSTGRES_USERNAME=postgres
+POSTGRES_PASSWORD=
+POSTGRES_HOST=localhost
+POSTGRES_PORT=5432
+POSTGRES_DATABASE=vlibras
 ```
 
 ##### [Jest And Supertest]()

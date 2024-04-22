@@ -11,11 +11,11 @@ services:
       - rabbitmq-net
     environment:
       PORT: 3000
-      DBSQL_USER: vlibras
-      DBSQL_PASS: vlibras
-      DBSQL_HOST: postgresdb
-      DBSQL_PORT: 5432
-      DBSQL_NAME: vlibrasdb
+      POSTGRES_USERNAME: vlibras
+      POSTGRES_PASSWORD: vlibras
+      POSTGRES_HOST: postgresdb
+      POSTGRES_PORT: 5432
+      POSTGRES_DATABASE: vlibrasdb
       CACHE_HOST: redis
       CACHE_PORT: 6379
       CACHE_NAME: "vlibras-cache"
