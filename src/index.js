@@ -56,7 +56,7 @@ const startHTTPServer = async function startHTTPServerListen() {
 
     try {
       await db.sequelize.authenticate();
-      serverInfo(`Connected to database ${process.env.DBSQL_NAME}`);
+      serverInfo(`Connected to database ${process.env.POSTGRES_DATABASE}`);
     } catch (error) {
       databaseError('Failed connecting to database')
     }

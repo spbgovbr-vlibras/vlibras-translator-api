@@ -39,18 +39,6 @@ export const reviewValidationRules = [
     .withMessage(VALIDATION_ERRORS.ratingOptions),
 ];
 
-export const videoValidationRules = [
-  body('gloss')
-    .isLength(VALIDATION_VALUES.textLength)
-    .withMessage(VALIDATION_ERRORS.glossLength),
-  body('avatar')
-    .isIn(VALIDATION_VALUES.avatarOptions)
-    .withMessage(VALIDATION_ERRORS.avatarOptions),
-  body('caption')
-    .isIn(VALIDATION_VALUES.captionOptions)
-    .withMessage(VALIDATION_ERRORS.captionOptions),
-];
-
 export const checkValidation = function checkRequestValidation(req, _res, next) {
   const errors = validationResult(req);
   if (errors.isEmpty()) {
