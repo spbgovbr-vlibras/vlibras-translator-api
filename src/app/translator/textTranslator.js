@@ -149,11 +149,11 @@ const textTranslator = async function textTranslatorController(req, res, next) {
         expiration: TRANSLATION_PAYLOAD_TTL,
       },
     );
-console.log('aquiiiiiiii')
     return await translation.save();
   } catch (error) {
     if (!res.headersSent)
-      return next(createError(500,TRANSLATOR_ERROR.translationError));
+      // TODO: refact this code before commit on prod
+      return next(createError(500,error.toString()));
   }
 };
 
