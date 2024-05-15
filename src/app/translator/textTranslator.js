@@ -65,6 +65,7 @@ const textTranslator = async function textTranslatorController(req, res, next) {
     );
 
     if (consumerCount === 0) {
+      AMQPChannel.close()
       return next(createError(500, TRANSLATOR_ERROR.unavailable));
     }
 
@@ -153,7 +154,7 @@ const textTranslator = async function textTranslatorController(req, res, next) {
   } catch (error) {
     if (!res.headersSent)
       // TODO: refact this code before commit on prod
-      return next(createError(500,error.toString()));
+      return next(createError(500,TRANSLATOR_ERROR.translationError));
   }
 };
 
