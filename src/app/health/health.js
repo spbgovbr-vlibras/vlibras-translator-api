@@ -10,7 +10,7 @@ const checkDatabaseConnection = () => new Promise((resolve, reject) => {
     .then(() => {
       resolve({ service: 'database', status: 'up' });
     })
-    .catch((error) => {
+    .catch((error) => { 
       reject(error);
     });
 });
@@ -55,6 +55,7 @@ const checkConsumerCount = async () => {
       { durable: false },
     );
     const { consumerCount } = result;
+    await channel.close();
     return consumerCount;
   } catch (error) {
     return error;
