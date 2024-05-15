@@ -65,7 +65,10 @@ const textTranslator = async function textTranslatorController(req, res, next) {
     );
 
     if (consumerCount === 0) {
-      AMQPChannel.close()
+      try {
+        AMQPChannel.close();
+      } catch (channelAlreadyClosedError) { /* empty */ }
+      
       return next(createError(500, TRANSLATOR_ERROR.unavailable));
     }
 
