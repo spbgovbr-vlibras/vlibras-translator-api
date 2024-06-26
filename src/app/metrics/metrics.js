@@ -8,7 +8,6 @@ const metrics = async function serviceMetrics(req, res, next) {
     const startTime = req.query.startTime ? new Date(req.query.startTime) : new Date(0);
     const endTime = req.query.endTime ? new Date(req.query.endTime) : new Date(8640000000000000);
 
-    
     const result = await db.sequelize.transaction(async (t) => {
 
       // SELECT COUNT(*) FROM "Translations" WHERE translation IS NOT NULL AND "createdAt" BETWEEN '1970-01-01' AND '2070-01-01';
@@ -24,16 +23,15 @@ const metrics = async function serviceMetrics(req, res, next) {
       //   transaction: t,
       // });
 
-      const translations = await db.sequelize.query('SELECT  * FROM "view_translations"', {
+      const translations = await db.sequelize.query('SELECT * FROM "view_translations"', {
+        type: db.Sequelize.QueryTypes.SELECT,
         transaction: t,
       });
-
 
       // SELECT COUNT(*) FROM "Reviews" WHERE "translationId" IS NOT NULL AND "createdAt" BETWEEN '1970-01-01' AND '2070-01-01';
       // CREATE MATERIALIZED VIEW "view_reviews" AS SELECT COUNT(*) FROM "Reviews" WHERE "translationId" IS NOT NULL AND "createdAt" BETWEEN '1970-01-01' AND '2070-01-01';
       // REFRESH MATERIALIZED VIEW "view_reviews";
       // SELECT * FROM "view_reviews";
-
 
       // const reviews = await db.Review.count({
       //   where: {
@@ -44,6 +42,7 @@ const metrics = async function serviceMetrics(req, res, next) {
       // });
 
       const reviews = await db.sequelize.query('SELECT * FROM "view_reviews"', {
+        type: db.Sequelize.QueryTypes.SELECT,
         transaction: t,
       });
 
@@ -66,13 +65,14 @@ const metrics = async function serviceMetrics(req, res, next) {
       // }
 
       const ratings = await db.sequelize.query('SELECT * FROM "view_rating"', {
+        type: db.Sequelize.QueryTypes.SELECT,
         transaction: t,
       });
-      
-    //SELECT "text", COUNT(*) as occurrences FROM "Hits" GROUP BY "text" ORDER BY occurrences DESC LIMIT 10;
-    // CREATE MATERIALIZED VIEW "view_hits" AS SELECT "text", COUNT(*) as occurrences FROM "Hits" GROUP BY "text" ORDER BY occurrences DESC LIMIT 10;
-    // REFRESH MATERIALIZED VIEW "view_hits";
-    // SELECT * FROM "view_hits";
+
+      // SELECT "text", COUNT(*) as occurrences FROM "Hits" GROUP BY "text" ORDER BY occurrences DESC LIMIT 10;
+      // CREATE MATERIALIZED VIEW "view_hits" AS SELECT "text", COUNT(*) as occurrences FROM "Hits" GROUP BY "text" ORDER BY occurrences DESC LIMIT 10;
+      // REFRESH MATERIALIZED VIEW "view_hits";
+      // SELECT * FROM "view_hits";
 
       // const hits = await db.Hit.findAll({
       //   attributes: [
@@ -86,6 +86,7 @@ const metrics = async function serviceMetrics(req, res, next) {
       // });
 
       const hits = await db.sequelize.query('SELECT * FROM "view_hits"', {
+        type: db.Sequelize.QueryTypes.SELECT,
         transaction: t,
       });
 
@@ -98,13 +99,13 @@ const metrics = async function serviceMetrics(req, res, next) {
     });
 
     return res.status(200).json({
-      translationsCount: result.translations[1].rows[0].count,
-      reviewsCount: result.reviews[1].rows[0].count,
-      ratingsCounters: result.ratings[0],
-      translationsHits: result.hits[0],
+      translationsCount: result.translations[0].count,
+      reviewsCount: result.reviews[0].count,
+      ratingsCounters: result.ratings,
+      translationsHits: result.hits,
     });
   } catch (error) {
-    serverError(error.message)
+    serverError(error.message);
     return next(createError(500, METRICS_ERROR.metricsError));
   }
 };
