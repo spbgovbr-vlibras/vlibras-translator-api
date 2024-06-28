@@ -1,8 +1,8 @@
 import createError from 'http-errors';
 import {
   body, param, query, validationResult,
-} from 'express-validator/check';
-import { VALIDATION_VALUES, VALIDATION_ERRORS } from '../../config/validation';
+} from 'express-validator';
+import { VALIDATION_VALUES, VALIDATION_ERRORS } from '../../config/validation.js';
 
 export const textValidationRules = body('text')
   .exists()
@@ -37,18 +37,6 @@ export const reviewValidationRules = [
   body('rating')
     .isIn(VALIDATION_VALUES.ratingOptions)
     .withMessage(VALIDATION_ERRORS.ratingOptions),
-];
-
-export const videoValidationRules = [
-  body('gloss')
-    .isLength(VALIDATION_VALUES.textLength)
-    .withMessage(VALIDATION_ERRORS.glossLength),
-  body('avatar')
-    .isIn(VALIDATION_VALUES.avatarOptions)
-    .withMessage(VALIDATION_ERRORS.avatarOptions),
-  body('caption')
-    .isIn(VALIDATION_VALUES.captionOptions)
-    .withMessage(VALIDATION_ERRORS.captionOptions),
 ];
 
 export const checkValidation = function checkRequestValidation(req, _res, next) {

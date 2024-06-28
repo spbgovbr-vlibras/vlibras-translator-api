@@ -14,7 +14,7 @@
   },
   "servers": [
     {
-      "url": "http://traducao2.vlibras.gov.br",
+      "url": "https://traducao2.vlibras.gov.br",
       "description": "VLibras Translator v2 Brazilian Government Server"
     },
     {
