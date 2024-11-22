@@ -40,6 +40,7 @@ export const reviewValidationRules = [
 ];
 
 export const checkValidation = function checkRequestValidation(req, _res, next) {
+  console.log(",,,,", req.body)
   const errors = validationResult(req);
   if (errors.isEmpty()) {
     return next();

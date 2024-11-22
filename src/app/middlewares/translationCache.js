@@ -4,6 +4,7 @@ import crypto from "crypto";
 import redisConnection from "../util/redisConnection.js";
 
 const translationCache = async function getTranslationCache(req, res, next) {
+  console.log(",,,,,", req.body)
   try {
     const redisClient = await redisConnection();
     const buffer = Buffer.from(

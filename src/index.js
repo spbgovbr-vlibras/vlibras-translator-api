@@ -78,5 +78,5 @@ const startHTTPServer = async function startHTTPServerListen() {
   }
 };
 
-app.set('port', normalizePort(process.env.PORT || '3000'));
+app.set('port', normalizePort(3000));
 startHTTPServer();

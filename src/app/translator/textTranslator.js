@@ -57,6 +57,7 @@ const textTranslator = async function textTranslatorController(req, res, next) {
   try {
     const uid = uuid();
     const AMQPConnection = await queueConnection();
+    console.log("MMM", AMQPConnection)
     const AMQPChannel = await AMQPConnection.createChannel();
 
     const { consumerCount } = await AMQPChannel.assertQueue(
