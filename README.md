@@ -11,7 +11,7 @@
 
 VLibras Translation Service API.
 
-![Version](https://img.shields.io/badge/version-v2.4.0-blue.svg)
+![Version](https://img.shields.io/badge/version-v3.0.0-blue.svg)
 ![License](https://img.shields.io/badge/license-LGPLv3-blue.svg)
 ![VLibras](https://img.shields.io/badge/vlibras%20suite-2019-green.svg?logo=data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA4AAAAUCAYAAAC9BQwsAAAABmJLR0QA/wD/AP+gvaeTAAAACXBIWXMAAA3XAAAN1wFCKJt4AAAAB3RJTUUH4wIHCiw3NwjjIgAAAQ9JREFUOMuNkjErhWEYhq/nOBmkDNLJaFGyyyYsZzIZKJwfcH6AhcFqtCvFDzD5CQaTFINSlJJBZHI6J5flU5/P937fube357m63+d+nqBEagNYA9pAExgABxHxktU3882hjqtd9d7/+lCPsvpDZNA+MAXsABNU6xHYQ912ON2qC2qQ/X+J4XQXEVe/jwawCzwNAZp/NCLiDVgHejXgKIkVdGpm/FKXU/BJDfytbpWBLfWzAjxVx1Kuxwno5k84Jex0IpyzdN46qfYSjq18bzMHzQHXudifgQtgBuhHxGvKbaPg0Klaan7GdqE2W39LOq8OCo6X6kgdeJ4IZKUKWq1Y+GHVjF3gveTIe8BiCvwBEZmRAXuH6mYAAAAASUVORK5CYII=)
 
@@ -48,10 +48,10 @@ Use [nvm](https://github.com/nvm-sh/nvm) to install node (relogin to finish the 
 curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.4/install.sh | bash
 ```
 
-Install Node.js 12.
+Install Node.js 18.
 
 ```sh
-nvm install 12
+nvm install 18
 ```
 
 ##### [PostgreSQL](https://www.postgresql.org/)
@@ -99,7 +99,7 @@ sudo -u postgres psql
 ```
 
 ```sh
-alter user postgres password 'senha';
+alter user postgres password 'AQUI VAI SUA SENHA';
 ```
 
 ```sh
@@ -119,29 +119,17 @@ CREATE DATABASE vlibras;
 ```
 
 Update the dabase configuration at [.env.dev](src/config/environments/.env.dev)
+
+# NOTE: The .env.dev file must be created in the src/config/environments directory. 
+# Copy the .env.example file located in the same directory and rename it to .env.dev.
+
 ```
 POSTGRES_USERNAME=postgres
-POSTGRES_PASSWORD=
+POSTGRES_PASSWORD=senha
 POSTGRES_HOST=localhost
 POSTGRES_PORT=5432
 POSTGRES_DATABASE=vlibras
 ```
-
-##### [Jest And Supertest]()
-
-Configure env file
-
-1. Create a env test file at [.env.test](src/config/environments/). Use [.env.example](src/config/environments/.env.example) as example.
-2. Configure environments variable according your infrastructure (ex: database, redis, rabbitmq, vlibras-text-core, etc) 
-
-Running tests.
-
-```sh
-npm run test:watch
-```
-
-
-
 
 ##### [Redis](https://redis.io)
 
@@ -223,6 +211,19 @@ To test the installation, build and start the translation API with the following
 
 ```sh
 npm run dev
+```
+
+##### [Jest And Supertest]()
+
+Configure env file
+
+1. Create a env test file at [.env.test](src/config/environments/). Use [.env.example](src/config/environments/.env.example) as example.
+2. Configure environments variable according your infrastructure (ex: database, redis, rabbitmq, vlibras-text-core, etc) 
+
+Running tests.
+
+```sh
+npm run test:watch
 ```
 
 ## Deployment
