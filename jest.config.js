@@ -1,8 +1,6 @@
 export default {
   collectCoverage: true,  // Ativa a coleta de cobertura de código
-  collectCoverageFrom: [
-    'src/**/*.{js,jsx}',  // Arquivos de código fonte que serão analisados para cobertura
-  ],
+  collectCoverageFrom: ['src/**/*.{js,jsx}'],  // Arquivos de código fonte que serão analisados para cobertura
   coverageDirectory: 'coverage',  // Onde os relatórios de cobertura serão salvos
   coverageReporters: ['text', 'lcov'],  // Tipos de relatórios de cobertura a serem gerados
   transform: {
