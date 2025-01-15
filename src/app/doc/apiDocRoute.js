@@ -1,6 +1,8 @@
 import { Router } from 'express';
 import swaggerUi from 'swagger-ui-express';
-import swaggerDoc from './openapi.json' assert { type: 'json' };
+import fs from 'fs';
+
+const swaggerDoc = JSON.parse(fs.readFileSync('./src/app/doc/openapi.json', 'utf8'));
 
 const options = {
   customCss: '.swagger-ui .topbar { display: none }',
