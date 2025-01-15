@@ -2,8 +2,12 @@ import env from '../../config/environments/environment.js';
 import db from '../db/models/index.js';
 import queueConnection from '../util/queueConnection.js';
 import redisConnection from '../util/redisConnection.js';
+import { readFileSync } from 'fs';
+import { join } from 'path';
 
-import packageJson from '../../../package.json' assert { type: 'json' };
+const packageJson = JSON.parse(
+  readFileSync(join(process.cwd(), 'package.json'), 'utf-8')
+);
 
 const checkDatabaseConnection = () => new Promise((resolve, reject) => {
   db.sequelize.authenticate()

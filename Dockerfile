@@ -1,6 +1,6 @@
 FROM node:hydrogen-alpine AS build
 
-RUN apk --no-cache add make g++
+RUN apk update && apk --no-cache add make g++
 
 COPY . /src
 WORKDIR /src
