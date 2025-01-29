@@ -75,8 +75,10 @@ const health = async (req, res) => {
       checkConsumerCount().catch((error) => ({ error })),
     ]);
 
+    const isUp = [database, queue, redis].every(service => service.status === 'up');
+    
     const response = {
-      status: 'up',
+      status: isUp ? 'up' : 'down',
       version: packageJson.version,
       database: database.status === 'up' ? 'up' : 'down',
       queue: queue.status === 'up' ? 'up' : 'down',
@@ -87,16 +89,16 @@ const health = async (req, res) => {
     res.status(200).json(response);
   } catch (error) {
     const response = {
-      status: 'up',
+      status: 'down',
       version: packageJson.version,
       database: 'down',
       queue: 'down',
       redis: 'down',
+      consumerCount: 0,
     };
     res.status(200).json(response);
   }
 };
-
 
 export default health;
 
