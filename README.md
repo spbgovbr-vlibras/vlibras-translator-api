@@ -48,10 +48,10 @@ Use [nvm](https://github.com/nvm-sh/nvm) to install node (relogin to finish the 
 curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.4/install.sh | bash
 ```
 
-Install Node.js 18.
+Install Node.js 24.
 
 ```sh
-nvm install 18
+nvm install 24
 ```
 
 ##### [PostgreSQL](https://www.postgresql.org/)
