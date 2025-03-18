@@ -45,18 +45,8 @@ export const checkValidation = function checkRequestValidation(req, _res, next) 
     return next();
   }
 
-  // Log para verificar se os erros estão sendo gerados corretamente
-  console.log("Validation errors:", errors.array());
+  const extractedErrors = [];
+  errors.array().map((err) => extractedErrors.push({ [err.param]: err.msg }));
 
-  const extractedErrors = errors.array().map(err => {
-    console.log("UIU", err);
-    return {
-      field: err.param || err.path || 'unknown',
-      message: err.msg,
-    };
-  });
-
-  // Garantir que os erros estão no formato correto ao serem passados para createError
   return next(createError(422, { errors: extractedErrors }));
 };
-
