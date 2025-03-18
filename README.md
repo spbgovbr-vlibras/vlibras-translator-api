@@ -48,10 +48,10 @@ Use [nvm](https://github.com/nvm-sh/nvm) to install node (relogin to finish the 
 curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.4/install.sh | bash
 ```
 
-Install Node.js 24.
+Install Node.js 12.
 
 ```sh
-nvm install 24
+nvm install 12
 ```
 
 ##### [PostgreSQL](https://www.postgresql.org/)
@@ -99,7 +99,7 @@ sudo -u postgres psql
 ```
 
 ```sh
-alter user postgres password 'AQUI VAI SUA SENHA';
+alter user postgres password 'senha';
 ```
 
 ```sh
@@ -119,17 +119,29 @@ CREATE DATABASE vlibras;
 ```
 
 Update the dabase configuration at [.env.dev](src/config/environments/.env.dev)
-
-# NOTE: The .env.dev file must be created in the src/config/environments directory. 
-# Copy the .env.example file located in the same directory and rename it to .env.dev.
-
 ```
 POSTGRES_USERNAME=postgres
-POSTGRES_PASSWORD=senha
+POSTGRES_PASSWORD=
 POSTGRES_HOST=localhost
 POSTGRES_PORT=5432
 POSTGRES_DATABASE=vlibras
 ```
+
+##### [Jest And Supertest]()
+
+Configure env file
+
+1. Create a env test file at [.env.test](src/config/environments/). Use [.env.example](src/config/environments/.env.example) as example.
+2. Configure environments variable according your infrastructure (ex: database, redis, rabbitmq, vlibras-text-core, etc) 
+
+Running tests.
+
+```sh
+npm run test:watch
+```
+
+
+
 
 ##### [Redis](https://redis.io)
 
@@ -211,19 +223,6 @@ To test the installation, build and start the translation API with the following
 
 ```sh
 npm run dev
-```
-
-##### [Jest And Supertest]()
-
-Configure env file
-
-1. Create a env test file at [.env.test](src/config/environments/). Use [.env.example](src/config/environments/.env.example) as example.
-2. Configure environments variable according your infrastructure (ex: database, redis, rabbitmq, vlibras-text-core, etc) 
-
-Running tests.
-
-```sh
-npm run test:watch
 ```
 
 ## Deployment

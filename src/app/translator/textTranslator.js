@@ -53,81 +53,6 @@ const storeStats = async function storeStatsController(req) {
   }
 }
 
-const textTranslatorHealth = async function textTranslatorController(req, res, next) {
-  try {
-    const uid = uuid();
-    const AMQPConnection = await queueConnection();
-    const AMQPChannel = await AMQPConnection.createChannel();
-
-    const { consumerCount } = await AMQPChannel.assertQueue(
-      env.TRANSLATOR_QUEUE,
-      { durable: false },
-    );
-
-    if (consumerCount === 0) {
-      try {
-        AMQPChannel.close();
-      } catch (channelAlreadyClosedError) { /* empty */ }
-      
-      return next(createError(500, TRANSLATOR_ERROR.unavailable));
-    }
-
-    setTimeout(storeStats, 10, req); // 10miliseconds means now.
-
-    const translation = db.Translation.build({
-      text: req.body.text,
-      requester: req.headers['x-forwarded-for'] || req.connection.remoteAddress,
-    });
-
-    const result = await new Promise((resolve, reject) => {
-      AMQPChannel.consume(
-        env.API_CONSUMER_QUEUE,
-        async (message) => {
-          try {
-            if (message.properties.correlationId !== uid) {
-              return reject(createError(500, TRANSLATOR_ERROR.wrongResponse));
-            }
-
-            const content = JSON.parse(message.content.toString());
-            if (content.error !== undefined) {
-              return reject(createError(500, content.error));
-            }
-
-            // Armazenar o conteúdo e resolver a promessa
-            resolve(content);
-
-          } catch (error) {
-            reject(createError(500, error.message));
-          }
-        },
-        { noAck: true },
-      );
-
-      setTimeout(() => {
-        reject(createError(408, TRANSLATOR_ERROR.timeout));
-      }, TRANSLATION_TIMEOUT);
-
-      const payload = JSON.stringify({ text: req.body.text });
-
-      AMQPChannel.publish(
-        '',
-        env.TRANSLATOR_QUEUE,
-        Buffer.from(payload),
-        {
-          correlationId: uid,
-          replyTo: env.API_CONSUMER_QUEUE,
-          expiration: TRANSLATION_PAYLOAD_TTL,
-        },
-      );
-    });
-
-    await translation.save();
-    return result;  // Retornar o conteúdo
-  } catch (error) {
-    return next(createError(500, TRANSLATOR_ERROR.translationError));
-  }
-};
-
 const textTranslator = async function textTranslatorController(req, res, next) {
   try {
     const uid = uuid();
@@ -172,7 +97,6 @@ const textTranslator = async function textTranslatorController(req, res, next) {
           }
   
           const content = JSON.parse(message.content.toString());
-         
           if (content.error !== undefined) {
             if(!res.headersSent)
               return next(createError(500, content.error));
