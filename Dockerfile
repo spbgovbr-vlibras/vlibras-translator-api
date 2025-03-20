@@ -1,6 +1,6 @@
-FROM node:hydrogen-alpine AS build
+FROM node:hydrogen-bullseye AS build
 
-RUN apk update && apk --no-cache add make g++
+RUN apt update && apt install -y make g++
 
 COPY . /src
 WORKDIR /src
@@ -8,7 +8,7 @@ WORKDIR /src
 RUN npm ci \
   && npm prune --production
 
-FROM node:hydrogen-alpine
+FROM node:hydrogen-bullseye
 
 RUN npm install -g sequelize-cli
 
@@ -19,6 +19,7 @@ COPY --from=build /src/package.json package.json
 COPY --from=build /src/.sequelizerc .sequelizerc
 
 ENV DEBUG vlibras-translator-*:*
-ENV NODE_ENV production
+ENV NODE_ENV=production
 
-CMD ["sh", "bootstrap.sh"]
+
+CMD ["bash", "bootstrap.sh"]
