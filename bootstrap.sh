@@ -7,4 +7,4 @@ then
 else
     echo -e "Environment variable NODE_ENV is required to start services"
     exit 1
-if
+fi
