@@ -1,0 +1,189 @@
+## Provide a name in place of kube-prometheus-stack for `app:` labels
+nameOverride: ""
+
+## Provide a name to substitute for the full names of resources
+fullnameOverride: ""
+
+## Labels to apply to all resources
+commonLabels: {}
+
+global:  
+  appName: tradapi
+  ## Reference to one or more secrets to be used when pulling images
+  ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
+  ##
+  imagePullSecrets: []
+  # - name: "image-pull-secret"
+  # or
+  # - "image-pull-secret"
+  # Global PostgreSQL Configuration
+  # These values are used as default settings for the PostgreSQL database connections.
+  # They serve as fallback values when specific configurations are not provided for
+  # either the internal or external PostgreSQL databases. This approach promotes
+  # reusability of these configurations across different parts of your Helm chart,
+  # helping to maintain consistency and reduce redundancy.
+  postgresql:
+    # dbName: "defaultdb"      # Default database name, used when no other specific database name is provided.
+    # username: "defaultuser"  # Default username for database authentication.
+    # password: "defaultpw"  # Default password for database authentication. Consider using secrets management for production environments.
+    # host: "defaulthost"      # Default hostname or IP address for the database server.
+    # port: 5432               # Default port on which the PostgreSQL server is listening.
+  redis:
+    # usePassword: true
+    # password: "changevlibrasme"
+    # cachename: "changemeName"
+    # host: "changeme"
+    # port: 6379
+  amqp:
+    # port: 5672
+    # username: vlibras
+    # password: vlibraschangeme
+    # host: "changeme"
+  
+
+tradapi:
+  replicaCount: 1
+  image:
+    repository: "vlibras/translator-api"
+    tag: "5.1.1"
+  
+  pullPolicy: Always
+
+  appConfig:
+    LOGGER_FORMAT: 'dev' #dev or production
+    PORT: '80'
+    AMQP_PROTOCOL: 'amqp'
+
+
+  secrets:
+    # The existingSecret field is more like a boolean. 
+    # if it's empty, Wikilibras Backend creates a secret based on Enviroment Variables Values
+    # if it's NOT empty, Wikilibras doesn't create a secret and try to use the existingSecret.
+    #existingSecret: ""
+    
+    appSecret:
+      AMQP_PREFETCH_COUNT: '1'
+      API_CONSUMER_QUEUE: 'amq.rabbitmq.reply-to'
+      TRANSLATOR_QUEUE: 'translate.to_text4'
+      VIDEOMAKER_QUEUE: 'translate.to_video'
+      CACHE_EXP: '604800'
+      CACHE_SIZE: '10485760'
+
+  service:
+    type: ClusterIP
+    port: 80
+
+  #httpRelativePath: /
+  ## Configure extra options for containers' liveness, readiness and startup probes
+  ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#configure-probes
+  ## @param livenessProbe.enabled Enable livenessProbe on Keycloak containers
+  ## @param livenessProbe.initialDelaySeconds Initial delay seconds for livenessProbe
+  ## @param livenessProbe.periodSeconds Period seconds for livenessProbe
+  ## @param livenessProbe.timeoutSeconds Timeout seconds for livenessProbe
+  ## @param livenessProbe.failureThreshold Failure threshold for livenessProbe
+  ## @param livenessProbe.successThreshold Success threshold for livenessProbe
+  ##
+  livenessProbe:
+    enabled: true
+    initialDelaySeconds: 60
+    periodSeconds: 1
+    timeoutSeconds: 5
+    failureThreshold: 3
+    successThreshold: 1
+  ## @param readinessProbe.enabled Enable readinessProbe on Keycloak containers
+  ## @param readinessProbe.initialDelaySeconds Initial delay seconds for readinessProbe
+  ## @param readinessProbe.periodSeconds Period seconds for readinessProbe
+  ## @param readinessProbe.timeoutSeconds Timeout seconds for readinessProbe
+  ## @param readinessProbe.failureThreshold Failure threshold for readinessProbe
+  ## @param readinessProbe.successThreshold Success threshold for readinessProbe
+  ##
+  readinessProbe:
+    enabled: true
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 1
+    failureThreshold: 3
+    successThreshold: 1
+  ## When enabling this, make sure to set initialDelaySeconds to 0 for livenessProbe and readinessProbe
+  ## @param startupProbe.enabled Enable startupProbe on Keycloak containers
+  ## @param startupProbe.initialDelaySeconds Initial delay seconds for startupProbe
+  ## @param startupProbe.periodSeconds Period seconds for startupProbe
+  ## @param startupProbe.timeoutSeconds Timeout seconds for startupProbe
+  ## @param startupProbe.failureThreshold Failure threshold for startupProbe
+  ## @param startupProbe.successThreshold Success threshold for startupProbe
+  ##
+  startupProbe:
+    enabled: false
+    initialDelaySeconds: 45
+    periodSeconds: 5
+    timeoutSeconds: 1
+    failureThreshold: 60
+    successThreshold: 1
+
+  podAnnotations: {}
+  podSecurityContext: {}
+  securityContext: {}
+  resources:
+    requests:
+      cpu: 100m
+      memory: 250Mi
+    limits:
+      memory: "2Gi"
+      cpu: "1"
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+
+# This section enables the internal PostgreSQL instance provided by the Helm chart.
+postgresql:
+  enabled: true
+  auth:
+    postgresPassword: "changeme"
+    username: "wikiback_usr"
+    password: "changeme"
+    database: "wikilibras-backend-sample"
+    port: "5432"
+    existingSecret: ""
+
+rabbitmqha:
+  enabled: true
+  port: 5672
+  rabbitmqUsername: vlibras
+  rabbitmqPassword: vlibraschangeme
+  existingSecret: ""
+
+redis:
+  enabled: true
+  usePassword: true
+  password: "changevlibrasme"
+  cachename: "changemeName"
+  redisPort: 6379
+  existingSecret: ""
+
+# Enable the use of an external services like PostgreSQL.
+# Note: If this is set to 'true', the internal PostgreSQL instance (above) will not be created.
+externalServices:
+  tradapi:
+    postgresql:
+      enabled: true
+      dbName: "trad-sample"
+      username: "trad_usr_psql"
+      password: "changeme"
+      host: "postgreshost.example.com"
+      port: 5432
+      #existingClaim: ""
+    amqp:
+      enabled: true
+      port: 5672
+      username: "trad_usr_amqp"
+      password: "changeme"
+      host: "rabitmqp.example.com"
+      #existingClaim: ""
+    redis:
+      enabled: true
+      usePassword: true
+      password: "changevlibrasme"
+      cachename: "changemeName"
+      redisPort: 6379
+      host: "redis.example.com"
+      #existingClaim: ""
