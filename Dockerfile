@@ -1,6 +1,6 @@
-FROM public.ecr.aws/docker/library/node:hydrogen-bullseye AS build
+FROM public.ecr.aws/docker/library/node:24-alpine AS build
 
-RUN apt update && apt install -y make g++
+RUN apk add --no-cache make g++
 
 COPY . /src
 WORKDIR /src
@@ -8,7 +8,7 @@ WORKDIR /src
 RUN npm ci \
   && npm prune --production
 
-FROM public.ecr.aws/docker/library/node:hydrogen-bullseye
+FROM public.ecr.aws/docker/library/node:24-alpine
 
 RUN npm install -g sequelize-cli
 
