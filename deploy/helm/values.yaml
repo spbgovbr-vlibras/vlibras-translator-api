@@ -146,14 +146,14 @@ postgresql:
     password: "changeme"
     database: "wikilibras-backend-sample"
     port: "5432"
-    existingSecret: "vlibrastradutor-db-credentials"
+    existingSecrets: "vlibrastradutor-db-credentials"
 
 rabbitmqha:
   enabled: true
   port: 5672
   rabbitmqUsername: vlibras
   rabbitmqPassword: vlibraschangeme
-  existingSecret: "vlibrastradutor-rabbitmq-credentials"
+  existingSecrets: "vlibrastradutor-rabbitmq-credentials"
 
 redis:
   enabled: true
@@ -161,7 +161,7 @@ redis:
   password: "changevlibrasme"
   cachename: "changemeName"
   redisPort: 6379
-  existingSecret: "vlibrastradutor-redis-credentials"
+  existingSecrets: "vlibrastradutor-redis-credentials"
 
 # Enable the use of an external services like PostgreSQL.
 # Note: If this is set to 'true', the internal PostgreSQL instance (above) will not be created.
@@ -174,7 +174,7 @@ externalServices:
       password: "changeme"
       host: "postgreshost.example.com"
       port: 5432
-      existingSecret: "vlibrastradutor-db-credentials"
+      existingSecrets: "vlibrastradutor-db-credentials"
       #existingClaim: ""
     amqp:
       enabled: true
@@ -182,7 +182,7 @@ externalServices:
       username: "trad_usr_amqp"
       password: "changeme"
       host: "rabitmqp.example.com"
-      existingSecret: "vlibrastradutor-rabbitmq-credentials"
+      existingSecrets: "vlibrastradutor-rabbitmq-credentials"
       #existingClaim: ""
     redis:
       enabled: true
@@ -191,5 +191,5 @@ externalServices:
       cachename: "changemeName"
       redisPort: 6379
       host: "redis.example.com"
-      existingSecret: "vlibrastradutor-redis-credentials"
+      existingSecrets: "vlibrastradutor-redis-credentials"
       #existingClaim: ""
