@@ -19,7 +19,7 @@ variables:
 stages:
   - build
   - container-scan
-  - sync-deploy
+#  - sync-deploy
 
 include:
 - project: sgd/pipeline-template
@@ -36,5 +36,47 @@ container_build:
   variables:
     DOCKERFILE_LOCATION: "Dockerfile"
 
-sync-deploy:
-  extends: .argocd:sync
+#sync-deploy:
+#  extends: .argocd:sync
+
+
+variables:
+  # Application variables
+  APP_NAME: tradutor-api
+  KUBE_NAMESPACE: vlibras
+  APP_URL_DTH: traducao2-dth.vlibras.gov.br
+  APP_URL_HOM: traducao2-dth.vlibras.gov.br
+  APP_URL_PRD: traducao2.vlibras.gov.br
+  IMAGE_LOCATION: "$CI_REGISTRY_IMAGE"
+  #KB_CONTEXT_DTH: $KUBE_CONTEXT_DTH
+  CHART_FOLDER: deploy/helm
+  # Docker DinD Variables
+  DOCKER_DRIVER: overlay2
+  DOCKER_HOST: 'tcp://docker:2375'
+  # Sast Scanner Gitlab
+  KUBESEC_HELM_CHARTS_PATH: 'deploy/helm/'
+  SCAN_KUBERNETES_MANIFESTS: 'true'
+  KUBESEC_HELM_OPTIONS: '-f deploy/helm/values.yaml'
+
+stages:
+  - build
+  - container-scan
+#  - sync-deploy
+
+include:
+- project: sgd/pipeline-template
+  ref: master
+  file:
+    - container-scanner/Container-Scan.gitlab-ci.yml
+    - container-build/Container-Build.gitlab-ci.yml
+    - deploy/Helm-Deploy.gitlab-ci.yml
+    - deploy/ArgoCD-Deploy.gitlab-ci.yml
+
+container_build:
+  stage: build
+  extends: .container_build
+  variables:
+    DOCKERFILE_LOCATION: "Dockerfile"
+
+#sync-deploy:
+#  extends: .argocd:sync
