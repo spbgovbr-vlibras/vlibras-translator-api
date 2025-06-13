@@ -7,8 +7,12 @@ fullnameOverride: ""
 ## Labels to apply to all resources
 commonLabels: {}
 
+imagePullSecrets:
+  - name: registrynuvem
+
+
 global:  
-  appName: tradapi
+  appName: tradutor-api
   ## Reference to one or more secrets to be used when pulling images
   ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
   ##
@@ -44,8 +48,8 @@ global:
 tradapi:
   replicaCount: 1
   image:
-    repository: "vlibras/translator-api"
-    tag: "5.1.1"
+    repository: "registry.sisp.gov.br/vlibras/vlibras-translator-service/vlibras-translator-api"
+    tag: ""
   
   pullPolicy: Always
 
@@ -59,7 +63,7 @@ tradapi:
     # The existingSecret field is more like a boolean. 
     # if it's empty, Wikilibras Backend creates a secret based on Enviroment Variables Values
     # if it's NOT empty, Wikilibras doesn't create a secret and try to use the existingSecret.
-    #existingSecret: ""
+    existingSecret: "vlibras-tradutor-api-appsecret"
     
     appSecret:
       AMQP_PREFETCH_COUNT: '1'
@@ -143,14 +147,14 @@ postgresql:
     password: "changeme"
     database: "wikilibras-backend-sample"
     port: "5432"
-    existingSecret: ""
+    existingSecrets: "vlibrastradutor-db-credentials"
 
 rabbitmqha:
   enabled: true
   port: 5672
   rabbitmqUsername: vlibras
   rabbitmqPassword: vlibraschangeme
-  existingSecret: ""
+  existingSecrets: "vlibrastradutor-rabbitmq-credentials"
 
 redis:
   enabled: true
@@ -158,7 +162,7 @@ redis:
   password: "changevlibrasme"
   cachename: "changemeName"
   redisPort: 6379
-  existingSecret: ""
+  existingSecrets: "vlibrastradutor-redis-credentials"
 
 # Enable the use of an external services like PostgreSQL.
 # Note: If this is set to 'true', the internal PostgreSQL instance (above) will not be created.
@@ -171,6 +175,7 @@ externalServices:
       password: "changeme"
       host: "postgreshost.example.com"
       port: 5432
+      existingSecrets: "vlibrastradutor-db-credentials"
       #existingClaim: ""
     amqp:
       enabled: true
@@ -178,6 +183,7 @@ externalServices:
       username: "trad_usr_amqp"
       password: "changeme"
       host: "rabitmqp.example.com"
+      existingSecrets: "vlibrastradutor-rabbitmq-credentials"
       #existingClaim: ""
     redis:
       enabled: true
@@ -186,4 +192,5 @@ externalServices:
       cachename: "changemeName"
       redisPort: 6379
       host: "redis.example.com"
+      existingSecrets: "vlibrastradutor-redis-credentials"
       #existingClaim: ""
