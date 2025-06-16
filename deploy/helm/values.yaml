@@ -48,7 +48,7 @@ tradapi:
   replicaCount: 1
   image:
     repository: "registry.sisp.gov.br/vlibras/vlibras-translator-service/vlibras-translator-api"
-    tag: "latest"
+    tag: ""
 
   pullPolicy: Always
 

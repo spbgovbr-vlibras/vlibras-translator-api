@@ -1,6 +1,6 @@
 variables:
   # Application variables
-  APP_NAME: tradutor-api
+  APP_NAME: tradapi
   KUBE_NAMESPACE: vlibras
   APP_URL_DTH: traducao2-dth.vlibras.gov.br
   APP_URL_HOM: traducao2-dth.vlibras.gov.br
