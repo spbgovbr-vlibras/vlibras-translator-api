@@ -22,4 +22,5 @@ ENV DEBUG vlibras-translator-*:*
 ENV NODE_ENV=production
 
 
-CMD ["bash", "bootstrap.sh"]
+#CMD ["bash", "bootstrap.sh"]
+CMD ["sh", "bootstrap.sh"]
