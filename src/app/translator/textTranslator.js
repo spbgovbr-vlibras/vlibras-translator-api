@@ -237,4 +237,8 @@ const textTranslator = async function textTranslatorController(req, res, next) {
   }
 };
 
-export default textTranslator;
+export {
+  textTranslator,
+  textTranslatorHealth,
+};
+

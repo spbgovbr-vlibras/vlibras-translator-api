@@ -1,19 +1,22 @@
 import { Router } from 'express';
-import health from './health.js';
-import textTranslatorHealth from '../translator/textTranslator.js';
+import {health, healthv2} from './health.js';
+import {textTranslatorHealth} from '../translator/textTranslator.js';
 
 const healthRouter = Router();
 
-healthRouter.get('/health', async (req, res, next) => {
+healthRouter.get('/health', health);
+
+healthRouter.get('/health/v2', async (req, res, next) => {
     try {
         req.body = { text: "Ola mundo da vida" };
 
         const content = await textTranslatorHealth(req, res, next);
 
-        return health(req, res, content);
+        return healthv2(req, res, content);
     } catch (error) {
         next(error);
     }
 });
+
 
 export default healthRouter;
