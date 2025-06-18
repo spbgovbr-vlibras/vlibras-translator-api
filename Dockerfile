@@ -1,6 +1,6 @@
-FROM public.ecr.aws/docker/library/node:24-alpine AS build
+FROM public.ecr.aws/docker/library/node:hydrogen-alpine AS build
 
-RUN apk add --no-cache make g++
+RUN apk add --no-cache make g++ python3
 
 COPY . /src
 WORKDIR /src
@@ -8,7 +8,7 @@ WORKDIR /src
 RUN npm ci \
   && npm prune --production
 
-FROM public.ecr.aws/docker/library/node:24-alpine
+FROM public.ecr.aws/docker/library/node:hydrogen-alpine
 
 RUN npm install -g sequelize-cli
 
@@ -21,6 +21,4 @@ COPY --from=build /src/.sequelizerc .sequelizerc
 ENV DEBUG vlibras-translator-*:*
 ENV NODE_ENV=production
 
-
-#CMD ["bash", "bootstrap.sh"]
 CMD ["sh", "bootstrap.sh"]
