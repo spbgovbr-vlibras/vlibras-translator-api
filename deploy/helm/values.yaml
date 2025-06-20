@@ -56,7 +56,7 @@ tradapi:
   pullPolicy: Always
 
   appConfig:
-    LOGGER_FORMAT: 'production' #dev or production
+    LOGGER_FORMAT: 'dev' #dev or production
     PORT: '80'
     AMQP_PROTOCOL: 'amqp'
 
