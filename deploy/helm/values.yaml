@@ -7,8 +7,8 @@ fullnameOverride: ""
 ## Labels to apply to all resources
 commonLabels: {}
 
-imagePullSecrets:
-  - name: registrynuvem
+#imagePullSecrets:
+#  - name: registrynuvem
 
 global:  
   appName: tradutor-api
@@ -47,8 +47,11 @@ global:
 tradapi:
   replicaCount: 1
   image:
-    repository: "registry.sisp.gov.br/vlibras/vlibras-translator-service/vlibras-translator-api"
-    tag: ""
+    repository: "vlibras/translator-api"
+    tag: "5.1.1"
+#    repository: "registry.sisp.gov.br/vlibras/vlibras-translator-service/vlibras-translator-api"
+#    tag: ""
+
 
   pullPolicy: Always
 
