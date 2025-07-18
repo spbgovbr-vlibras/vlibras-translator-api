@@ -62,7 +62,7 @@ const checkConsumerCount = async () => {
   }
 };
 
-const health = async (req, res) => {
+const health = async (req, res, content) => {
   try {
     const [database, queue, redis, queueConsumerCount] = await Promise.all([
       checkDatabaseConnection().catch((error) => ({ service: 'database', status: 'down', error })),
@@ -78,6 +78,7 @@ const health = async (req, res) => {
       queue: queue.status === 'up' ? 'up' : 'down',
       redis: redis.status === 'up' ? 'up' : 'down',
       consumerCount: queueConsumerCount,
+      versionTranslate: content.version || "No content available", 
     };
 
     res.status(200).json(response);
@@ -88,8 +89,10 @@ const health = async (req, res) => {
       database: 'down',
       queue: 'down',
       redis: 'down',
+      consumerCount: 0,
+      versionTranslate: content.version || "No content available",  
     };
-    res.status(200).json(response);
+    res.status(500).json(response);
   }
 };
 

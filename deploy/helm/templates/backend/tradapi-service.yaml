@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ template "tradapi-name.fullname" . }}
+  labels:
+    {{ include "tradapi.labels" . | indent 4 }}
+spec:
+  type: {{ .Values.tradapi.service.type }}
+  ports:
+  - port: {{ .Values.tradapi.service.port }}
+    name: http
+    targetPort: {{ .Values.tradapi.service.port }}
+    protocol: TCP
+  selector:
+    {{ include "tradapi.labels" . | indent 4 }}
