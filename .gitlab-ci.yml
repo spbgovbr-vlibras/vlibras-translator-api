@@ -38,3 +38,17 @@ container_build:
 
 sync-deploy:
   extends: .argocd:sync
+  rules:
+    - if: '$CI_COMMIT_REF_NAME != "main"'
+      variables:
+        ARGOCD_SERVER: argocd.dth.sisp.gov.br
+        ARGOCD_APP_NAME: ${APP_NAME}-dth
+        ARGOCD_KV: sgd-dth
+        VALUES: ${VALUES_DTH}
+    - if: '$CI_COMMIT_REF_NAME == "main" || $CI_COMMIT_REF_NAME == "master"'
+      variables:
+        ARGOCD_SERVER: argocd.vlibras.gov.br
+        ARGOCD_APP_NAME: ${APP_NAME}-prd
+        ARGOCD_KV: vlibras-prd
+        VALUES: ${VALUES_PRD}
+    - when: always
