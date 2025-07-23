@@ -47,8 +47,10 @@ global:
 tradapi:
   replicaCount: 1
   image:
-    repository: "registry.sisp.gov.br/vlibras/vlibras-translator-service/vlibras-translator-api"
-    tag: ""
+    # repository: "registry.sisp.gov.br/vlibras/vlibras-translator-service/vlibras-translator-api"
+    # tag: ""
+    repository: harbor.sisp.gov.br/registry/vlibras-translator-api
+    tag: latest
 
 
   pullPolicy: Always

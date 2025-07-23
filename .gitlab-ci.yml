@@ -1,5 +1,6 @@
 variables:
   # Application variables
+  ARGOCD_ENV: "vlibras"
   APP_NAME: tradapi
   KUBE_NAMESPACE: vlibras
   APP_URL_DTH: traducao2-dth.vlibras.gov.br
@@ -17,24 +18,66 @@ variables:
   KUBESEC_HELM_OPTIONS: '-f deploy/helm/values.yaml'
 
 stages:
-  - build
+  - harbor
+  - secret-scan
+  # - build
   - container-scan
+  - container-build
   - sync-deploy
 
 include:
 - project: sgd/pipeline-template
-  ref: master
+  ref: main
   file:
-    - container-scanner/Container-Scan.gitlab-ci.yml
-    - container-build/Container-Build.gitlab-ci.yml
-    - deploy/Helm-Deploy.gitlab-ci.yml
+    # - container-scanner/Container-Scan.gitlab-ci.yml
+    # - container-build/Container-Build.gitlab-ci.yml
+    # - deploy/Helm-Deploy.gitlab-ci.yml
+    - registry/Harbor-Project.gitlab-ci.yml
+    - security/Container-Scan.gitlab-ci.yml
+    - security/Secret-Scan.gitlab-ci.yml
+    - container/Container-Build.gitlab-ci.yml
     - deploy/ArgoCD-Deploy.gitlab-ci.yml
 
-container_build:
-  stage: build
-  extends: .container_build
+harbor:
+  stage: harbor
+  extends: .harbor_project
+
+secret-scan:
+  stage: secret-scan
+  extends: .secret-scan
+  allow_failure: true
+
+# build:
+#   stage: build
+#   extends: .container_build
+  # variables:
+  #   DOCKERFILE_LOCATION: "Dockerfile"
+
+container-scan:
+  stage: container-scan
+  extends: .container-scan
+  allow_failure: true
+
+container-build:
+  stage: container-build
+  extends: .container-build
   variables:
     DOCKERFILE_LOCATION: "Dockerfile"
 
 sync-deploy:
+  stage: sync-deploy
   extends: .argocd:sync
+  # rules:
+  #   - if: '$CI_COMMIT_REF_NAME != "main"'
+  #     variables:
+  #       ARGOCD_SERVER: argocd.dth.sisp.gov.br
+  #       ARGOCD_APP_NAME: ${APP_NAME}-dth
+  #       ARGOCD_KV: sgd-dth
+  #       VALUES: ${VALUES_DTH}
+  #   - if: '$CI_COMMIT_REF_NAME == "main" || $CI_COMMIT_REF_NAME == "master"'
+  #     variables:
+  #       ARGOCD_SERVER: argocd.vlibras.gov.br
+  #       ARGOCD_APP_NAME: ${APP_NAME}-prd
+  #       ARGOCD_KV: vlibras-prd
+  #       VALUES: ${VALUES_PRD}
+  #   - when: always
