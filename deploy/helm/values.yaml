@@ -45,7 +45,7 @@ global:
   
 
 tradapi:
-  replicaCount: 1
+  replicaCount: 4
   image:
     # repository: "registry.sisp.gov.br/vlibras/vlibras-translator-service/vlibras-translator-api"
     # tag: ""
@@ -134,7 +134,7 @@ tradapi:
       cpu: 100m
       memory: 250Mi
     limits:
-      memory: "2Gi"
+      memory: "1Gi"
       cpu: "1"
   nodeSelector: {}
   tolerations: []
