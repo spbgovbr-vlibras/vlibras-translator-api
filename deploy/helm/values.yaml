@@ -45,7 +45,7 @@ global:
   
 
 tradapi:
-  replicaCount: 4
+  replicaCount: 6
   image:
     # repository: "registry.sisp.gov.br/vlibras/vlibras-translator-service/vlibras-translator-api"
     # tag: ""
