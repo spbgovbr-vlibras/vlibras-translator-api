@@ -56,7 +56,7 @@ tradapi:
   pullPolicy: Always
 
   appConfig:
-    LOGGER_FORMAT: 'dev' #dev or production
+    LOGGER_FORMAT: 'production' #dev or production
     PORT: '80'
     AMQP_PROTOCOL: 'amqp'
 
@@ -134,8 +134,8 @@ tradapi:
       cpu: 100m
       memory: 250Mi
     limits:
-      memory: "1Gi"
-      cpu: "1"
+      memory: "2Gi"
+      cpu: "2"
   nodeSelector: {}
   tolerations: []
   affinity: {}
