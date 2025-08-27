@@ -43,6 +43,7 @@
     "node-fetch": "^3.3.2",
     "path-to-regexp": "^0.1.12",
     "pg": "^8.11.3",
+    "redis": "^5.8.2",
     "send": "^0.19.0",
     "sequelize": "^6.33.0",
     "sequelize-cli": "^6.6.2",
