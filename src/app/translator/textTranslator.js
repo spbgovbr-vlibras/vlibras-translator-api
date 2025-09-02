@@ -54,8 +54,8 @@ const storeStats = async function storeStatsController(req) {
 }
 
 const textTranslatorHealth = async function textTranslatorController(req, res, next) {
+  const uid = req.uid;
   try {
-    const uid = uuid();
     const AMQPConnection = await queueConnection();
     const AMQPChannel = await AMQPConnection.createChannel();
 
@@ -131,8 +131,6 @@ const textTranslatorHealth = async function textTranslatorController(req, res, n
 const textTranslator = async function textTranslatorController(req, res, next) {
   const uid = req.uid;
   try {
-    console.log('[ENV] 🌍 Dump completo do objeto env:', env);
-
     const AMQPConnection = await queueConnection();
     console.log('[TextTranslator] - Processando requisição:', uid)
     console.log(`[RabbitMQ][${uid}] - Conectado com sucesso`);
@@ -232,6 +230,7 @@ const textTranslator = async function textTranslatorController(req, res, next) {
     console.log(`[RabbitMQ][${uid}] - Consumidor registrado na fila "${env.API_CONSUMER_QUEUE}"`);
 
     setTimeout(() => {
+      console.log(`[Timeout][${uid}] - Timeout atingido após ${TRANSLATION_TIMEOUT}ms`);
       if (!res.headersSent) {
         try {
           AMQPChannel.close();
