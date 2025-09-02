@@ -131,8 +131,6 @@ const textTranslatorHealth = async function textTranslatorController(req, res, n
 const textTranslator = async function textTranslatorController(req, res, next) {
   const uid = req.uid;
   try {
-    console.log('[ENV] 🌍 Dump completo do objeto env:', env);
-
     const AMQPConnection = await queueConnection();
     console.log('[TextTranslator] - Processando requisição:', uid)
     console.log(`[RabbitMQ][${uid}] - Conectado com sucesso`);
