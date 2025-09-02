@@ -54,8 +54,8 @@ const storeStats = async function storeStatsController(req) {
 }
 
 const textTranslatorHealth = async function textTranslatorController(req, res, next) {
+  const uid = req.uid;
   try {
-    const uid = uuid();
     const AMQPConnection = await queueConnection();
     const AMQPChannel = await AMQPConnection.createChannel();
 
