@@ -13,6 +13,7 @@ import reviewRoute from './review/translationReviewRoute.js';
 import translatorRoute from './translator/textTranslatorRoute.js';
 import metricsRoute from './metrics/metricsRoute.js';
 import healthRouter from './health/healthRoute.js';
+import { attachUid } from './middlewares/attachUid.js';
 
 const app = express();
 
@@ -23,6 +24,7 @@ app.use(logger(env.LOGGER_FORMAT || 'combined'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
+app.use(attachUid)
 
 app.use('/', apiDocRoute);
 app.use('/', reviewRoute);
