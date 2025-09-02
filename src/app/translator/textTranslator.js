@@ -230,7 +230,7 @@ const textTranslator = async function textTranslatorController(req, res, next) {
     console.log(`[RabbitMQ][${uid}] - Consumidor registrado na fila "${env.API_CONSUMER_QUEUE}"`);
 
     setTimeout(() => {
-      console.warn(`[Timeout][${uid}] - Timeout atingido após ${TRANSLATION_TIMEOUT}ms`);
+      console.log(`[Timeout][${uid}] - Timeout atingido após ${TRANSLATION_TIMEOUT}ms`);
       if (!res.headersSent) {
         try {
           AMQPChannel.close();
