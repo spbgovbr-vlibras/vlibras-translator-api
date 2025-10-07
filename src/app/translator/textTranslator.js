@@ -11,262 +11,312 @@ import {
   TRANSLATION_TIMEOUT,
   TRANSLATION_PAYLOAD_TTL,
 } from '../../config/timeout.js';
-
-
 import phraseBreaker from '../util/phraseBreaker.js';
+import { context, trace, SpanStatusCode, propagation } from '@opentelemetry/api';
+import winston from 'winston';
 
-/**
- * Asynchronous stores the statistics of the traslator at the DB.
- *
- * @param {Request} req - The http(s) request.
- */
+const tracer = trace.getTracer('vlibras-translator-api');
+
+const logger = winston.createLogger({
+  level: 'info',
+  format: winston.format.simple(),
+  transports: [new winston.transports.Console()],
+});
+
+const amqpHeadersSetter = {
+  set(carrier, key, value) {
+    if (carrier && key) carrier[key] = value;
+  },
+};
+const amqpHeadersGetter = {
+  get(carrier, key) {
+    return carrier ? carrier[key] : undefined;
+  },
+  keys(carrier) {
+    return carrier ? Object.keys(carrier) : [];
+  },
+};
+
 const storeStats = async function storeStatsController(req) {
-
+  const span = tracer.startSpan('storeStats', { attributes: { 'app.component': 'stats' } });
   try {
-    
     const phrases = await phraseBreaker(req.body.text);
     await db.sequelize.transaction(async (t) => {
       for (let i = 0; i < phrases.length; i = i + 1) {
         const phrase = phrases[i].trim();
+        const findSpan = tracer.startSpan('sequelize.findOne', { attributes: { 'db.system': 'sequelize', 'db.entity': 'Hit' } });
         const translationAlreadyExists = await db.Hit.findOne({
-          where: {
-            text: phrase
-          },
+          where: { text: phrase },
           transaction: t
-        });
-  
+        }).finally(() => findSpan.end());
         let translationHit = undefined;
         if (translationAlreadyExists) {
-          translationAlreadyExists.set({hits: translationAlreadyExists.hits + 1});
-          await translationAlreadyExists.save({ transaction: t });
+          translationAlreadyExists.set({ hits: translationAlreadyExists.hits + 1 });
+          const saveSpan = tracer.startSpan('sequelize.save', { attributes: { 'db.system': 'sequelize', 'db.entity': 'Hit' } });
+          await translationAlreadyExists.save({ transaction: t }).finally(() => saveSpan.end());
         } else {
-          translationHit = db.Hit.build({
-            text: phrase,
-            hits: 1,
-          });
-          await translationHit.save({ transaction: t });
+          translationHit = db.Hit.build({ text: phrase, hits: 1 });
+          const saveSpan = tracer.startSpan('sequelize.save', { attributes: { 'db.system': 'sequelize', 'db.entity': 'Hit' } });
+          await translationHit.save({ transaction: t }).finally(() => saveSpan.end());
         }
       }
     });
   } catch (error) {
-    serverError('Text translator failed storing stats')
+    logger.error(`[Stats] ${error.message}`);
+    span.recordException(error);
+    span.setStatus({ code: SpanStatusCode.ERROR, message: error.message });
+    serverError('Text translator failed storing stats');
+  } finally {
+    span.end();
   }
-}
+};
 
 const textTranslatorHealth = async function textTranslatorController(req, res, next) {
+  const handlerSpan = tracer.startSpan('textTranslatorHealth', { attributes: { 'app.component': 'http' } });
   const uid = req.uid;
+  let AMQPChannel;
+  let consumerTag;
+  let timeoutId;
+
+  const cleanup = async () => {
+    clearTimeout(timeoutId);
+    try { if (consumerTag) await AMQPChannel.cancel(consumerTag); } catch (e) { logger.warn(`Cancel warn: ${e.message}`); }
+    try { if (AMQPChannel) await AMQPChannel.close(); } catch (e) { logger.warn(`Channel close warn: ${e.message}`); }
+  };
+
   try {
     const AMQPConnection = await queueConnection();
-    const AMQPChannel = await AMQPConnection.createChannel();
-
-    const { consumerCount } = await AMQPChannel.assertQueue(
-      env.TRANSLATOR_QUEUE,
-      { durable: false },
-    );
-
+    AMQPChannel = await AMQPConnection.createConfirmChannel();
+    await AMQPChannel.prefetch(Number(process.env.AMQP_PREFETCH_COUNT || 10));
+    const { consumerCount } = await AMQPChannel.assertQueue(env.TRANSLATOR_QUEUE, { durable: false });
     if (consumerCount === 0) {
-      try {
-        AMQPChannel.close();
-      } catch (channelAlreadyClosedError) { /* empty */ }
-      
+      await cleanup();
+      handlerSpan.end();
       return next(createError(500, TRANSLATOR_ERROR.unavailable));
     }
 
-    setTimeout(storeStats, 10, req); // 10miliseconds means now.
+    res.on('close', async () => { await cleanup(); });
+
+    setTimeout(storeStats, 10, req);
 
     const translation = db.Translation.build({
       text: req.body.text,
       requester: req.headers['x-forwarded-for'] || req.connection.remoteAddress,
     });
 
-    const result = await new Promise((resolve, reject) => {
-      AMQPChannel.consume(
-        env.API_CONSUMER_QUEUE,
+    const { queue: replyQueue } = await AMQPChannel.assertQueue('', { exclusive: true, autoDelete: true, durable: false });
+
+    const result = await new Promise(async (resolve, reject) => {
+      const ok = await AMQPChannel.consume(
+        replyQueue,
         async (message) => {
           try {
             if (message.properties.correlationId !== uid) {
-              return reject(createError(500, TRANSLATOR_ERROR.wrongResponse));
+              try { await AMQPChannel.nack(message, false, false); } catch {}
+              return;
             }
-
-            const content = JSON.parse(message.content.toString());
+            let content;
+            try { content = JSON.parse(message.content.toString()); } catch (e) {
+              try { await AMQPChannel.nack(message, false, false); } catch {}
+              return;
+            }
             if (content.error !== undefined) {
+              try { await AMQPChannel.ack(message); } catch {}
+              await cleanup();
               return reject(createError(500, content.error));
             }
-
-            // Armazenar o conteúdo e resolver a promessa
+            try { await AMQPChannel.ack(message); } catch {}
+            await cleanup();
             resolve(content);
-
           } catch (error) {
+            try { await AMQPChannel.nack(message, false, false); } catch {}
+            await cleanup();
             reject(createError(500, error.message));
           }
         },
-        { noAck: true },
+        { noAck: false },
       );
+      consumerTag = ok.consumerTag;
 
-      setTimeout(() => {
+      timeoutId = setTimeout(async () => {
+        await cleanup();
         reject(createError(408, TRANSLATOR_ERROR.timeout));
       }, TRANSLATION_TIMEOUT);
 
       const payload = JSON.stringify({ text: req.body.text });
-
-      AMQPChannel.publish(
-        '',
-        env.TRANSLATOR_QUEUE,
-        Buffer.from(payload),
-        {
-          correlationId: uid,
-          replyTo: env.API_CONSUMER_QUEUE,
-          expiration: TRANSLATION_PAYLOAD_TTL,
-        },
-      );
+      const headers = {};
+      propagation.inject(context.active(), headers, amqpHeadersSetter);
+      AMQPChannel.publish('', env.TRANSLATOR_QUEUE, Buffer.from(payload), {
+        correlationId: uid, replyTo: replyQueue, expiration: TRANSLATION_PAYLOAD_TTL, headers
+      });
+      await AMQPChannel.waitForConfirms();
     });
 
+    if (result?.translation) {
+      translation.set({ translation: result.translation });
+    }
     await translation.save();
-    return result;  // Retornar o conteúdo
+
+    handlerSpan.end();
+
+    return res.status(200).json(result);
   } catch (error) {
+    await cleanup();
+    handlerSpan.end();
     return next(createError(500, TRANSLATOR_ERROR.translationError));
   }
 };
 
 const textTranslator = async function textTranslatorController(req, res, next) {
+  const handlerSpan = tracer.startSpan('textTranslator', { attributes: { 'app.component': 'http' } });
   const uid = req.uid;
+  let AMQPChannel;
+  let consumerTag;
+  let timeoutId;
+  let responded = false;
+
+  const cleanup = async () => {
+    clearTimeout(timeoutId);
+    try { if (consumerTag) await AMQPChannel.cancel(consumerTag); } catch (e) { logger.warn(`Cancel warn: ${e.message}`); }
+    try { if (AMQPChannel) await AMQPChannel.close(); } catch (e) { logger.warn(`Channel close warn: ${e.message}`); }
+  };
+
   try {
-    const AMQPConnection = await queueConnection();
-    console.log('[TextTranslator] - Processando requisição:', uid)
-    console.log(`[RabbitMQ][${uid}] - Conectado com sucesso`);
-
-    const AMQPChannel = await AMQPConnection.createChannel();
-    console.log(`[RabbitMQ][${uid}] - Canal criado`);
-
-    const { consumerCount } = await AMQPChannel.assertQueue(env.TRANSLATOR_QUEUE, { durable: false });
-    console.log(`[RabbitMQ][${uid}] - Fila "${env.TRANSLATOR_QUEUE}" verificada. Consumers ativos: ${consumerCount}`);
-
+    const connSpan = tracer.startSpan('amqp.connection.get');
+    const AMQPConnection = await queueConnection().finally(() => connSpan.end());
+    logger.info('[TextTranslator] - Processando requisição: ' + uid);
+    const chSpan = tracer.startSpan('amqp.createConfirmChannel');
+    AMQPChannel = await AMQPConnection.createConfirmChannel().finally(() => chSpan.end());
+    logger.info(`[RabbitMQ][${uid}] - Canal criado`);
+    const prefetchSpan = tracer.startSpan('amqp.prefetch');
+    await AMQPChannel.prefetch(Number(process.env.AMQP_PREFETCH_COUNT || 10)).finally(() => prefetchSpan.end());
+    const assertSpan = tracer.startSpan('amqp.assertQueue', { attributes: { 'messaging.destination': env.TRANSLATOR_QUEUE, 'messaging.destination_kind': 'queue' } });
+    const { consumerCount } = await AMQPChannel.assertQueue(env.TRANSLATOR_QUEUE, { durable: false }).finally(() => assertSpan.end());
+    logger.info(`[RabbitMQ][${uid}] - Consumers ativos: ${consumerCount}`);
     if (consumerCount === 0) {
-      console.warn(`[RabbitMQ][${uid}] -  Nenhum consumidor disponível na fila "${env.TRANSLATOR_QUEUE}"`);
-      try {
-        await AMQPChannel.close();
-        console.log(`[RabbitMQ][${uid}] - Canal fechado após ausência de consumidores`);
-      } catch (err) {
-        console.warn(`[RabbitMQ][${uid}] - Erro ao tentar fechar canal:`, err.message);
-      }
+      await cleanup();
+      handlerSpan.end();
       return next(createError(500, TRANSLATOR_ERROR.unavailable));
     }
-
-    console.log(`[Translator][${uid}] - Coleta de estatísticas agendada`);
-
     const requesterIp = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
-    const translation = db.Translation.build({
-      text: req.body.text,
-      requester: requesterIp,
+    const translation = db.Translation.build({ text: req.body.text, requester: requesterIp });
+    const assertReplySpan = tracer.startSpan('amqp.assertReplyQueue');
+    const { queue: replyQueue } = await AMQPChannel.assertQueue('', { exclusive: true, autoDelete: true, durable: false }).finally(() => assertReplySpan.end());
+    res.on('close', async () => {
+      if (!responded) {
+        await cleanup();
+      }
     });
-    console.log(`[DB][${uid}] - Instância de tradução criada. Texto: "${req.body.text}" | IP: ${requesterIp}`);
-
-    AMQPChannel.consume(
-      env.API_CONSUMER_QUEUE,
+    const ok = await AMQPChannel.consume(
+      replyQueue,
       async (message) => {
-        console.log(`[RabbitMQ][${uid}] - Mensagem recebida na fila de resposta`);
-
-        setTimeout(() => {
-          try {
-            AMQPChannel.close();
-            console.log(`[RabbitMQ][${uid}] - Canal fechado após consumo da resposta`);
-          } catch (err) {
-            console.warn(`[RabbitMQ][${uid}] - Canal já estava fechado (timeout)`);
-          }
-        }, CHANNEL_CLOSE_TIMEOUT);
-
+        logger.info(`[RabbitMQ][${uid}] - Mensagem recebida na fila de resposta`);
+        const consumeSpan = tracer.startSpan('amqp.consume', { attributes: { 'messaging.operation': 'receive' } });
         try {
           const correlationId = message.properties.correlationId;
           if (correlationId !== uid) {
-            console.error(`[RabbitMQ][${uid}] - correlationId inválido. Esperado: ${uid}, recebido: ${correlationId}`);
-            if (!res.headersSent)
-              return next(createError(500, TRANSLATOR_ERROR.wrongResponse));
+            logger.error(`[RabbitMQ][${uid}] - correlationId inválido. Esperado: ${uid}, recebido: ${correlationId}`);
+            consumeSpan.setStatus({ code: SpanStatusCode.ERROR, message: 'wrongResponse' });
+            try { await AMQPChannel.nack(message, false, false); } catch (e) { logger.warn(`Nack warn: ${e.message}`); }
             return;
           }
-
+          const parentCtx = propagation.extract(context.active(), message?.properties?.headers || {}, amqpHeadersGetter);
+          context.with(parentCtx, () => {});
+          const parseSpan = tracer.startSpan('json.parse');
           const content = JSON.parse(message.content.toString());
-          console.log(`[RabbitMQ][${uid}] - Conteúdo recebido do worker:`, content);
-
+          parseSpan.end();
+          logger.info(`[RabbitMQ][${uid}] - Conteúdo recebido do worker: ${JSON.stringify(content)}`);
           if (content.error !== undefined) {
-            console.error(`[RabbitMQ][${uid}] - Erro retornado do worker:`, content.error);
-            if (!res.headersSent)
-              return next(createError(500, content.error));
+            logger.error(`[RabbitMQ][${uid}] - Erro retornado do worker: ${content.error}`);
+            consumeSpan.setStatus({ code: SpanStatusCode.ERROR, message: String(content.error) });
+            try { await AMQPChannel.ack(message); } catch (e) { logger.warn(`Ack warn: ${e.message}`); }
+            if (!res.headersSent) {
+              responded = true;
+              res.status(500).send(String(content.error));
+            }
+            await cleanup();
             return;
           }
-
           if (!res.headersSent) {
             res.status(200).send(content.translation);
-            console.log(`[Express][${uid}] - Resposta enviada ao cliente:`, content.translation);
+            responded = true;
+            logger.info(`[Express][${uid}] - Resposta enviada ao cliente`);
           }
-
+          try { await AMQPChannel.ack(message); } catch (e) { logger.warn(`Ack warn: ${e.message}`); }
           if (req.body.textHash) {
             try {
+              const redisSpan = tracer.startSpan('redis.set', { attributes: { 'db.system': 'redis', 'db.operation': 'SET' } });
               const redisClient = await redisConnection();
-              console.log(`[Redis][${uid}] - Conexão com Redis estabelecida`);
-              await redisClient.set(
-                req.body.textHash,
-                content.translation,
-                'EX',
-                env.CACHE_EXP
-              );
-              console.log(`[Redis][${uid}] - Tradução armazenada com chave "${req.body.textHash}" por ${env.CACHE_EXP} segundos`);
+              await redisClient.set(req.body.textHash, content.translation, 'EX', env.CACHE_EXP);
+              redisSpan.end();
             } catch (redisErr) {
-              console.error(`[Redis][${uid}] - Falha ao conectar ou setar cache:`, redisErr.message);
+              logger.error(`[Redis][${uid}] - ${redisErr.message}`);
               cacheError(`SET ${redisErr.message}`);
             }
           }
-
           translation.set({ translation: content.translation });
-          await translation.save();
-          console.log(`[DB][${uid}] - Tradução salva no banco de dados`);
+          const saveSpan = tracer.startSpan('sequelize.save', { attributes: { 'db.system': 'sequelize', 'db.entity': 'Translation' } });
+          await translation.save().finally(() => saveSpan.end());
+          await cleanup();
         } catch (err) {
-          console.error(`[Translator][${uid}] - Erro ao processar a mensagem:`, err.message);
-          serverError(err.message);
+          logger.error(`[Translator][${uid}] - ${err.message}`);
+          consumeSpan.recordException(err);
+          consumeSpan.setStatus({ code: SpanStatusCode.ERROR, message: err.message });
+          try { await AMQPChannel.nack(message, false, false); } catch (e) { logger.warn(`Nack warn: ${e.message}`); }
+          if (!res.headersSent) {
+            responded = true;
+            res.status(500).send(TRANSLATOR_ERROR.translationError);
+          }
+          await cleanup();
+        } finally {
+          consumeSpan.end();
         }
       },
-      { noAck: true },
+      { noAck: false },
     );
-
-    console.log(`[RabbitMQ][${uid}] - Consumidor registrado na fila "${env.API_CONSUMER_QUEUE}"`);
-
-    setTimeout(() => {
-      console.log(`[Timeout][${uid}] - Timeout atingido após ${TRANSLATION_TIMEOUT}ms`);
+    consumerTag = ok.consumerTag;
+    timeoutId = setTimeout(async () => {
+      logger.info(`[Timeout][${uid}] - Timeout atingido após ${TRANSLATION_TIMEOUT}ms`);
       if (!res.headersSent) {
-        try {
-          AMQPChannel.close();
-        } catch (err) {
-          console.warn(`[Timeout][${uid}] - Falha ao fechar canal após timeout:`, err.message);
-        }
+        await cleanup();
         return next(createError(408, TRANSLATOR_ERROR.timeout));
       }
     }, TRANSLATION_TIMEOUT);
-    console.log(`[Timeout][${uid}] - Timeout programado para ${TRANSLATION_TIMEOUT}ms`);
-
     const payload = JSON.stringify({ text: req.body.text });
-    console.log(`[RabbitMQ][${uid}] - Publicando payload:`, payload);
-
-    await AMQPChannel.publish(
-      '',
-      env.TRANSLATOR_QUEUE,
-      Buffer.from(payload),
-      {
-        correlationId: uid,
-        replyTo: env.API_CONSUMER_QUEUE,
-        expiration: TRANSLATION_PAYLOAD_TTL,
-      },
-    );
-    console.log(`[RabbitMQ][${uid}] - Payload publicado na fila "${env.TRANSLATOR_QUEUE}" com TTL ${TRANSLATION_PAYLOAD_TTL}ms`);
-
-    await translation.save();
-    console.log(`[DB][${uid}] - Registro salvo inicialmente no banco para log`);
-
+    const headers = {};
+    propagation.inject(context.active(), headers, amqpHeadersSetter);
+    const publishSpan = tracer.startSpan('amqp.publish', { attributes: { 'messaging.destination': env.TRANSLATOR_QUEUE, 'messaging.destination_kind': 'queue', 'messaging.rabbitmq.correlation_id': uid } });
+    if (TRANSLATION_TIMEOUT >= TRANSLATION_PAYLOAD_TTL) {
+      logger.warn(`[TimeoutGuard][${uid}] TRANSLATION_TIMEOUT (${TRANSLATION_TIMEOUT}) >= TTL (${TRANSLATION_PAYLOAD_TTL})`);
+    }
+    try {
+      AMQPChannel.publish('', env.TRANSLATOR_QUEUE, Buffer.from(payload), { correlationId: uid, replyTo: replyQueue, expiration: TRANSLATION_PAYLOAD_TTL, headers });
+      const confirmSpan = tracer.startSpan('amqp.waitForConfirms');
+      await AMQPChannel.waitForConfirms().finally(() => confirmSpan.end());
+      logger.info(`[RabbitMQ][${uid}] - Payload publicado`);
+    } catch (err) {
+      logger.error(`[RabbitMQ][${uid}] - Falha ao publicar payload: ${err.message}`);
+      publishSpan.recordException(err);
+      publishSpan.setStatus({ code: SpanStatusCode.ERROR, message: err.message });
+      if (!res.headersSent) {
+        responded = true;
+        res.status(500).send(TRANSLATOR_ERROR.translationError);
+      }
+      await cleanup();
+    } finally {
+      publishSpan.end();
+    }
+    handlerSpan.end();
   } catch (error) {
-    console.error(`[Fatal][${uid}] - Erro fatal na tradução:`, error.message);
+    logger.error(`[Fatal][${uid}] - ${error.message}`);
+    handlerSpan.recordException(error);
+    handlerSpan.setStatus({ code: SpanStatusCode.ERROR, message: error.message });
+    await cleanup();
+    handlerSpan.end();
     if (!res.headersSent) {
       return next(createError(500, TRANSLATOR_ERROR.translationError));
     }
   }
 };
 
-
-export {textTranslator, textTranslatorHealth};
+export { textTranslator, textTranslatorHealth };

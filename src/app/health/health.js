@@ -84,7 +84,7 @@ const health = async (req, res, content) => {
       queue: queue.status === 'up' ? 'up' : 'down',
       redis: redis.status === 'up' ? 'up' : 'down',
       consumerCount: queueConsumerCount,
-      versionTranslate: content.version || "No content available", 
+      versionTranslate: content?.version ?? "No content available",
     };
 
     res.status(200).json(response);
@@ -96,7 +96,7 @@ const health = async (req, res, content) => {
       queue: 'down',
       redis: 'down',
       consumerCount: 0,
-      versionTranslate: content.version || "No content available",  
+      versionTranslate: content?.version ?? "No content available", 
     };
     res.status(500).json(response);
   }

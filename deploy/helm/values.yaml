@@ -45,7 +45,7 @@ global:
   
 
 tradapi:
-  replicaCount: 6
+  replicaCount: 2
   image:
     # repository: "registry.sisp.gov.br/vlibras/vlibras-translator-service/vlibras-translator-api"
     # tag: ""
@@ -56,10 +56,20 @@ tradapi:
   pullPolicy: Always
 
   appConfig:
-    LOGGER_FORMAT: 'production' #dev or production
+    LOGGER_FORMAT: 'tiny' #dev or production
     PORT: '80'
     AMQP_PROTOCOL: 'amqp'
-
+    OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: http://otel-collector-opentelemetry-collector.monitoring.svc.cluster.local:4317
+    OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector-opentelemetry-collector.monitoring.svc.cluster.local:4317
+    OTEL_SERVICE_NAME: vlibras-translator-api
+    OTEL_EXPORTER_OTLP_TRACES_PROTOCOL: grpc
+    OTEL_RESOURCE_ATTRIBUTES: service.version=1.0.0,deployment.environment=production
+    OTEL_TRACES_SAMPLER: always_on
+    OTEL_PROPAGATORS: tracecontext,baggage
+    OTEL_EXPORTER_OTLP_TRACES_TIMEOUT: 10s
+    OTEL_EXPORTER_OTLP_TRACES_COMPRESSION: gzip
+    OTEL_LOG_LEVEL: warn
+    OTEL_SEMCONV_STABILITY_OPT_IN: messaging/dup
 
   secrets:
     # The existingSecret field is more like a boolean. 
@@ -91,8 +101,8 @@ tradapi:
   ##
   livenessProbe:
     enabled: true
-    initialDelaySeconds: 60
-    periodSeconds: 1
+    initialDelaySeconds: 10
+    periodSeconds: 20
     timeoutSeconds: 5
     failureThreshold: 3
     successThreshold: 1
@@ -105,7 +115,7 @@ tradapi:
   ##
   readinessProbe:
     enabled: true
-    initialDelaySeconds: 30
+    initialDelaySeconds: 5
     periodSeconds: 10
     timeoutSeconds: 1
     failureThreshold: 3
@@ -119,8 +129,8 @@ tradapi:
   ## @param startupProbe.successThreshold Success threshold for startupProbe
   ##
   startupProbe:
-    enabled: false
-    initialDelaySeconds: 45
+    enabled: true
+    initialDelaySeconds: 0
     periodSeconds: 5
     timeoutSeconds: 1
     failureThreshold: 60

@@ -52,18 +52,24 @@ spec:
               protocol: TCP
           {{- if .Values.tradapi.startupProbe.enabled }}
           startupProbe: {{- omit .Values.tradapi.startupProbe "enabled" | toYaml | nindent 12 }}
-            tcpSocket:
+            httpGet:
+              path: /healthcheck
               port: {{ .Values.tradapi.service.port }}
+              scheme: HTTP
           {{- end }}
           {{- if .Values.tradapi.livenessProbe.enabled }}
           livenessProbe: {{- omit .Values.tradapi.livenessProbe "enabled" | toYaml | nindent 12 }}
-            tcpSocket:
+            httpGet:
+              path: /healthcheck
               port: {{ .Values.tradapi.service.port }}
+              scheme: HTTP
           {{- end }}
           {{- if .Values.tradapi.readinessProbe.enabled }}
           readinessProbe: {{- omit .Values.tradapi.readinessProbe "enabled" | toYaml | nindent 12 }}
-            tcpSocket:
+            httpGet:
+              path: /healthcheck
               port: {{ .Values.tradapi.service.port }}
+              scheme: HTTP
           {{- end }}
           resources:
             {{- toYaml .Values.tradapi.resources | nindent 12 }}

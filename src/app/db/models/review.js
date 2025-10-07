@@ -2,23 +2,30 @@ import { Model, DataTypes } from 'sequelize';
 
 export default (sequelize) => {
   class Review extends Model {
-    /**
-     * Helper method for defining associations.
-     * This method is not a part of Sequelize lifecycle.
-     * The `models/index` file will call this method automatically.
-     */
     static associate(models) {
-      // define association here
+      models.Review.belongsTo(models.Translation, { foreignKey: 'translationId' });
     }
   }
-  Review.init({
-    translationId: DataTypes.INTEGER,
-    rating: DataTypes.BOOLEAN,
-    review: DataTypes.STRING(5000),
-    requester: DataTypes.STRING
-  }, {
-    sequelize,
-    modelName: 'Review',
-  });
+
+  Review.init(
+    {
+      translationId: { type: DataTypes.INTEGER, allowNull: false },
+      rating: { type: DataTypes.BOOLEAN, allowNull: false },
+      review: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+        validate: {
+          len: [0, 25000],
+        },
+      },
+      requester: { type: DataTypes.STRING(255), allowNull: true },
+    },
+    {
+      sequelize,
+      modelName: 'Review',
+      indexes: [{ fields: ['translationId'] }],
+    }
+  );
+
   return Review;
 };
