@@ -14,6 +14,7 @@ import {
 
 
 import phraseBreaker from '../util/phraseBreaker.js';
+import { testTranslation, testTranslationWithInference } from './textTranslation.js';
 
 /**
  * Asynchronous stores the statistics of the traslator at the DB.
@@ -268,5 +269,22 @@ const textTranslator = async function textTranslatorController(req, res, next) {
   }
 };
 
+const textTranslatorTest = async (req, res, next) => {
+  try {
+    const { text } = req.body;
 
-export {textTranslator, textTranslatorHealth};
+    if (!text) {
+      return res.status(400).json({ error: 'O campo "text" é obrigatório' });
+    }
+
+    const result = await testTranslationWithInference(text);
+
+    return res.status(200).json(result);
+  } catch (error) {
+    console.error('Erro ao simular tradução:', error);
+    return res.status(500).json({ error: 'Erro interno ao simular tradução' });
+  }
+};
+
+
+export {textTranslator, textTranslatorHealth, textTranslatorTest};
