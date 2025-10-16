@@ -1,10 +1,11 @@
 import { Router } from 'express';
+import { healthLimiter } from '../middlewares/rateLimiter.js';
 import health from './health.js';
 import { textTranslatorHealth } from '../translator/textTranslator.js';
 
 const healthRouter = Router();
 
-healthRouter.get('/health', async (req, res, next) => {
+healthRouter.get('/health', healthLimiter, async (req, res, next) => {
     try {
         req.body = { text: "Ola mundo da vida" };
 

@@ -7,6 +7,7 @@ import compression from 'compression';
 import helmet from 'helmet';
 
 import env from '../config/environments/environment.js';
+import { generalLimiter } from './middlewares/rateLimiter.js';
 
 import apiDocRoute from './doc/apiDocRoute.js';
 import reviewRoute from './review/translationReviewRoute.js';
@@ -24,6 +25,7 @@ app.use(logger(env.LOGGER_FORMAT || 'combined'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
+app.use(generalLimiter);
 app.use(attachUid)
 
 app.use('/', apiDocRoute);

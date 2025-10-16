@@ -4,10 +4,10 @@ import { REVIEW_ERROR } from '../../config/error.js';
 
 
 function isAllUpper(str) {
-    return typeof str === 'string'
-      && str.trim().length > 0
-      && /[\p{Lu}]/u.test(str)
-      && !/[\p{Ll}]/u.test(str);
+  return typeof str === 'string'
+    && str.trim().length > 0
+    && /[\p{Lu}]/u.test(str)
+    && !/[\p{Ll}]/u.test(str);
 }
 
 function normalizeForCompare(str) {
@@ -36,69 +36,90 @@ function levenshtein(a, b) {
   }
   return dp[n];
 }
+
 function similarity(a, b) {
   const maxLen = Math.max(a.length, b.length);
   if (maxLen === 0) return 1;
   return 1 - (levenshtein(a, b) / maxLen);
 }
 
-export function validateTranslationReviewSecure(opts = {}) {
-    const { 
-      minSimilarity = 0.5,  
-      maxSimilarity = 0.99, 
-      maxLength = 5000 
-    } = opts;
-  
-    return function (req, res, next) {
-      try {
-        const { translation: tRaw, review: rRaw } = req.body;
-        const problems = [];
-  
-        if (typeof tRaw !== 'string' || !tRaw.trim()) {
-          problems.push('translation-invalid');
-        }
-        if (typeof rRaw !== 'string' || !rRaw.trim()) {
-          problems.push('review-invalid');
-        }
-  
-        if (problems.length === 0) {
-          if (!isAllUpper(tRaw) || !isAllUpper(rRaw)) {
-            problems.push('not-uppercase');
-          }
-          
-          if (tRaw.length > maxLength || rRaw.length > maxLength) {
-            problems.push('too-long');
-          }
-  
-          if (problems.length === 0) {
-            const t = normalizeForCompare(tRaw);
-            const r = normalizeForCompare(rRaw);
-            const sim = similarity(t, r);
-  
-            if (sim < minSimilarity) {
-              problems.push('too-different');
-            } else if (sim > maxSimilarity) {
-              problems.push('too-similar'); 
-            }
-          }
-        }
-  
-        if (problems.length > 0) {
-          serverInfo(
-            `[validateTranslationReviewSecure] validation failed - ` +
-            `IP=${req.ip || req.headers['x-forwarded-for'] || 'unknown'}, ` +
-            `reasons=${problems.join(',')}`
-          );
 
-          const publicMsg = REVIEW_ERROR?.reviewError || 'Requisição inválida.';
-          return next(createError(400, publicMsg));
-        }
-  
-        next();
-      } catch (e) {
-        serverError(`[validateTranslationReviewSecure] exception: ${e.message}`);
-        const publicMsg = REVIEW_ERROR?.reviewError || 'Requisição inválida.';
-        next(createError(400, publicMsg));
+export function validateTranslationReviewSecure(opts = {}) {
+  const {
+    minSimilarity = 0.5,
+    maxSimilarity = 0.95,
+    maxLength = 5000
+  } = opts;
+
+  return function (req, res, next) {
+    try {
+      const { translation: tRaw, review: rRaw, rating } = req.body;
+      const problems = [];
+
+      if (typeof tRaw !== 'string' || !tRaw.trim()) {
+        problems.push('translation-missing');
       }
-    };
-  }
+
+      if (rating === 'bad') {
+        if (typeof rRaw !== 'string' || !rRaw.trim()) {
+          problems.push('review-required-for-bad-rating');
+          serverInfo(
+            `[validateTranslationReview] Review required when rating is 'bad' - ` +
+            `IP=${req.ip || req.headers['x-forwarded-for'] || 'unknown'}`
+          );
+          return next(createError(400, 'Review is required when rating is bad.'));
+        }
+      } else {
+        return next();
+      }
+
+      if (problems.length === 0) {
+        if (!isAllUpper(tRaw) || !isAllUpper(rRaw)) {
+          problems.push('not-uppercase');
+        }
+
+        if (tRaw.length > maxLength || rRaw.length > maxLength) {
+          problems.push('too-long');
+        }
+
+        if (problems.length === 0) {
+          const t = normalizeForCompare(tRaw);
+          const r = normalizeForCompare(rRaw);
+          const sim = similarity(t, r);
+
+          if (sim < minSimilarity) {
+            problems.push('suggestion-too-different');
+            serverInfo(
+              `[validateTranslationReview] Suggestion too different - ` +
+              `similarity=${sim.toFixed(2)}, min=${minSimilarity}`
+            );
+          }
+          else if (sim > maxSimilarity) {
+            problems.push('suggestion-too-similar');
+            serverInfo(
+              `[validateTranslationReview] Suggestion too similar - ` +
+              `similarity=${sim.toFixed(2)}, max=${maxSimilarity}`
+            );
+          }
+        }
+      }
+
+      if (problems.length > 0) {
+        serverInfo(
+          `[validateTranslationReview] validation failed - ` +
+          `IP=${req.ip || req.headers['x-forwarded-for'] || 'unknown'}, ` +
+          `reasons=${problems.join(',')}`
+        );
+
+        const publicMsg = REVIEW_ERROR?.reviewError || 'Invalid suggestion.';
+        return next(createError(400, publicMsg));
+      }
+
+      next();
+    } catch (e) {
+      serverError(`[validateTranslationReview] exception: ${e.message}`);
+      const publicMsg = REVIEW_ERROR?.reviewError || 'Invalid suggestion.';
+      next(createError(400, publicMsg));
+    }
+  };
+}
