@@ -14,6 +14,7 @@ import {
 
 
 import phraseBreaker from '../util/phraseBreaker.js';
+import sentimentAnalyzer from '../util/sentimentAnalyzer.js';
 
 /**
  * Asynchronous stores the statistics of the traslator at the DB.
@@ -237,4 +238,103 @@ const textTranslator = async function textTranslatorController(req, res, next) {
   }
 };
 
-export default textTranslator;
+const sentimentTranslator = async function sentimentTranslatorController(req, res, next) {
+  try {
+    const uid = uuid();
+    const AMQPConnection = await queueConnection();
+    const AMQPChannel = await AMQPConnection.createChannel();
+
+    const { consumerCount } = await AMQPChannel.assertQueue(env.TRANSLATOR_QUEUE, { durable: false });
+
+    if (consumerCount === 0) {
+      try { AMQPChannel.close(); } catch {}
+      return next(createError(500, TRANSLATOR_ERROR.unavailable));
+    }
+
+    AMQPChannel.consume(
+      env.API_CONSUMER_QUEUE,
+      async (message) => {
+        setTimeout(() => {
+          try { AMQPChannel.close(); } catch {}
+        }, CHANNEL_CLOSE_TIMEOUT);
+
+        try {
+          if (message.properties.correlationId !== uid) return;
+
+          const content = JSON.parse(message.content.toString());
+          if (content.error) return next(createError(500, content.error));
+
+          const translatedText = content.translation;
+
+          const sentences = await phraseBreaker(translatedText);
+
+          const sentimentResults = [];
+          for (const sentence of sentences) {
+            const sentimento = await sentimentAnalyzer(sentence);
+            sentimentResults.push({ traducao: sentence, sentimento });
+          }
+
+          const counts = sentimentResults.reduce((acc, s) => {
+            acc[s.sentimento] = (acc[s.sentimento] || 0) + 1;
+            return acc;
+          }, {});
+
+          const sentimentoGeral = Object.entries(counts).reduce(
+            (a, b) => (b[1] > a[1] ? b : a),
+            ['', 0]
+          )[0] || 'neutro';
+
+          const responsePayload = {
+            traducao: translatedText,
+            sentimentoGeral,
+            sentimentoPorSentenca: sentimentResults,
+          };
+
+          if (!res.headersSent) res.status(200).json(responsePayload);
+
+          if (req.body.textHash) {
+            try {
+              const redisClient = await redisConnection();
+              await redisClient.set(
+                req.body.textHash,
+                JSON.stringify(responsePayload),
+                'EX',
+                env.CACHE_EXP,
+              );
+            } catch (error) {
+              cacheError(`SET ${error.message}`);
+            }
+          }
+        } catch (error) {
+          serverError(error.message);
+        }
+      },
+      { noAck: true },
+    );
+
+    setTimeout(() => {
+      if (!res.headersSent) {
+        try { AMQPChannel.close(); } catch {}
+        return next(createError(408, TRANSLATOR_ERROR.timeout));
+      }
+    }, TRANSLATION_TIMEOUT);
+
+    const payload = JSON.stringify({ text: req.body.text });
+    await AMQPChannel.publish(
+      '',
+      env.TRANSLATOR_QUEUE,
+      Buffer.from(payload),
+      {
+        correlationId: uid,
+        replyTo: env.API_CONSUMER_QUEUE,
+        expiration: TRANSLATION_PAYLOAD_TTL,
+      },
+    );
+  } catch (error) {
+    if (!res.headersSent)
+      return next(createError(500, TRANSLATOR_ERROR.translationError));
+  }
+};
+
+
+export default { textTranslator, textTranslatorHealth, sentimentTranslator };
