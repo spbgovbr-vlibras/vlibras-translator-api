@@ -241,37 +241,80 @@ const textTranslator = async function textTranslatorController(req, res, next) {
 const sentimentTranslator = async function sentimentTranslatorController(req, res, next) {
   try {
     const uid = uuid();
-    const AMQPConnection = await queueConnection();
-    const AMQPChannel = await AMQPConnection.createChannel();
+    console.log(`[DEBUG] Gerando UID da requisição: ${uid}`);
 
-    const { consumerCount } = await AMQPChannel.assertQueue(env.TRANSLATOR_QUEUE, { durable: false });
+    const AMQPConnection = await queueConnection();
+    console.log('[DEBUG] Conexão AMQP criada');
+
+    const AMQPChannel = await AMQPConnection.createChannel();
+    console.log('[DEBUG] Canal AMQP criado');
+
+    const { consumerCount } = await AMQPChannel.assertQueue(
+      env.TRANSLATOR_QUEUE,
+      { durable: false },
+    );
+    console.log(`[DEBUG] Fila ${env.TRANSLATOR_QUEUE} possui ${consumerCount} consumidores`);
 
     if (consumerCount === 0) {
       try { AMQPChannel.close(); } catch {}
+      console.error('[ERROR] Nenhum consumidor disponível na fila de tradução');
       return next(createError(500, TRANSLATOR_ERROR.unavailable));
     }
 
+    setTimeout(storeStats, 10, req);
+
+    const translation = db.Translation.build({
+      text: req.body.text,
+      requester: req.headers['x-forwarded-for'] || req.connection.remoteAddress,
+    });
+    console.log('[DEBUG] Registro de tradução criado no banco');
+
+    // Consumidor
     AMQPChannel.consume(
       env.API_CONSUMER_QUEUE,
       async (message) => {
+        console.log('[DEBUG] Mensagem recebida do worker');
         setTimeout(() => {
           try { AMQPChannel.close(); } catch {}
         }, CHANNEL_CLOSE_TIMEOUT);
 
         try {
-          if (message.properties.correlationId !== uid) return;
+          console.log('[DEBUG] CorrelationId da mensagem:', message.properties.correlationId);
+          if (message.properties.correlationId !== uid) {
+            console.warn('[WARN] CorrelationId não confere');
+            if (!res.headersSent)
+              return next(createError(500, TRANSLATOR_ERROR.wrongResponse));
+            else return undefined;
+          }
 
           const content = JSON.parse(message.content.toString());
-          if (content.error) return next(createError(500, content.error));
+          console.log('[DEBUG] Conteúdo da mensagem:', content);
+
+          if (content.error !== undefined) {
+            console.error('[ERROR] Worker retornou erro:', content.error);
+            if (!res.headersSent)
+              return next(createError(500, content.error));
+            return undefined;
+          }
 
           const translatedText = content.translation;
+          console.log('[DEBUG] Texto traduzido recebido');
 
+          // ---- Parte dos sentimentos ----
           const sentences = await phraseBreaker(translatedText);
+          console.log(`[DEBUG] ${sentences.length} frases quebradas`);
 
           const sentimentResults = [];
+
           for (const sentence of sentences) {
-            const sentimento = await sentimentAnalyzer(sentence);
-            sentimentResults.push({ traducao: sentence, sentimento });
+            try {
+              const sentimento = await sentimentAnalyzer(sentence);
+              sentimentResults.push({ traducao: sentence, sentimento });
+              console.log(`[DEBUG] Sentimento da frase "${sentence}": ${sentimento}`);
+            } catch (err) {
+              sentimentResults.push({ traducao: sentence, sentimento: 'erro' });
+              console.error('[ERROR] Erro ao analisar sentimento:', err.message);
+            }
           }
 
           const counts = sentimentResults.reduce((acc, s) => {
@@ -289,9 +332,14 @@ const sentimentTranslator = async function sentimentTranslatorController(req, re
             sentimentoGeral,
             sentimentoPorSentenca: sentimentResults,
           };
+          // ---- Fim da parte dos sentimentos ----
 
-          if (!res.headersSent) res.status(200).json(responsePayload);
+          if (!res.headersSent) {
+            console.log('[DEBUG] Enviando resposta HTTP');
+            res.status(200).json(responsePayload);
+          }
 
+          // Cache no Redis
           if (req.body.textHash) {
             try {
               const redisClient = await redisConnection();
@@ -301,13 +349,22 @@ const sentimentTranslator = async function sentimentTranslatorController(req, re
                 'EX',
                 env.CACHE_EXP,
               );
+              console.log('[DEBUG] Payload armazenado no Redis com sucesso');
             } catch (error) {
+              console.error('[ERROR] Falha ao salvar no Redis:', error.message);
               cacheError(`SET ${error.message}`);
             }
           }
+
+          translation.set({ translation: translatedText });
+          await translation.save();
+          console.log('[DEBUG] Tradução salva no banco');
         } catch (error) {
-          serverError(error.message);
+          console.error('[ERROR] Erro no processamento da tradução/sentimento:', error.message);
+          serverError(`Erro no processamento da tradução/sentimento: ${error.message}`);
         }
+
+        return undefined;
       },
       { noAck: true },
     );
@@ -315,11 +372,15 @@ const sentimentTranslator = async function sentimentTranslatorController(req, re
     setTimeout(() => {
       if (!res.headersSent) {
         try { AMQPChannel.close(); } catch {}
+        console.error('[ERROR] Timeout atingido sem resposta do worker');
         return next(createError(408, TRANSLATOR_ERROR.timeout));
       }
+      return undefined;
     }, TRANSLATION_TIMEOUT);
 
     const payload = JSON.stringify({ text: req.body.text });
+    console.log('[DEBUG] Publicando payload na fila de tradução');
+
     await AMQPChannel.publish(
       '',
       env.TRANSLATOR_QUEUE,
@@ -330,11 +391,14 @@ const sentimentTranslator = async function sentimentTranslatorController(req, re
         expiration: TRANSLATION_PAYLOAD_TTL,
       },
     );
+
+    return await translation.save();
   } catch (error) {
+    console.error('[ERROR] Erro no sentimentTranslator:', error.message);
     if (!res.headersSent)
       return next(createError(500, TRANSLATOR_ERROR.translationError));
   }
 };
 
 
-export default { textTranslator, textTranslatorHealth, sentimentTranslator };
+export { textTranslator, textTranslatorHealth, sentimentTranslator };
