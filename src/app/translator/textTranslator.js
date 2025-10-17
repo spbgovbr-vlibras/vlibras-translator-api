@@ -14,6 +14,7 @@ import {
 
 
 import phraseBreaker from '../util/phraseBreaker.js';
+import sentimentPhraseBreaker from '../util/sentimentPhraseBreaker.js';
 import sentimentAnalyzer from '../util/sentimentAnalyzer.js';
 
 /**
@@ -301,7 +302,7 @@ const sentimentTranslator = async function sentimentTranslatorController(req, re
           console.log('[DEBUG] Texto traduzido recebido');
 
           // ---- Parte dos sentimentos ----
-          const sentences = await phraseBreaker(translatedText);
+          const sentences = await sentimentPhraseBreaker(translatedText);
           console.log(`[DEBUG] ${sentences.length} frases quebradas`);
 
           const sentimentResults = [];
