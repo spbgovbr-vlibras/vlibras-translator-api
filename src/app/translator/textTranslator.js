@@ -54,8 +54,8 @@ const storeStats = async function storeStatsController(req) {
 }
 
 const textTranslatorHealth = async function textTranslatorController(req, res, next) {
+  const uid = req.uid;
   try {
-    const uid = uuid();
     const AMQPConnection = await queueConnection();
     const AMQPChannel = await AMQPConnection.createChannel();
 
@@ -129,95 +129,121 @@ const textTranslatorHealth = async function textTranslatorController(req, res, n
 };
 
 const textTranslator = async function textTranslatorController(req, res, next) {
+  const uid = req.uid;
   try {
-    const uid = uuid();
     const AMQPConnection = await queueConnection();
-    const AMQPChannel = await AMQPConnection.createChannel();
+    console.log('[TextTranslator] - Processando requisição:', uid)
+    console.log(`[RabbitMQ][${uid}] - Conectado com sucesso`);
 
-    const { consumerCount } = await AMQPChannel.assertQueue(
-      env.TRANSLATOR_QUEUE,
-      { durable: false },
-    );
+    const AMQPChannel = await AMQPConnection.createChannel();
+    console.log(`[RabbitMQ][${uid}] - Canal criado`);
+
+    const { consumerCount } = await AMQPChannel.assertQueue(env.TRANSLATOR_QUEUE, { durable: false });
+    console.log(`[RabbitMQ][${uid}] - Fila "${env.TRANSLATOR_QUEUE}" verificada. Consumers ativos: ${consumerCount}`);
 
     if (consumerCount === 0) {
+      console.warn(`[RabbitMQ][${uid}] -  Nenhum consumidor disponível na fila "${env.TRANSLATOR_QUEUE}"`);
       try {
-        AMQPChannel.close();
-      } catch (channelAlreadyClosedError) { /* empty */ }
-      
+        await AMQPChannel.close();
+        console.log(`[RabbitMQ][${uid}] - Canal fechado após ausência de consumidores`);
+      } catch (err) {
+        console.warn(`[RabbitMQ][${uid}] - Erro ao tentar fechar canal:`, err.message);
+      }
       return next(createError(500, TRANSLATOR_ERROR.unavailable));
     }
 
-    setTimeout(storeStats, 10, req); // 10miliseconds means now.
+    console.log(`[Translator][${uid}] - Coleta de estatísticas agendada`);
 
+    const requesterIp = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
     const translation = db.Translation.build({
       text: req.body.text,
-      requester: req.headers['x-forwarded-for'] || req.connection.remoteAddress,
-    })
+      requester: requesterIp,
+    });
+    console.log(`[DB][${uid}] - Instância de tradução criada. Texto: "${req.body.text}" | IP: ${requesterIp}`);
 
     AMQPChannel.consume(
       env.API_CONSUMER_QUEUE,
       async (message) => {
+        console.log(`[RabbitMQ][${uid}] - Mensagem recebida na fila de resposta`);
+
         setTimeout(() => {
           try {
             AMQPChannel.close();
-          } catch (channelAlreadyClosedError) { /* empty */ }
+            console.log(`[RabbitMQ][${uid}] - Canal fechado após consumo da resposta`);
+          } catch (err) {
+            console.warn(`[RabbitMQ][${uid}] - Canal já estava fechado (timeout)`);
+          }
         }, CHANNEL_CLOSE_TIMEOUT);
 
         try {
-          if (message.properties.correlationId !== uid ) {
-            if(!res.headersSent)
+          const correlationId = message.properties.correlationId;
+          if (correlationId !== uid) {
+            console.error(`[RabbitMQ][${uid}] - correlationId inválido. Esperado: ${uid}, recebido: ${correlationId}`);
+            if (!res.headersSent)
               return next(createError(500, TRANSLATOR_ERROR.wrongResponse));
-            else
-              return undefined
+            return;
           }
-  
+
           const content = JSON.parse(message.content.toString());
-         
+          console.log(`[RabbitMQ][${uid}] - Conteúdo recebido do worker:`, content);
+
           if (content.error !== undefined) {
-            if(!res.headersSent)
+            console.error(`[RabbitMQ][${uid}] - Erro retornado do worker:`, content.error);
+            if (!res.headersSent)
               return next(createError(500, content.error));
-            return undefined
+            return;
           }
-  
-          if(!res.headersSent)
+
+          if (!res.headersSent) {
             res.status(200).send(content.translation);
-  
+            console.log(`[Express][${uid}] - Resposta enviada ao cliente:`, content.translation);
+          }
+
           if (req.body.textHash) {
             try {
               const redisClient = await redisConnection();
+              console.log(`[Redis][${uid}] - Conexão com Redis estabelecida`);
               await redisClient.set(
                 req.body.textHash,
                 content.translation,
                 'EX',
-                env.CACHE_EXP,
+                env.CACHE_EXP
               );
-            } catch (error) {
-              cacheError(`SET ${error.message}`);
+              console.log(`[Redis][${uid}] - Tradução armazenada com chave "${req.body.textHash}" por ${env.CACHE_EXP} segundos`);
+            } catch (redisErr) {
+              console.error(`[Redis][${uid}] - Falha ao conectar ou setar cache:`, redisErr.message);
+              cacheError(`SET ${redisErr.message}`);
             }
           }
 
           translation.set({ translation: content.translation });
           await translation.save();
-        } catch (error) {
-          serverError(error.message)
+          console.log(`[DB][${uid}] - Tradução salva no banco de dados`);
+        } catch (err) {
+          console.error(`[Translator][${uid}] - Erro ao processar a mensagem:`, err.message);
+          serverError(err.message);
         }
-       
-        return undefined;
       },
       { noAck: true },
     );
 
+    console.log(`[RabbitMQ][${uid}] - Consumidor registrado na fila "${env.API_CONSUMER_QUEUE}"`);
+
     setTimeout(() => {
+      console.log(`[Timeout][${uid}] - Timeout atingido após ${TRANSLATION_TIMEOUT}ms`);
       if (!res.headersSent) {
         try {
           AMQPChannel.close();
-        } catch (channelAlreadyClosedError) { /* empty */ }
+        } catch (err) {
+          console.warn(`[Timeout][${uid}] - Falha ao fechar canal após timeout:`, err.message);
+        }
         return next(createError(408, TRANSLATOR_ERROR.timeout));
       }
-      return undefined;
     }, TRANSLATION_TIMEOUT);
+    console.log(`[Timeout][${uid}] - Timeout programado para ${TRANSLATION_TIMEOUT}ms`);
 
     const payload = JSON.stringify({ text: req.body.text });
+    console.log(`[RabbitMQ][${uid}] - Publicando payload:`, payload);
 
     await AMQPChannel.publish(
       '',
@@ -229,12 +255,18 @@ const textTranslator = async function textTranslatorController(req, res, next) {
         expiration: TRANSLATION_PAYLOAD_TTL,
       },
     );
-    return await translation.save();
+    console.log(`[RabbitMQ][${uid}] - Payload publicado na fila "${env.TRANSLATOR_QUEUE}" com TTL ${TRANSLATION_PAYLOAD_TTL}ms`);
+
+    await translation.save();
+    console.log(`[DB][${uid}] - Registro salvo inicialmente no banco para log`);
+
   } catch (error) {
-    if (!res.headersSent)
-      // TODO: refact this code before commit on prod
-      return next(createError(500,TRANSLATOR_ERROR.translationError));
+    console.error(`[Fatal][${uid}] - Erro fatal na tradução:`, error.message);
+    if (!res.headersSent) {
+      return next(createError(500, TRANSLATOR_ERROR.translationError));
+    }
   }
 };
 
-export default textTranslator;
+
+export {textTranslator, textTranslatorHealth};

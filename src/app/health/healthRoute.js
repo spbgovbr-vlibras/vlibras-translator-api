@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import health from './health.js';
-import textTranslatorHealth from '../translator/textTranslator.js';
+import { textTranslatorHealth } from '../translator/textTranslator.js';
 
 const healthRouter = Router();
 

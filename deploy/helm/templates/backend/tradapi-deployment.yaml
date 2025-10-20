@@ -1,0 +1,82 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "tradapi.fullname" . }}
+  labels:
+    {{ include "tradapi.labels" . | indent 4 }}
+spec:
+  replicas: {{ .Values.tradapi.replicaCount }}
+  selector:
+    matchLabels:
+      {{ include "tradapi.labels" . | indent 8 }}
+  template:
+    metadata:
+      annotations:
+        date: {{ now | quote }}
+        {{- with .Values.tradapi.annotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      labels:
+        {{ include "tradapi.labels" . | indent 12 }}
+        {{- with .Values.tradapi.labels }}
+        {{- toYaml . | nindent 12 }}
+        {{- end }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        {{- toYaml .Values.tradapi.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ template "tradapi.fullname" . }}
+          securityContext:
+            {{- toYaml .Values.tradapi.securityContext | nindent 12 }}
+          image: "{{ .Values.tradapi.image.repository }}:{{ .Values.tradapi.image.tag }}"
+          imagePullPolicy: {{ .Values.tradapi.pullPolicy }}
+          envFrom:
+            - configMapRef:
+                name: {{ include "tradapi.fullname" . }}-app-config
+            - secretRef:
+                name: {{ if .Values.tradapi.secrets.existingSecret }}{{ .Values.tradapi.secrets.existingSecret }}{{- else }}{{ include "tradapi.fullname" . }}-app-secret{{- end }}
+            - secretRef:
+                name: {{ include "tradapiGetPostgresSecretName" . }}
+            - secretRef:
+                name: {{ include "tradapiGetRedisSecretName" . }}
+            - secretRef:
+                name: {{ include "tradapiGetAmqpSecretName" . }}                
+          tty: true
+          ports:
+            - name: http
+              containerPort: {{ .Values.tradapi.service.port }}
+              protocol: TCP
+          {{- if .Values.tradapi.startupProbe.enabled }}
+          startupProbe: {{- omit .Values.tradapi.startupProbe "enabled" | toYaml | nindent 12 }}
+            tcpSocket:
+              port: {{ .Values.tradapi.service.port }}
+          {{- end }}
+          {{- if .Values.tradapi.livenessProbe.enabled }}
+          livenessProbe: {{- omit .Values.tradapi.livenessProbe "enabled" | toYaml | nindent 12 }}
+            tcpSocket:
+              port: {{ .Values.tradapi.service.port }}
+          {{- end }}
+          {{- if .Values.tradapi.readinessProbe.enabled }}
+          readinessProbe: {{- omit .Values.tradapi.readinessProbe "enabled" | toYaml | nindent 12 }}
+            tcpSocket:
+              port: {{ .Values.tradapi.service.port }}
+          {{- end }}
+          resources:
+            {{- toYaml .Values.tradapi.resources | nindent 12 }}
+      {{- with .Values.tradapi.nodeSelector }}
+      nodeSelector:
+{{ toYaml . | indent 8 }}
+      {{- end }}
+      {{- with .Values.tradapi.affinity }}
+      affinity:
+{{ toYaml . | indent 8 }}
+      {{- end }}
+      {{- with .Values.tradapi.tolerations }}
+      tolerations:
+{{ toYaml . | indent 8 }}
+      {{- end }}
+

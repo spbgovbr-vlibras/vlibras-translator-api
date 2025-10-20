@@ -1,0 +1,49 @@
+###############################################################
+# Notas sobre a implantacao da aplicacao
+###############################################################
+
+1. Informacoes da Aplicacao:
+
+   O Translator-Api referi-se a fachada do backend de traducao de Portugues para Glosas(Libras). 
+   Para o pleno funcionamento do tradutor, certifique-se que o core de traducao esteja configurado e possa se comunicar com o backend.
+   Esta comunicacao se faz atraves de filas assincronas (AMQP), Cache de requisicoes (Redis) e banco sql (Postgres).
+   As variaveis associadas a esses servicos devem ter os mesmos valores para ambos os servicos
+
+   - Nome da aplicacao: {{ .Chart.Name }}
+   - Versao: {{ .Chart.Version }}
+   - Nome da release: {{ .Release.Name }}
+   - Namespace: {{ .Release.Namespace }}
+
+2. Como acessar a aplicacao:
+   {{- if eq $.Values.tradapi.service.type "LoadBalancer" }}
+   - A aplicacao esta exposta via LoadBalancer:
+     (Pode levar alguns minutos para o IP do LoadBalancer ser provisionado. Use o seguinte comando para verificar o IP:
+     kubectl get svc --namespace {{ .Release.Namespace }} -o wide)
+  {{- else if eq .Values.tradapi.service.type "NodePort" }}
+   - A aplicacao esta exposta via NodePort:
+     NodePort: {{ .Values.tradapi.service.nodePort }}
+     Use o IP de qualquer no do cluster com o NodePort para acessar a aplicacao:
+     URL: http://<Node-IP>:{{ .Values.tradapi.service.nodePort }}
+   {{- else }}
+   - A aplicacao esta exposta via ClusterIP:
+     URL: http://<Cluster-IP>:{{ .Values.tradapi.service.port }}
+     (Acessivel apenas de dentro do cluster)
+   {{- end }}
+
+3. Visualizando logs:
+   Para visualizar os logs da API, execute:
+   kubectl logs -n {{ .Release.Namespace }} -l app.kubernetes.io/instance={{ .Release.Name }}
+
+4. Escalando a aplicacao:
+   Para escalar a aplicacao, execute:
+   kubectl scale deployment {{ include "tradapi.name" . }} --replicas=<quantidade-desejada> -n {{ .Release.Namespace }}
+
+5. Resolucao de problemas:
+   - Caso a aplicacao nao inicie, verifique os logs dos pods:
+     kubectl logs -n {{ .Release.Namespace }} -l app.kubernetes.io/instance={{ .Release.Name }}
+   - Verifique os endpoints dos servicos:
+     kubectl get svc -n {{ .Release.Namespace }}
+
+6. Remocao:
+   Para excluir esta release, execute:
+   helm uninstall {{ .Release.Name }} -n {{ .Release.Namespace }}

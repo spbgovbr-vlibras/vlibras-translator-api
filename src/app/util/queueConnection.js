@@ -14,16 +14,35 @@ const connectionURL = {
 const queueConnection = async function AMQPQueueConnection() {
   try {
     if (AMQPConnection === undefined) {
+      console.log('[RabbitMQ] - Tentando conectar com RabbitMQ em:', connectionURL);
       AMQPConnection = await amqplib.connect(connectionURL);
+      console.log('[RabbitMQ] - Conexão estabelecida com RabbitMQ');
+
       AMQPConnection.on('close', () => {
-        AMQPConnection = undefined;    
+        console.warn('[RabbitMQ] - Conexão com RabbitMQ fechada');
+        AMQPConnection = undefined;
       });
+
+      AMQPConnection.on('error', (err) => {
+        console.error('[RabbitMQ] - Erro na conexão:', err.message);
+      });
+    } else {
+      console.log('[RabbitMQ] - Reutilizando conexão existente');
     }
     return AMQPConnection;
   } catch (error) {
-    serverError('Queue connection failed. Reason: ', error)
+    serverError('Queue connection failed. Reason: ', error);
+    console.error('[RabbitMQ] - Falha ao conectar com RabbitMQ:', error.message);
+
     if (AMQPConnection !== undefined) {
-      setTimeout(() => { AMQPConnection.close(); }, 500);
+      setTimeout(() => {
+        try {
+          AMQPConnection.close();
+          console.log('[RabbitMQ] - Conexão fechada após erro');
+        } catch (closeErr) {
+          console.warn('[RabbitMQ] - Erro ao fechar conexão após falha:', closeErr.message);
+        }
+      }, 500);
     }
     throw new Error(error);
   }
