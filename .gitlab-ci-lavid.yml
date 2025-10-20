@@ -1,0 +1,11 @@
+variables:
+  ARGO_APP: trad-api
+  ARGO_ENV: vlibras
+
+include:
+  # 🔹 Template padrão para branches dev
+  - project: 'vlibras2019/DevOps'
+    ref: main
+    file: '/Default-App-Pipeline-VLibras.gitlab-ci.yml'
+    rules:
+      - if: '$CI_COMMIT_REF_NAME == "dev"'
