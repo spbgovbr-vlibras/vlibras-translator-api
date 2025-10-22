@@ -1,7 +1,7 @@
 variables:
-  ARGO_APP: trad-api
-  ARGO_ENV: vlibras
+  APP_NAME: trad-api
   VALUES_LOCATION_EXTRA: "$VALUES_DEV"
+  APP_URL: traducao2-dth.vlibras.lavid.ufpb.br
 
 include:
   # 🔹 Template padrão para branches dev
