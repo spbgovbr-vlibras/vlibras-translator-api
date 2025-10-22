@@ -65,7 +65,7 @@ tradapi:
     enabled: true
     className: nginx
     host: traducao2-dth.vlibras.lavid.ufpb.br
-    name: vlibras-validator-ing
+    name: vlibras-tradapi-ing
     port: 80
     path: /
     pathType: Prefix
