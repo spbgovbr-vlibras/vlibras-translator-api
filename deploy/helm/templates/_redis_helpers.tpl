@@ -1,7 +1,7 @@
 {{- define "tradapiGetRedisCache" -}}
 {{- if and .Values.global .Values.global.redis .Values.global.redis.cachename (not .Values.externalServices.tradapi.redis.cachename) }}
   {{- .Values.global.redis.cachename -}}
-{{- else if .Values.externalServices.tradapi.redis.cachename -}}``
+{{- else if .Values.externalServices.tradapi.redis.cachename -}}
   {{- .Values.externalServices.tradapi.redis.cachename -}}
 {{- else if .Values.redis.cachename -}}
   {{- .Values.redis.cachename -}}

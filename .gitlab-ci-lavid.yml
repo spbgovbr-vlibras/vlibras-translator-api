@@ -1,6 +1,7 @@
 variables:
   ARGO_APP: trad-api
   ARGO_ENV: vlibras
+  VALUES_LOCATION_EXTRA: "$VALUES_DEV"
 
 include:
   # 🔹 Template padrão para branches dev

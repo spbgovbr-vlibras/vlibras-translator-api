@@ -1,7 +1,7 @@
 {{- define "tradapiGetPostgresDatabase" -}}
 {{- if and .Values.global .Values.global.postgresql .Values.global.postgresql.dbName (not .Values.externalServices.tradapi.postgresql.dbName) }}
   {{- .Values.global.postgresql.dbName -}}
-{{- else if .Values.externalServices.tradapi.postgresql.dbName -}}``
+{{- else if .Values.externalServices.tradapi.postgresql.dbName -}}
   {{- .Values.externalServices.tradapi.postgresql.dbName -}}
 {{- else if .Values.postgresql.auth.database -}}
   {{- .Values.postgresql.auth.database -}}
