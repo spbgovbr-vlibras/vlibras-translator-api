@@ -7,6 +7,7 @@ fullnameOverride: ""
 ## Labels to apply to all resources
 commonLabels: {}
 
+namespace: vlibras
 imagePullSecrets:
   - name: registrynuvem
 
@@ -59,6 +60,18 @@ tradapi:
     LOGGER_FORMAT: 'production' #dev or production
     PORT: '80'
     AMQP_PROTOCOL: 'amqp'
+  
+  ingress:
+    enabled: true
+    className: nginx
+    host: traducao2-dth.vlibras.lavid.ufpb.br
+    name: vlibras-tradapi-ing
+    port: 80
+    path: /
+    pathType: Prefix
+    secretName: kcert-tradapi
+    annotations: {} 
+
 
 
   secrets:
