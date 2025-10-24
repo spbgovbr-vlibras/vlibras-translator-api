@@ -1,11 +1,18 @@
-export default function sentimentPhraseBreaker(text) {
+export default function sentimentPhraseBreakerLibras(text) {
   if (!text || typeof text !== 'string') return [];
 
-  const trimmed = text.trim();
+  const textWithPunct = text
+    .replace(/\[PONTO\]/gi, '.')
+    .replace(/\[INTERROGACAO\]/gi, '?')
+    .replace(/\[EXCLAMACAO\]/gi, '!')
+    .replace(/\sMAS\s/gi, '. MAS ');
 
-  const regex = /(?<!\b(?:Dr|Sr|Sra|Prof|Ex)\.)(?<=\.|\!|\?)\s+/gi;
+  const regex = /(?<=\.|\!|\?)\s+/g;
+  const sentences = textWithPunct
+    .split(regex)
+    .map(s => s.replace(/[.!?]$/, '').trim()) 
+    .filter(s => s.length > 0);
 
-  const sentences = trimmed.split(regex).map(s => s.trim()).filter(s => s.length > 0);
-
+  console.log('[DEBUG] LIBRAS sentences:', sentences); 
   return sentences;
 }
