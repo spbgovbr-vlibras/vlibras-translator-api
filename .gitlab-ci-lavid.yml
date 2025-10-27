@@ -1,5 +1,5 @@
 variables:
-  APP_NAME: trad-api
+  APP_NAME: tradapi
   APP_URL: traducao2-dth.vlibras.lavid.ufpb.br
 
 include:
