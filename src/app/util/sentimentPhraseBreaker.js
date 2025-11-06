@@ -1,4 +1,4 @@
-export default function sentimentPhraseBreakerLibras(text) {
+export default function sentimentPhraseBreaker(text) {
   if (!text || typeof text !== 'string') return [];
 
   const textWithPunct = text
@@ -13,6 +13,5 @@ export default function sentimentPhraseBreakerLibras(text) {
     .map(s => s.replace(/[.!?]$/, '').trim()) 
     .filter(s => s.length > 0);
 
-  console.log('[DEBUG] LIBRAS sentences:', sentences); 
   return sentences;
 }

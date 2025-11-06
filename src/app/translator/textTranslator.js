@@ -273,26 +273,23 @@ const sentimentTranslator = async function sentimentTranslatorController(req, re
             }
 
             if (message.properties.correlationId !== uid) {
-              AMQPChannel.nack(message, false, false); // Rejeita mensagem errada sem requeue
+              AMQPChannel.nack(message, false, false); 
               return;
             }
 
             const content = JSON.parse(message.content.toString());
 
-            // Ack manual removido pois usamos noAck: true
-
             if (content.error !== undefined) {
               return reject(createError(500, content.error));
             }
 
-            const translatedText = content.translation || ''; // Garante que não seja undefined
+            const translatedText = content.translation || ''; 
 
             let sentimentAnalysisResult;
             try {
-              if (translatedText.length > 0) { // Só analisa se houver texto
-                sentimentAnalysisResult = await sentimentAnalyzer(translatedText);
+              if (translatedText.length > 0) {
+                sentimentAnalysisResult = await sentimentAnalyzer(req.body.text);
               } else {
-                // Se não houver tradução, define um resultado padrão
                 sentimentAnalysisResult = {
                     sentimentoGeral: 'neutro',
                     sentimentoPorSentenca: []

@@ -1,83 +1,154 @@
 import env from "../../config/environments/environment.js";
+import sentimentPhraseBreaker from "./sentimentPhraseBreaker.js";
+
+const emotionMapPT = {
+  happy: "Feliz",
+  sad: "Tristeza",
+  anger: "Raiva",
+  fear: "Medo",
+  surprise: "Surpresa",
+  neutral: "Neutro"
+};
 
 export default async function sentimentAnalyzer(fullText) {
-
-  const prompt = `Analise o texto a seguir, que está em formato de glossário LIBRAS.
-1. Identifique as sentenças ou cláusulas conceituais dentro do texto.
-2. Para CADA sentença/cláusula identificada, determine seu sentimento (feliz, medo, raiva, surpresa, tristeza ou neutro).
-3. Determine o sentimento GERAL predominante do texto completo.
-4. Retorne SOMENTE UM JSON VÁLIDO no seguinte formato, sem nenhum texto antes ou depois:
-{
-  "sentimentoGeral": "<sentimento_geral_predominante>",
-  "sentimentoPorSentenca": [
-    { "traducao": "<texto_da_primeira_sentenca_ou_clausula>", "sentimento": "<sentimento_da_primeira>" },
-    { "traducao": "<texto_da_segunda_sentenca_ou_clausula>", "sentimento": "<sentimento_da_segunda>" },
-    ...
-  ]
-}
-
-Texto a ser analisado: "${fullText}"`;
-
-  const API_KEY = env.API_KEY;
-
+  const API_KEY = env.DEEP_SEEK_API_KEY;
   if (!API_KEY) {
-    console.error("ERRO: A variável de ambiente API_KEY não está definida.");
-    throw new Error("ERRO_CONFIG: Chave da API Gemini não configurada.");
+    throw new Error("ERRO_CONFIG: Chave da API DeepSeek não configurada.");
   }
 
- const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent?key=${API_KEY}`;
+  const API_URL = "https://api.deepseek.com/v1/chat/completions";
+  const sentences = sentimentPhraseBreaker(fullText);
+
+  const systemPrompt = `
+# Persona and Objective
+You are an advanced AI model trained as a Textual Emotion Analyst. Your task is to receive a text and return a JSON object containing the single, most dominant emotion detected.
+
+## Valid Emotions
+- happy: Joy, satisfaction, contentment, euphoria, relief, pride
+- sad: Loss, sadness, disappointment, unhappiness, melancholy
+- fear: Anxiety, apprehension, dread, worry, terror
+- anger: Irritation, fury, frustration, indignation, annoyance
+- surprise: Reaction to something unexpected (positive, negative, or neutral)
+- neutral: Absence of clear emotion, purely informational text
+
+## Rules
+1. Identify **only the primary emotion** in the text.
+2. Consider context, subtext, irony, sarcasm, and linguistic nuances.
+3. Return strictly **a JSON object**, starting with { and ending with }.
+4. Do not include text outside the JSON or comments.
+
+## Examples
+
+### happy
+{"text": "I just got the news that I've been promoted! I can't stop smiling, what an amazing day!", "detected_emotions": ["happy"]}
+
+### sad
+{"text": "I just found out my childhood pet passed away. I can't stop crying.", "detected_emotions": ["sad"]}
+
+### anger
+{"text": "I can't believe he lied to me again! I'm boiling with anger and frustration.", "detected_emotions": ["anger"]}
+
+### fear
+{"text": "I have a big presentation tomorrow and I'm really nervous about speaking in front of everyone.", "detected_emotions": ["fear"]}
+
+### surprise
+{"text": "I had no idea you were all planning a party for me! I was completely shocked.", "detected_emotions": ["surprise"]}
+
+### neutral
+{"text": "The store is located at 123 Main Street.", "detected_emotions": ["neutral"]}
+`;
+
+  let sentimentoGeral = "Neutro";
 
   try {
-    const response = await fetch(API_URL, {
+    const safeFullText = fullText.normalize("NFC").replace(/\\/g, "\\\\").replace(/"/g, '\\"').replace(/\n/g, " ");
+    const payloadFull = {
+      model: "deepseek-chat",
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: `Identifique a emoção predominante neste texto completo: "${safeFullText}"` }
+      ],
+      temperature: 0
+    };
+
+    const responseFull = await fetch(API_URL, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        "Authorization": `Bearer ${API_KEY}`,
+        "Accept": "application/json"
       },
-      body: JSON.stringify({
-        contents: [{
-          parts: [{
-            text: prompt
-          }]
-        }],
-        generationConfig: {
-          "response_mime_type": "application/json",
-        }
-      }),
+      body: JSON.stringify(payloadFull)
     });
 
-    if (!response.ok) {
-        let errorBody = await response.text();
-        try { errorBody = JSON.parse(errorBody); } catch { /* Ignora */ }
-        console.error(`Erro HTTP da API Gemini: ${response.status} ${response.statusText}`, errorBody);
-        throw new Error(`ERRO_API: HTTP ${response.status}`);
+    if (!responseFull.ok) {
+      let errorBody = await responseFull.text();
+      try { errorBody = JSON.parse(errorBody); } catch { }
+      throw new Error(`ERRO_API: HTTP ${responseFull.status}`);
     }
 
-    const data = await response.json();
+    const dataFull = await responseFull.json();
+    const contentFull = dataFull?.choices?.[0]?.message?.content?.trim() || '{}';
 
-    if (data.error) {
-      console.error("A API Gemini retornou um erro lógico:", data.error.message);
-      throw new Error(`ERRO_API: ${data.error.message}`);
+    try {
+      const parsedFull = JSON.parse(contentFull);
+      if (parsedFull.detected_emotions && parsedFull.detected_emotions.length > 0) {
+        const emotionENFull = parsedFull.detected_emotions[0].toLowerCase();
+        sentimentoGeral = emotionMapPT[emotionENFull] || "Neutro";
+      }
+    } catch { }
+
+  } catch { }
+
+  const results = [];
+  for (const sentence of sentences) {
+    const safeSentence = sentence.normalize("NFC").replace(/\\/g, "\\\\").replace(/"/g, '\\"').replace(/\n/g, " ");
+    try {
+      const payloadSent = {
+        model: "deepseek-chat",
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: `Identifique a emoção predominante nesta frase: "${safeSentence}"` }
+        ],
+        temperature: 0
+      };
+
+      const responseSent = await fetch(API_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${API_KEY}`,
+          "Accept": "application/json"
+        },
+        body: JSON.stringify(payloadSent)
+      });
+
+      if (!responseSent.ok) {
+        results.push({ traducao: sentence, sentimento: "Neutro" });
+        continue;
+      }
+
+      const dataSent = await responseSent.json();
+      const contentSent = dataSent?.choices?.[0]?.message?.content?.trim() || '{}';
+      let emotionPTSent = "Neutro";
+
+      try {
+        const parsedSent = JSON.parse(contentSent);
+        if (parsedSent.detected_emotions && parsedSent.detected_emotions.length > 0) {
+          const emotionENSent = parsedSent.detected_emotions[0].toLowerCase();
+          emotionPTSent = emotionMapPT[emotionENSent] || "Neutro";
+        }
+      } catch { }
+
+      results.push({ traducao: sentence, sentimento: emotionPTSent });
+
+    } catch {
+      results.push({ traducao: sentence, sentimento: "Neutro" });
     }
-
-    const outputText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-    if (!outputText) {
-        console.error("Resposta inesperada da API (sem texto em 'candidates'):", JSON.stringify(data, null, 2));
-        throw new Error("ERRO_FORMATO: Resposta inesperada da API");
-    }
-
-    console.log('[DEBUG] Texto JSON recebido da Gemini (análise completa):', outputText);
-
-    const parsed = JSON.parse(outputText);
-
-    if (!parsed || typeof parsed.sentimentoGeral !== 'string' || !Array.isArray(parsed.sentimentoPorSentenca)) {
-       console.error("Formato JSON inesperado da Gemini (estrutura inválida):", parsed);
-       throw new Error("ERRO_FORMATO: JSON da API inválido");
-    }
-
-    return parsed; // Retorna o objeto JSON completo
-
-  } catch (err) {
-    console.error(`Erro ao chamar ou processar a API Gemini para "${fullText.substring(0, 50)}...":`, err);
-    throw err; // Relança o erro para o controller tratar
   }
+
+  return {
+    sentimentoGeral,
+    sentimentoPorSentenca: results
+  };
 }
