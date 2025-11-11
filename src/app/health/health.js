@@ -76,7 +76,7 @@ const health = async (req, res, content) => {
     ]);
 
     const isUp = [database, queue, redis].every(service => service.status === 'up');
-
+    
     const response = {
       status: isUp ? 'up' : 'down',
       version: packageJson.version,
@@ -101,7 +101,6 @@ const health = async (req, res, content) => {
     res.status(500).json(response);
   }
 };
-
 
 export default health;
 
