@@ -288,7 +288,7 @@ const sentimentTranslator = async function sentimentTranslatorController(req, re
             let sentimentAnalysisResult;
             try {
               if (translatedText.length > 0) {
-                sentimentAnalysisResult = await sentimentAnalyzer(req.body.text);
+                sentimentAnalysisResult = await sentimentAnalyzer(req.body.text, translatedText);
               } else {
                 sentimentAnalysisResult = {
                     sentimentoGeral: 'neutro',
@@ -312,11 +312,11 @@ const sentimentTranslator = async function sentimentTranslatorController(req, re
             resolve(responsePayload);
 
           } catch (error) {
-             // Nack manual removido
+             
              reject(createError(500, error.message || TRANSLATOR_ERROR.translationError));
           }
         },
-        { noAck: true }, // Voltou para true
+        { noAck: true },
       );
 
       setTimeout(() => {
@@ -335,9 +335,6 @@ const sentimentTranslator = async function sentimentTranslatorController(req, re
         expiration: TRANSLATION_PAYLOAD_TTL,
       },
     );
-
-    // Salva o registro inicial no banco ANTES de esperar a resposta
-    await translation.save();
 
     const finalPayload = await consumePromise;
 

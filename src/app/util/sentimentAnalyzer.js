@@ -1,6 +1,17 @@
 import env from "../../config/environments/environment.js";
 import sentimentPhraseBreaker from "./sentimentPhraseBreaker.js";
 
+function safeParseJSON(text) {
+  if (!text || typeof text !== "string") return {};
+  const match = text.match(/\{[\s\S]*\}/);
+  if (!match) return {};
+  try {
+    return JSON.parse(match[0]);
+  } catch {
+    return {};
+  }
+}
+
 const emotionMapPT = {
   happy: "Feliz",
   sad: "Tristeza",
@@ -10,141 +21,115 @@ const emotionMapPT = {
   neutral: "Neutro"
 };
 
-export default async function sentimentAnalyzer(fullText) {
+export default async function sentimentAnalyzer(originalText, translatedText = "") {
   const API_KEY = env.DEEP_SEEK_API_KEY;
   if (!API_KEY) {
     throw new Error("ERRO_CONFIG: Chave da API DeepSeek não configurada.");
   }
 
+  let fetchFn = global.fetch;
+  if (!fetchFn) {
+    try {
+      const mod = await import("node-fetch");
+      fetchFn = mod.default;
+    } catch (err) {
+      throw new Error("Fetch não disponível e 'node-fetch' não pôde ser carregado.");
+    }
+  }
+
   const API_URL = "https://api.deepseek.com/v1/chat/completions";
-  const sentences = sentimentPhraseBreaker(fullText);
+
+  const sentencesOriginal = Array.isArray(sentimentPhraseBreaker(originalText))
+    ? sentimentPhraseBreaker(originalText)
+    : (originalText ? [originalText] : []);
+  const sentencesTranslated = translatedText
+    ? (Array.isArray(sentimentPhraseBreaker(translatedText)) ? sentimentPhraseBreaker(translatedText) : [translatedText])
+    : sentencesOriginal.slice();
 
   const systemPrompt = `
-# Persona and Objective
-You are an advanced AI model trained as a Textual Emotion Analyst. Your task is to receive a text and return a JSON object containing the single, most dominant emotion detected.
+      You are an advanced Textual Emotion Analyst. Return strictly a JSON object with a single key "detected_emotions"
+      whose value is an array with the single primary emotion as one of: happy, sad, anger, fear, surprise, neutral.
+      Do NOT add any extra text.
+  `;
 
-## Valid Emotions
-- happy: Joy, satisfaction, contentment, euphoria, relief, pride
-- sad: Loss, sadness, disappointment, unhappiness, melancholy
-- fear: Anxiety, apprehension, dread, worry, terror
-- anger: Irritation, fury, frustration, indignation, annoyance
-- surprise: Reaction to something unexpected (positive, negative, or neutral)
-- neutral: Absence of clear emotion, purely informational text
-
-## Rules
-1. Identify **only the primary emotion** in the text.
-2. Consider context, subtext, irony, sarcasm, and linguistic nuances.
-3. Return strictly **a JSON object**, starting with { and ending with }.
-4. Do not include text outside the JSON or comments.
-
-## Examples
-
-### happy
-{"text": "I just got the news that I've been promoted! I can't stop smiling, what an amazing day!", "detected_emotions": ["happy"]}
-
-### sad
-{"text": "I just found out my childhood pet passed away. I can't stop crying.", "detected_emotions": ["sad"]}
-
-### anger
-{"text": "I can't believe he lied to me again! I'm boiling with anger and frustration.", "detected_emotions": ["anger"]}
-
-### fear
-{"text": "I have a big presentation tomorrow and I'm really nervous about speaking in front of everyone.", "detected_emotions": ["fear"]}
-
-### surprise
-{"text": "I had no idea you were all planning a party for me! I was completely shocked.", "detected_emotions": ["surprise"]}
-
-### neutral
-{"text": "The store is located at 123 Main Street.", "detected_emotions": ["neutral"]}
-`;
-
-  let sentimentoGeral = "Neutro";
-
-  try {
-    const safeFullText = fullText.normalize("NFC").replace(/\\/g, "\\\\").replace(/"/g, '\\"').replace(/\n/g, " ");
-    const payloadFull = {
-      model: "deepseek-chat",
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: `Identifique a emoção predominante neste texto completo: "${safeFullText}"` }
-      ],
-      temperature: 0
-    };
-
-    const responseFull = await fetch(API_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${API_KEY}`,
-        "Accept": "application/json"
-      },
-      body: JSON.stringify(payloadFull)
-    });
-
-    if (!responseFull.ok) {
-      let errorBody = await responseFull.text();
-      try { errorBody = JSON.parse(errorBody); } catch { }
-      throw new Error(`ERRO_API: HTTP ${responseFull.status}`);
-    }
-
-    const dataFull = await responseFull.json();
-    const contentFull = dataFull?.choices?.[0]?.message?.content?.trim() || '{}';
-
+  async function analyzeWithDeepSeek(textToAnalyze) {
     try {
-      const parsedFull = JSON.parse(contentFull);
-      if (parsedFull.detected_emotions && parsedFull.detected_emotions.length > 0) {
-        const emotionENFull = parsedFull.detected_emotions[0].toLowerCase();
-        sentimentoGeral = emotionMapPT[emotionENFull] || "Neutro";
-      }
-    } catch { }
+      const safeText = JSON.stringify(String(textToAnalyze || "").normalize("NFC"));
 
-  } catch { }
-
-  const results = [];
-  for (const sentence of sentences) {
-    const safeSentence = sentence.normalize("NFC").replace(/\\/g, "\\\\").replace(/"/g, '\\"').replace(/\n/g, " ");
-    try {
-      const payloadSent = {
+      const payload = {
         model: "deepseek-chat",
         messages: [
           { role: "system", content: systemPrompt },
-          { role: "user", content: `Identifique a emoção predominante nesta frase: "${safeSentence}"` }
+          { role: "user", content: `Identifique a emoção predominante neste texto: ${safeText}` }
         ],
         temperature: 0
       };
 
-      const responseSent = await fetch(API_URL, {
+      const resp = await fetchFn(API_URL, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${API_KEY}`,
           "Accept": "application/json"
         },
-        body: JSON.stringify(payloadSent)
+        body: JSON.stringify(payload)
       });
 
-      if (!responseSent.ok) {
-        results.push({ traducao: sentence, sentimento: "Neutro" });
-        continue;
+      const respText = await resp.text();
+      console.log("UUUU", respText);
+
+      if (!resp.ok) {
+        return "neutral";
       }
 
-      const dataSent = await responseSent.json();
-      const contentSent = dataSent?.choices?.[0]?.message?.content?.trim() || '{}';
-      let emotionPTSent = "Neutro";
+      let emotionEN = "neutral";
 
       try {
-        const parsedSent = JSON.parse(contentSent);
-        if (parsedSent.detected_emotions && parsedSent.detected_emotions.length > 0) {
-          const emotionENSent = parsedSent.detected_emotions[0].toLowerCase();
-          emotionPTSent = emotionMapPT[emotionENSent] || "Neutro";
-        }
-      } catch { }
+        const parsedOuter = JSON.parse(respText);
 
-      results.push({ traducao: sentence, sentimento: emotionPTSent });
+        const contentStr = parsedOuter?.choices?.[0]?.message?.content?.trim() || "{}";
+
+        const parsedInner = safeParseJSON(contentStr);
+
+        emotionEN = (parsedInner?.detected_emotions?.[0] || "neutral").toLowerCase();
+      } catch {
+        emotionEN = "neutral";
+      }
+
+      return emotionEN;
 
     } catch {
-      results.push({ traducao: sentence, sentimento: "Neutro" });
+      return "neutral";
     }
+  }
+
+  let sentimentoGeral = "Neutro";
+  try {
+    const emotionENFull = await analyzeWithDeepSeek(originalText);
+    sentimentoGeral = emotionMapPT[emotionENFull] || "Neutro";
+  } catch {
+    sentimentoGeral = "Neutro";
+  }
+
+  const results = [];
+  const maxLen = Math.max(sentencesOriginal.length, sentencesTranslated.length);
+
+  for (let i = 0; i < maxLen; i++) {
+    const sentenceOrig = sentencesOriginal[i] ?? "";
+    const sentenceTrans = sentencesTranslated[i] ?? sentenceOrig;
+
+    let emotionPTSent = "Neutro";
+    try {
+      const emotionENSent = await analyzeWithDeepSeek(sentenceOrig || sentenceTrans);
+      emotionPTSent = emotionMapPT[emotionENSent] || "Neutro";
+    } catch {
+      emotionPTSent = "Neutro";
+    }
+
+    results.push({
+      traducao: sentenceTrans,
+      sentimento: emotionPTSent
+    });
   }
 
   return {
