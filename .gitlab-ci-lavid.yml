@@ -1,11 +1,13 @@
+workflow:
+  rules:
+    - if: '$CI_COMMIT_REF_NAME == "dev"'
+    - when: never
+
 variables:
   APP_NAME: tradapi
   APP_URL: traducao2-dth.vlibras.lavid.ufpb.br
 
 include:
-  # 🔹 Template padrão para branches dev
   - project: 'vlibras2019/DevOps'
     ref: main
     file: '/Default-App-Pipeline-VLibras.gitlab-ci.yml'
-    rules:
-      - if: '$CI_COMMIT_REF_NAME == "dev"'
