@@ -6,6 +6,7 @@ workflow:
 variables:
   APP_NAME: tradapi
   APP_URL: traducao2-dth.vlibras.lavid.ufpb.br
+  RELEASE_NAME: vlibras-translator-api
 
 include:
   - project: 'vlibras2019/DevOps'
