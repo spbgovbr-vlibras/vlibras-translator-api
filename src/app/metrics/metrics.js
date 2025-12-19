@@ -5,17 +5,33 @@ import { METRICS_ERROR } from '../../config/error.js';
 
 const metrics = async function serviceMetrics(req, res, next) {
   try {
-    const startTime = req.query.startTime ? new Date(req.query.startTime) : new Date(0);
-    const endTime = req.query.endTime ? new Date(req.query.endTime) : new Date(8640000000000000);
+    const hasDateFilter = !!(req.query.startTime && req.query.endTime);
+
+    const startTime = hasDateFilter ? new Date(req.query.startTime) : null;
+    const endTime = hasDateFilter ? new Date(req.query.endTime) : null;
 
     const result = await db.sequelize.transaction(async (t) => {
-      const translations = await db.Translation.count({
-        where: {
-          translation: { [db.Sequelize.Op.not]: null },
-          createdAt: { [db.Sequelize.Op.between]: [startTime, endTime] },
-        },
-        transaction: t,
-      });
+      let translations;
+
+      if (hasDateFilter) {
+        translations = await db.Translation.count({
+          where: {
+            translation: { [db.Sequelize.Op.not]: null },
+            createdAt: { [db.Sequelize.Op.between]: [startTime, endTime] },
+          },
+          transaction: t,
+        });
+      } 
+      
+      else {
+        const rows = await db.sequelize.query(
+          'SELECT total_translation_count FROM translations_count LIMIT 1',
+          { type: db.Sequelize.QueryTypes.SELECT, transaction: t }
+        );
+
+        translations = rows?.[0]?.total_translation_count ?? 0;
+      }
+
 
       const reviews = await db.Review.count({
         where: {
