@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ include "tradapi.fullname" . }}
+  namespace: {{ .Values.namespace }}
   labels:
     {{ include "tradapi.labels" . | indent 4 }}
 spec:
@@ -40,11 +41,11 @@ spec:
             - secretRef:
                 name: {{ if .Values.tradapi.secrets.existingSecret }}{{ .Values.tradapi.secrets.existingSecret }}{{- else }}{{ include "tradapi.fullname" . }}-app-secret{{- end }}
             - secretRef:
-                name: {{ include "tradapiGetPostgresSecretName" . }}
+                name: {{ if .Values.externalServices.tradapi.redis.existingSecrets }}{{ .Values.externalServices.tradapi.redis.existingSecrets }}{{- else }}{{ include "tradapi.fullname" . }}-cache-credentials{{- end }}
             - secretRef:
-                name: {{ include "tradapiGetRedisSecretName" . }}
+                name: {{ if .Values.externalServices.tradapi.postgresql.existingSecrets }}{{ .Values.externalServices.tradapi.postgresql.existingSecrets }}{{- else }}{{ include "tradapi.fullname" . }}-db-credentials{{- end }}
             - secretRef:
-                name: {{ include "tradapiGetAmqpSecretName" . }}                
+                name: {{ if .Values.externalServices.tradapi.amqp.existingSecrets }}{{ .Values.externalServices.tradapi.amqp.existingSecrets }}{{- else }}{{ include "tradapi.fullname" . }}-amqp-credentials{{- end }} 
           tty: true
           ports:
             - name: http

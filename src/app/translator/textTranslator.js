@@ -17,6 +17,8 @@ import {
 } from '../../config/validation.js';
 
 import phraseBreaker from '../util/phraseBreaker.js';
+import sentimentPhraseBreaker from '../util/sentimentPhraseBreaker.js';
+import sentimentAnalyzer from '../util/sentimentAnalyzer.js';
 
 /**
  * Asynchronous stores the statistics of the traslator at the DB.
@@ -250,5 +252,147 @@ const textTranslator = async function textTranslatorController(req, res, next) {
   }
 };
 
+const sentimentTranslator = async function sentimentTranslatorController(req, res, next) {
+  const uid = uuid();
+  let AMQPChannel;
 
-export {textTranslator, textTranslatorHealth};
+  try {
+    const AMQPConnection = await queueConnection();
+    AMQPChannel = await AMQPConnection.createChannel();
+
+    const { consumerCount } = await AMQPChannel.assertQueue(
+      env.TRANSLATOR_QUEUE,
+      { durable: false },
+    );
+
+    if (consumerCount === 0) {
+      throw createError(500, TRANSLATOR_ERROR.unavailable);
+    }
+
+    setTimeout(storeStats, 10, req);
+
+    const translation = db.Translation.build({
+      text: req.body.text,
+      requester: req.headers['x-forwarded-for'] || req.connection.remoteAddress,
+    });
+
+    const consumePromise = new Promise((resolve, reject) => {
+      AMQPChannel.consume(
+        env.API_CONSUMER_QUEUE,
+        async (message) => {
+          try {
+            if (!message) {
+              return reject(createError(500, TRANSLATOR_ERROR.translationError));
+            }
+
+            if (message.properties.correlationId !== uid) {
+              AMQPChannel.nack(message, false, false); 
+              return;
+            }
+
+            const content = JSON.parse(message.content.toString());
+
+            if (content.error !== undefined) {
+              return reject(createError(500, content.error));
+            }
+
+            const translatedText = content.translation || ''; 
+
+            let sentimentAnalysisResult;
+            try {
+              if (translatedText.length > 0) {
+                sentimentAnalysisResult = await sentimentAnalyzer(req.body.text, translatedText);
+              } else {
+                sentimentAnalysisResult = {
+                    sentimentoGeral: 'neutro',
+                    sentimentoPorSentenca: []
+                };
+              }
+
+            } catch (sentimentError) {
+              sentimentAnalysisResult = {
+                sentimentoGeral: 'ERRO_API_GERAL',
+                sentimentoPorSentenca: [{ traducao: translatedText, sentimento: 'ERRO_API_GERAL' }]
+              };
+            }
+
+            const responsePayload = {
+              traducao: translatedText,
+              sentimentoGeral: sentimentAnalysisResult.sentimentoGeral || 'neutro',
+              sentimentoPorSentenca: sentimentAnalysisResult.sentimentoPorSentenca || [],
+            };
+
+            resolve(responsePayload);
+
+          } catch (error) {
+             
+             reject(createError(500, error.message || TRANSLATOR_ERROR.translationError));
+          }
+        },
+        { noAck: true },
+      );
+
+      setTimeout(() => {
+         reject(createError(408, TRANSLATOR_ERROR.timeout));
+      }, TRANSLATION_TIMEOUT);
+    });
+
+    const payload = JSON.stringify({ text: req.body.text });
+    await AMQPChannel.publish(
+      '',
+      env.TRANSLATOR_QUEUE,
+      Buffer.from(payload),
+      {
+        correlationId: uid,
+        replyTo: env.API_CONSUMER_QUEUE,
+        expiration: TRANSLATION_PAYLOAD_TTL,
+      },
+    );
+
+    const finalPayload = await consumePromise;
+
+    if (!res.headersSent) {
+      res.status(200).json(finalPayload);
+    }
+
+    try {
+      if (req.body.textHash && finalPayload) {
+        const redisClient = await redisConnection();
+        await redisClient.set(
+          req.body.textHash,
+          JSON.stringify(finalPayload),
+          'EX',
+          env.CACHE_EXP,
+        );
+      }
+    } catch (error) {
+        cacheError(`SET ${error.message}`);
+    }
+
+    try {
+      if (finalPayload && finalPayload.traducao !== undefined && translation) { // Verifica se translation existe
+          translation.set({ translation: finalPayload.traducao });
+          await translation.save();
+      }
+    } catch (error) {
+        serverError(`Erro ao atualizar tradução no DB: ${error.message}`);
+    }
+
+  } catch (error) {
+    if (!res.headersSent) {
+      return next(error);
+    } else {
+       console.error('[ERROR] Erro após resposta HTTP já ter sido enviada:', error);
+    }
+  } finally {
+    if (AMQPChannel) {
+      try {
+        await AMQPChannel.close();
+      } catch (closeError) {
+        console.error('[ERROR] Erro ao fechar canal AMQP no finally:', closeError);
+      }
+    }
+  }
+};
+
+export { textTranslator, textTranslatorHealth, sentimentTranslator };

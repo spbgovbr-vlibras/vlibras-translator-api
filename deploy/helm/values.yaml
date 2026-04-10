@@ -7,6 +7,7 @@ fullnameOverride: ""
 ## Labels to apply to all resources
 commonLabels: {}
 
+namespace: vlibras
 imagePullSecrets:
   - name: registrynuvem
 
@@ -45,7 +46,7 @@ global:
   
 
 tradapi:
-  replicaCount: 1
+  replicaCount: 6
   image:
     # repository: "registry.sisp.gov.br/vlibras/vlibras-translator-service/vlibras-translator-api"
     # tag: ""
@@ -56,9 +57,21 @@ tradapi:
   pullPolicy: Always
 
   appConfig:
-    LOGGER_FORMAT: 'dev' #dev or production
+    LOGGER_FORMAT: 'production' #dev or production
     PORT: '80'
     AMQP_PROTOCOL: 'amqp'
+  
+  ingress:
+    enabled: true
+    className: nginx
+    host: traducao2-dth.vlibras.lavid.ufpb.br
+    name: vlibras-tradapi-ing
+    port: 80
+    path: /
+    pathType: Prefix
+    secretName: kcert-tradapi
+    annotations: {} 
+
 
 
   secrets:
@@ -131,11 +144,11 @@ tradapi:
   securityContext: {}
   resources:
     requests:
-      cpu: 100m
-      memory: 250Mi
+      cpu: 1
+      memory: "1Gi"
     limits:
       memory: "2Gi"
-      cpu: "1"
+      cpu: "2"
   nodeSelector: {}
   tolerations: []
   affinity: {}

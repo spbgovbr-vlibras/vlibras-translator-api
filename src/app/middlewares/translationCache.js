@@ -8,7 +8,7 @@ const translationCache = async function getTranslationCache(req, res, next) {
   try {
     const redisClient = await redisConnection();
     const buffer = Buffer.from(
-      req.body.text.replace(/[^A-Z0-9]/gi, "").toLowerCase()
+    req.body.text.replace(/[^A-Za-z0-9\s?!.,;:()]/g, "").toLowerCase()
     );
 
     console.log(`[Cache][${uid}] - Conexão com Redis estabelecida`);
