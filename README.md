@@ -159,6 +159,10 @@ Security-related environment variables available in [.env.example](src/config/en
 # If omitted, browser requests with Origin are blocked on /health and /metrics.
 # HEALTH_CORS_ALLOWED_ORIGINS=https://monitor.example.gov.br
 # METRICS_CORS_ALLOWED_ORIGINS=https://monitor.example.gov.br
+
+# Detailed internal health endpoint allowlist.
+# In production, if omitted, /status is not exposed.
+# INTERNAL_STATUS_ALLOWED_IPS=127.0.0.1,10.0.0.10
 ```
 
 Notes:
@@ -167,6 +171,8 @@ Notes:
 2. In `production`, `/docs` is disabled unless `DOCS_ENABLED=true`.
 3. In non-production environments, `/docs` stays enabled unless `DOCS_ENABLED=false`.
 4. `CORS_ALLOWED_ORIGINS`, `HEALTH_CORS_ALLOWED_ORIGINS` and `METRICS_CORS_ALLOWED_ORIGINS` accept comma-separated origins without spaces being required.
+5. `/health` is public and returns only `{"status":"up"}`.
+6. `/status` is the detailed operational endpoint and is restricted by `INTERNAL_STATUS_ALLOWED_IPS`.
 
 ##### [Redis](https://redis.io)
 

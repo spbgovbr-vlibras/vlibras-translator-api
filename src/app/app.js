@@ -56,7 +56,7 @@ const {
 app.set('etag', false);
 app.set('trust proxy', env.TRUST_PROXY === 'true');
 app.use((req, res, next) => {
-  if (req.path === '/metrics' || req.path === '/health') {
+  if (req.path === '/metrics' || req.path === '/health' || req.path === '/status') {
     next();
     return;
   }

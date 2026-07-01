@@ -30,6 +30,7 @@ const checkQueueConnection = () => new Promise((resolve, reject) => {
       reject(error);
     });
 });
+
 const checkRedisConnection = () => new Promise((resolve) => {
   const redisClient = redisConnection();
 
@@ -67,40 +68,32 @@ const checkConsumerCount = async () => {
   }
 };
 
-const health = async (req, res, content) => {
-  try {
-    const [database, queue, redis, queueConsumerCount] = await Promise.all([
-      checkDatabaseConnection().catch((error) => ({ service: 'database', status: 'down', error })),
-      checkQueueConnection().catch((error) => ({ service: 'queue', status: 'down', error })),
-      checkRedisConnection().catch((error) => ({ service: 'redis', status: 'down', error })),
-      checkConsumerCount().catch((error) => ({ error })),
-    ]);
+const getPublicHealthResponse = () => ({
+  status: 'up',
+});
 
-    const isUp = [database, queue, redis].every((service) => service.status === 'up');
+const getDetailedHealthResponse = async (content) => {
+  const [database, queue, redis, queueConsumerCount] = await Promise.all([
+    checkDatabaseConnection().catch((error) => ({ service: 'database', status: 'down', error })),
+    checkQueueConnection().catch((error) => ({ service: 'queue', status: 'down', error })),
+    checkRedisConnection().catch((error) => ({ service: 'redis', status: 'down', error })),
+    checkConsumerCount().catch((error) => ({ error })),
+  ]);
 
-    const response = {
-      status: isUp ? 'up' : 'down',
-      version: packageJson.version,
-      database: database.status === 'up' ? 'up' : 'down',
-      queue: queue.status === 'up' ? 'up' : 'down',
-      redis: redis.status === 'up' ? 'up' : 'down',
-      consumerCount: queueConsumerCount,
-      versionTranslate: getTranslateVersion(content),
-    };
+  const isUp = [database, queue, redis].every((service) => service.status === 'up');
 
-    res.status(200).json(response);
-  } catch (error) {
-    const response = {
-      status: 'down',
-      version: packageJson.version,
-      database: 'down',
-      queue: 'down',
-      redis: 'down',
-      consumerCount: 0,
-      versionTranslate: getTranslateVersion(content),
-    };
-    res.status(500).json(response);
-  }
+  return {
+    status: isUp ? 'up' : 'down',
+    version: packageJson.version,
+    database: database.status === 'up' ? 'up' : 'down',
+    queue: queue.status === 'up' ? 'up' : 'down',
+    redis: redis.status === 'up' ? 'up' : 'down',
+    consumerCount: queueConsumerCount,
+    versionTranslate: getTranslateVersion(content),
+  };
 };
 
-export default health;
+export {
+  getDetailedHealthResponse,
+  getPublicHealthResponse,
+};
