@@ -23,6 +23,7 @@ const parseAllowedOrigins = (allowedOrigins = '') => allowedOrigins
   .map((origin) => origin.trim())
   .filter(Boolean);
 const createCorsOptions = ({ allowedOrigins = [], allowAllIfEmpty = false } = {}) => ({
+  credentials: false,
   origin(origin, callback) {
     if (!origin) {
       callback(null, true);
@@ -55,6 +56,7 @@ const {
 } = createRateLimitMiddleware(env);
 const apiKeyAuth = createApiKeyAuthMiddleware(env);
 
+app.disable('x-powered-by');
 app.set('etag', false);
 app.set('trust proxy', env.TRUST_PROXY === 'true');
 app.use((req, res, next) => {
