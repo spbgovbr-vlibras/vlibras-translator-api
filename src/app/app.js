@@ -82,7 +82,7 @@ app.use((req, res, next) => {
 });
 
 app.use('/', apiDocRoute);
-app.use('/', apiKeyAuth, reviewRoute);
+app.use('/', reviewRoute);
 app.use('/translate', translateRateLimit);
 app.use('/translatesentiment', translateRateLimit);
 app.use('/', translatorRoute);
@@ -94,11 +94,12 @@ app.use(
 );
 app.use(
   '/',
+  apiKeyAuth,
   cors(createCorsOptions({ allowedOrigins: healthAllowedOrigins })),
   healthRouter,
 );
 
-app.get('/healthcheck', (_req, res) => {
+app.get('/healthcheck', apiKeyAuth, (_req, res) => {
   res.sendStatus(200);
 });
 
@@ -114,7 +115,7 @@ app.use((err, _req, res, _next) => {
     return res.json({ error: err });
   }
 
-  if (err.status === 422) {
+  if (err.errors) {
     return res.json({ error: err.errors });
   }
 

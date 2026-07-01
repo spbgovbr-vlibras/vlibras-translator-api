@@ -96,11 +96,6 @@
     },
     "/review": {
       "post": {
-        "security": [
-          {
-            "ApiKeyAuth": []
-          }
-        ],
         "tags": [
           "reviews"
         ],
@@ -154,6 +149,11 @@
     },
     "/health": {
       "get": {
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
         "tags": [
           "health"
         ],
@@ -176,6 +176,11 @@
     },
     "/healthcheck": {
       "get": {
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
         "tags": [
           "health"
         ],
