@@ -16,21 +16,68 @@ import healthRouter from './health/healthRoute.js';
 import { attachUid } from './middlewares/attachUid.js';
 
 const app = express();
+const parseAllowedOrigins = (allowedOrigins = '') => allowedOrigins
+  .split(',')
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+const createCorsOptions = ({ allowedOrigins = [], allowAllIfEmpty = false } = {}) => ({
+  origin(origin, callback) {
+    if (!origin) {
+      callback(null, true);
+      return;
+    }
 
-app.use(cors());
+    if (allowAllIfEmpty && allowedOrigins.length === 0) {
+      callback(null, true);
+      return;
+    }
+
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+      return;
+    }
+
+    callback(createError(403, 'Origin not allowed by CORS'));
+  },
+});
+const appAllowedOrigins = parseAllowedOrigins(env.CORS_ALLOWED_ORIGINS);
+const healthAllowedOrigins = parseAllowedOrigins(env.HEALTH_CORS_ALLOWED_ORIGINS);
+const metricsAllowedOrigins = parseAllowedOrigins(env.METRICS_CORS_ALLOWED_ORIGINS);
+const appCors = cors(createCorsOptions({
+  allowedOrigins: appAllowedOrigins,
+  allowAllIfEmpty: true,
+}));
+
+app.set('etag', false);
+app.use((req, res, next) => {
+  if (req.path === '/metrics' || req.path === '/health') {
+    next();
+    return;
+  }
+
+  appCors(req, res, next);
+});
 app.use(compression());
 app.use(helmet());
 app.use(logger(env.LOGGER_FORMAT || 'combined'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
-app.use(attachUid)
+app.use(attachUid);
 
 app.use('/', apiDocRoute);
 app.use('/', reviewRoute);
 app.use('/', translatorRoute);
-app.use('/', metricsRoute);
-app.use('/', healthRouter);
+app.use(
+  '/',
+  cors(createCorsOptions({ allowedOrigins: metricsAllowedOrigins })),
+  metricsRoute,
+);
+app.use(
+  '/',
+  cors(createCorsOptions({ allowedOrigins: healthAllowedOrigins })),
+  healthRouter,
+);
 
 app.get('/healthcheck', (_req, res) => {
   res.sendStatus(200);

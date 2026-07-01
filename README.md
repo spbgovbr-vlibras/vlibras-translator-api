@@ -131,6 +131,31 @@ POSTGRES_PORT=5432
 POSTGRES_DATABASE=vlibras
 ```
 
+Security-related environment variables available in [.env.example](src/config/environments/.env.example):
+
+```sh
+# Swagger UI exposure
+# Production default: disabled
+# Non-production default: enabled
+# DOCS_ENABLED=false
+
+# Main API CORS allowlist, comma-separated.
+# If omitted, current permissive behavior is preserved for non-monitoring routes.
+# CORS_ALLOWED_ORIGINS=https://app.example.gov.br,https://admin.example.gov.br
+
+# Monitoring endpoint CORS allowlists, comma-separated.
+# If omitted, browser requests with Origin are blocked on /health and /metrics.
+# HEALTH_CORS_ALLOWED_ORIGINS=https://monitor.example.gov.br
+# METRICS_CORS_ALLOWED_ORIGINS=https://monitor.example.gov.br
+```
+
+Notes:
+
+1. `DOCS_ENABLED` is evaluated together with `NODE_ENV`.
+2. In `production`, `/docs` is disabled unless `DOCS_ENABLED=true`.
+3. In non-production environments, `/docs` stays enabled unless `DOCS_ENABLED=false`.
+4. `CORS_ALLOWED_ORIGINS`, `HEALTH_CORS_ALLOWED_ORIGINS` and `METRICS_CORS_ALLOWED_ORIGINS` accept comma-separated origins without spaces being required.
+
 ##### [Redis](https://redis.io)
 
 Update local apt package.
