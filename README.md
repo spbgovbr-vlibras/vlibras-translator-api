@@ -140,7 +140,7 @@ Security-related environment variables available in [.env.example](src/config/en
 # DOCS_ENABLED=false
 
 # API key authentication for protected endpoints.
-# When enabled, /review and /metrics require a key.
+# When enabled, /metrics, /health and /healthcheck require a key.
 # API_KEY_AUTH_ENABLED=true
 # API_KEY_HEADER=x-api-key
 # API_KEYS=replace-with-long-random-key,second-key-for-rotation
@@ -177,7 +177,7 @@ Notes:
 2. In `production`, `/docs` is disabled unless `DOCS_ENABLED=true`.
 3. In non-production environments, `/docs` stays enabled unless `DOCS_ENABLED=false`.
 4. `CORS_ALLOWED_ORIGINS`, `HEALTH_CORS_ALLOWED_ORIGINS` and `METRICS_CORS_ALLOWED_ORIGINS` accept comma-separated origins without spaces being required.
-5. `/health` is public and returns only `{"status":"up"}`.
+5. `/health` is the minimal health endpoint. If API key auth is enabled, it also requires the configured key.
 6. `/status` is the detailed operational endpoint and is restricted by `INTERNAL_STATUS_ALLOWED_IPS`.
 
 ##### [Redis](https://redis.io)
