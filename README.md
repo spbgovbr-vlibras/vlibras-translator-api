@@ -139,6 +139,18 @@ Security-related environment variables available in [.env.example](src/config/en
 # Non-production default: enabled
 # DOCS_ENABLED=false
 
+# Trust X-Forwarded-* headers from a reverse proxy such as Istio/Envoy.
+# TRUST_PROXY=true
+
+# Fixed-window rate limiting for all endpoints.
+# Keys are composed from client IP + Authorization header when present.
+# RATE_LIMIT_WINDOW_MS=60000
+# RATE_LIMIT_MAX_REQUESTS=100
+
+# Stricter limit for translation endpoints.
+# TRANSLATE_RATE_LIMIT_WINDOW_MS=60000
+# TRANSLATE_RATE_LIMIT_MAX_REQUESTS=20
+
 # Main API CORS allowlist, comma-separated.
 # If omitted, current permissive behavior is preserved for non-monitoring routes.
 # CORS_ALLOWED_ORIGINS=https://app.example.gov.br,https://admin.example.gov.br

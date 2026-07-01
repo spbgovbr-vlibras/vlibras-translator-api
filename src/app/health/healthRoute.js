@@ -5,15 +5,20 @@ import { textTranslatorHealth } from '../translator/textTranslator.js';
 const healthRouter = Router();
 
 healthRouter.get('/health', async (req, res, next) => {
+  try {
+    req.body = { text: 'Ola mundo da vida' };
+    let content;
+
     try {
-        req.body = { text: "Ola mundo da vida" };
-
-        const content = await textTranslatorHealth(req, res, next);
-
-        return health(req, res, content);
+      content = await textTranslatorHealth(req, res, () => undefined);
     } catch (error) {
-        next(error);
+      content = undefined;
     }
+
+    return health(req, res, content);
+  } catch (error) {
+    return next(error);
+  }
 });
 
 export default healthRouter;

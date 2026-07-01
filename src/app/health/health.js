@@ -1,20 +1,22 @@
+import { readFileSync } from 'fs';
+import { join } from 'path';
 import env from '../../config/environments/environment.js';
 import db from '../db/models/index.js';
 import queueConnection from '../util/queueConnection.js';
 import redisConnection from '../util/redisConnection.js';
-import { readFileSync } from 'fs';
-import { join } from 'path';
 
 const packageJson = JSON.parse(
-  readFileSync(join(process.cwd(), 'package.json'), 'utf-8')
+  readFileSync(join(process.cwd(), 'package.json'), 'utf-8'),
 );
+
+const getTranslateVersion = (content) => content?.version || 'No content available';
 
 const checkDatabaseConnection = () => new Promise((resolve, reject) => {
   db.sequelize.authenticate()
     .then(() => {
       resolve({ service: 'database', status: 'up' });
     })
-    .catch((error) => { 
+    .catch((error) => {
       reject(error);
     });
 });
@@ -50,7 +52,6 @@ const checkRedisConnection = () => new Promise((resolve) => {
 });
 
 const checkConsumerCount = async () => {
-
   try {
     const connection = await queueConnection();
     const channel = await connection.createChannel();
@@ -75,8 +76,8 @@ const health = async (req, res, content) => {
       checkConsumerCount().catch((error) => ({ error })),
     ]);
 
-    const isUp = [database, queue, redis].every(service => service.status === 'up');
-    
+    const isUp = [database, queue, redis].every((service) => service.status === 'up');
+
     const response = {
       status: isUp ? 'up' : 'down',
       version: packageJson.version,
@@ -84,7 +85,7 @@ const health = async (req, res, content) => {
       queue: queue.status === 'up' ? 'up' : 'down',
       redis: redis.status === 'up' ? 'up' : 'down',
       consumerCount: queueConsumerCount,
-      versionTranslate: content.version || "No content available", 
+      versionTranslate: getTranslateVersion(content),
     };
 
     res.status(200).json(response);
@@ -96,11 +97,10 @@ const health = async (req, res, content) => {
       queue: 'down',
       redis: 'down',
       consumerCount: 0,
-      versionTranslate: content.version || "No content available",  
+      versionTranslate: getTranslateVersion(content),
     };
     res.status(500).json(response);
   }
 };
 
 export default health;
-
