@@ -14,6 +14,7 @@ import translatorRoute from './translator/textTranslatorRoute.js';
 import metricsRoute from './metrics/metricsRoute.js';
 import healthRouter from './health/healthRoute.js';
 import { attachUid } from './middlewares/attachUid.js';
+import createApiKeyAuthMiddleware from './middlewares/apiKeyAuth.js';
 import { createRateLimitMiddleware } from './middlewares/rateLimit.js';
 
 const app = express();
@@ -52,6 +53,7 @@ const {
   generalRateLimit,
   translateRateLimit,
 } = createRateLimitMiddleware(env);
+const apiKeyAuth = createApiKeyAuthMiddleware(env);
 
 app.set('etag', false);
 app.set('trust proxy', env.TRUST_PROXY === 'true');
@@ -80,12 +82,13 @@ app.use((req, res, next) => {
 });
 
 app.use('/', apiDocRoute);
-app.use('/', reviewRoute);
+app.use('/', apiKeyAuth, reviewRoute);
 app.use('/translate', translateRateLimit);
 app.use('/translatesentiment', translateRateLimit);
 app.use('/', translatorRoute);
 app.use(
   '/',
+  apiKeyAuth,
   cors(createCorsOptions({ allowedOrigins: metricsAllowedOrigins })),
   metricsRoute,
 );

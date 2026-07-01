@@ -139,6 +139,12 @@ Security-related environment variables available in [.env.example](src/config/en
 # Non-production default: enabled
 # DOCS_ENABLED=false
 
+# API key authentication for protected endpoints.
+# When enabled, /review and /metrics require a key.
+# API_KEY_AUTH_ENABLED=true
+# API_KEY_HEADER=x-api-key
+# API_KEYS=replace-with-long-random-key,second-key-for-rotation
+
 # Trust X-Forwarded-* headers from a reverse proxy such as Istio/Envoy.
 # TRUST_PROXY=true
 
