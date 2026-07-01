@@ -14,6 +14,7 @@ import translatorRoute from './translator/textTranslatorRoute.js';
 import metricsRoute from './metrics/metricsRoute.js';
 import healthRouter from './health/healthRoute.js';
 import { attachUid } from './middlewares/attachUid.js';
+import { createRateLimitMiddleware } from './middlewares/rateLimit.js';
 
 const app = express();
 const parseAllowedOrigins = (allowedOrigins = '') => allowedOrigins
@@ -47,8 +48,13 @@ const appCors = cors(createCorsOptions({
   allowedOrigins: appAllowedOrigins,
   allowAllIfEmpty: true,
 }));
+const {
+  generalRateLimit,
+  translateRateLimit,
+} = createRateLimitMiddleware(env);
 
 app.set('etag', false);
+app.set('trust proxy', env.TRUST_PROXY === 'true');
 app.use((req, res, next) => {
   if (req.path === '/metrics' || req.path === '/health') {
     next();
@@ -64,9 +70,19 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(attachUid);
+app.use((req, res, next) => {
+  if (req.path === '/translate' || req.path === '/translatesentiment') {
+    next();
+    return;
+  }
+
+  generalRateLimit(req, res, next);
+});
 
 app.use('/', apiDocRoute);
 app.use('/', reviewRoute);
+app.use('/translate', translateRateLimit);
+app.use('/translatesentiment', translateRateLimit);
 app.use('/', translatorRoute);
 app.use(
   '/',
