@@ -2,7 +2,6 @@ import fs from 'fs';
 import express, { Router } from 'express';
 import { createRequire } from 'module';
 import crypto from 'crypto';
-import createError from 'http-errors';
 
 const require = createRequire(import.meta.url);
 const swaggerUiDist = require('swagger-ui-dist');
@@ -96,7 +95,7 @@ const apiDocRoute = Router();
 
 apiDocRoute.use('/docs', (req, res, next) => {
   if (!docsEnabled) {
-    next(createError(404));
+    res.status(404).json({ error: 'Not Found' });
     return;
   }
 
