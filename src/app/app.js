@@ -110,11 +110,11 @@ app.use((_req, _res, next) => {
 });
 
 app.use((err, _req, res, _next) => {
-  res.status(err.status || 500);
+  const statusCode = err.status || 500;
+  res.status(statusCode);
 
-  if (app.get('env') === 'dev') {
+  if (app.get('env') === 'dev' && statusCode >= 500) {
     console.error('\x1b[2m', err, '\x1b[0m');
-    return res.json({ error: err });
   }
 
   if (err.errors) {
