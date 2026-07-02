@@ -133,52 +133,6 @@ POSTGRES_DATABASE=vlibras
 
 Security-related environment variables available in [.env.example](src/config/environments/.env.example):
 
-```sh
-# Swagger UI exposure
-# Production default: disabled
-# Non-production default: enabled
-# DOCS_ENABLED=false
-
-# API key authentication for protected endpoints.
-# When enabled, /metrics, /health and /healthcheck require a key.
-# API_KEY_AUTH_ENABLED=true
-# API_KEY_HEADER=x-api-key
-# API_KEYS=replace-with-long-random-key,second-key-for-rotation
-
-# Trust X-Forwarded-* headers from a reverse proxy such as Istio/Envoy.
-# TRUST_PROXY=true
-
-# Fixed-window rate limiting for all endpoints.
-# Keys are composed from client IP + Authorization header when present.
-# RATE_LIMIT_WINDOW_MS=60000
-# RATE_LIMIT_MAX_REQUESTS=100
-
-# Stricter limit for translation endpoints.
-# TRANSLATE_RATE_LIMIT_WINDOW_MS=60000
-# TRANSLATE_RATE_LIMIT_MAX_REQUESTS=20
-
-# Main API CORS allowlist, comma-separated.
-# If omitted, current permissive behavior is preserved for non-monitoring routes.
-# CORS_ALLOWED_ORIGINS=https://app.example.gov.br,https://admin.example.gov.br
-
-# Monitoring endpoint CORS allowlists, comma-separated.
-# If omitted, browser requests with Origin are blocked on /health and /metrics.
-# HEALTH_CORS_ALLOWED_ORIGINS=https://monitor.example.gov.br
-# METRICS_CORS_ALLOWED_ORIGINS=https://monitor.example.gov.br
-
-# Detailed internal health endpoint allowlist.
-# In production, if omitted, /status is not exposed.
-# INTERNAL_STATUS_ALLOWED_IPS=127.0.0.1,10.0.0.10
-```
-
-Notes:
-
-1. `DOCS_ENABLED` is evaluated together with `NODE_ENV`.
-2. In `production`, `/docs` is disabled unless `DOCS_ENABLED=true`.
-3. In non-production environments, `/docs` stays enabled unless `DOCS_ENABLED=false`.
-4. `CORS_ALLOWED_ORIGINS`, `HEALTH_CORS_ALLOWED_ORIGINS` and `METRICS_CORS_ALLOWED_ORIGINS` accept comma-separated origins without spaces being required.
-5. `/health` is the minimal health endpoint. If API key auth is enabled, it also requires the configured key.
-6. `/status` is the detailed operational endpoint and is restricted by `INTERNAL_STATUS_ALLOWED_IPS`.
 
 ##### [Redis](https://redis.io)
 
