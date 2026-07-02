@@ -94,6 +94,59 @@
         }
       }
     },
+    "/translatesentiment": {
+      "post": {
+        "tags": [
+          "translations"
+        ],
+        "summary": "Translates a text and returns sentiment analysis",
+        "description": "Translates a text written in Brazilian Portuguese to LIBRAS and returns overall and per-sentence sentiment analysis for the translated content.",
+        "operationId": "translateTextWithSentiment",
+        "requestBody": {
+          "description": "Text to translate and analyze",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Translate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Text translated with sentiment analysis",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SentimentTranslationResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Received an invalid body param",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvalidParams"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal processing error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InternalError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/review": {
       "post": {
         "tags": [
@@ -310,6 +363,47 @@
       "TranslatedText": {
         "type": "string",
         "example": "RATO ROER ROUPA REI ROMA"
+      },
+      "SentimentTranslationResponse": {
+        "type": "object",
+        "required": [
+          "traducao",
+          "sentimentoGeral",
+          "sentimentoPorSentenca"
+        ],
+        "properties": {
+          "traducao": {
+            "type": "string",
+            "example": "RATO ROER ROUPA REI ROMA"
+          },
+          "sentimentoGeral": {
+            "type": "string",
+            "example": "Neutro"
+          },
+          "sentimentoPorSentenca": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SentenceSentiment"
+            }
+          }
+        }
+      },
+      "SentenceSentiment": {
+        "type": "object",
+        "required": [
+          "traducao",
+          "sentimento"
+        ],
+        "properties": {
+          "traducao": {
+            "type": "string",
+            "example": "RATO ROER ROUPA"
+          },
+          "sentimento": {
+            "type": "string",
+            "example": "Neutro"
+          }
+        }
       },
       "Review": {
         "required": [
