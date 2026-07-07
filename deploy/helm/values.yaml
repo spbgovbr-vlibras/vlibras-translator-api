@@ -87,6 +87,7 @@ tradapi:
       VIDEOMAKER_QUEUE: 'translate.to_video'
       CACHE_EXP: '604800'
       CACHE_SIZE: '10485760'
+      DOCS_ENABLED: 'true'
 
   service:
     type: ClusterIP
