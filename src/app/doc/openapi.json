@@ -147,6 +147,77 @@
         }
       }
     },
+    "/refine": {
+      "post": {
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "tags": [
+          "translations"
+        ],
+        "summary": "Translates a text and applies standalone gloss refinement",
+        "description": "Runs the normal translation flow and then attempts a second-stage gloss refinement through the worker capabilities and refinement queues. This endpoint is optional and controlled by environment configuration.",
+        "operationId": "refineGloss",
+        "requestBody": {
+          "description": "Text to translate and refine",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Translate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Refined translated text",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/TranslatedText"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid API key",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Unauthorized"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Refinement route is disabled for this environment"
+          },
+          "422": {
+            "description": "Received an invalid body param",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvalidParams"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal processing error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InternalError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/review": {
       "post": {
         "tags": [
