@@ -88,7 +88,7 @@ tradapi:
       CACHE_EXP: '604800'
       CACHE_SIZE: '10485760'
       DOCS_ENABLED: 'true'
-  
+
   service:
     type: ClusterIP
     port: 80
