@@ -9,8 +9,12 @@ export const VALIDATION_VALUES = {
 export const VALIDATION_ERRORS = {
   textLength: `'text' exceeded ${VALIDATION_VALUES.textLength.max} characters limit.`,
   notFoundText: `'text' field is required.`,
+  textType: '\'text\' must be a string.',
   glossLength: `'gloss' exceeded ${VALIDATION_VALUES.textLength.max} characters limit.`,
   translationLength: `'translation' exceeded ${VALIDATION_VALUES.textLength.max} characters limit.`,
+  translationType: '\'translation\' must be a string.',
+  reviewType: '\'review\' must be a string.',
+  reviewLength: `'review' exceeded ${VALIDATION_VALUES.textLength.max} characters limit.`,
   ratingOptions: `'rating' is not in valid values [${VALIDATION_VALUES.ratingOptions}].`,
   avatarOptions: `'avatar' is not in valid values [${VALIDATION_VALUES.avatarOptions}].`,
   captionOptions: `'caption' is not in valid values [${VALIDATION_VALUES.captionOptions}].`,
