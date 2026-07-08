@@ -24,8 +24,9 @@ COPY --from=build --chown=node:node /src/.sequelizerc .sequelizerc
 RUN rm -rf /usr/local/lib/node_modules/npm \
   && rm -f /usr/local/bin/npm /usr/local/bin/npx
 
+ARG NODE_ENV=production
 ENV DEBUG=vlibras-translator-*:*
-ENV NODE_ENV=production
+ENV NODE_ENV=$NODE_ENV
 
 USER node
 
