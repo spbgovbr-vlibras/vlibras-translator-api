@@ -87,7 +87,7 @@ tradapi:
       VIDEOMAKER_QUEUE: 'translate.to_video'
       CACHE_EXP: '604800'
       CACHE_SIZE: '10485760'
-      DOCS_ENABLED: 'false'
+      DOCS_ENABLED: 'true'
       RATE_LIMIT_WINDOW_MS: '60000'
       RATE_LIMIT_MAX_REQUESTS: '100'
       TRANSLATE_RATE_LIMIT_WINDOW_MS: '60000'
