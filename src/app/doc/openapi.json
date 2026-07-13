@@ -193,7 +193,17 @@
             }
           },
           "404": {
-            "description": "Refinement route is disabled for this environment"
+            "description": "Refinement route is disabled for this environment",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InternalError"
+                },
+                "example": {
+                  "error": "Refinement route is disabled for this environment"
+                }
+              }
+            }
           },
           "422": {
             "description": "Received an invalid body param",

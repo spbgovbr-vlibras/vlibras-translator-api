@@ -1,3 +1,4 @@
+import createError from 'http-errors';
 import env from '../../config/environments/environment.js';
 import { requestQueueReply } from './amqpRpc.js';
 
@@ -44,7 +45,7 @@ const createGlossRefinementService = ({
 
 const createGlossRefinementEnabledMiddleware = (runtimeEnv) => (req, _res, next) => {
   if (!isGlossRefinementEnabled(runtimeEnv)) {
-    next('route');
+    next(createError(404, 'Refinement route is disabled for this environment'));
     return;
   }
 

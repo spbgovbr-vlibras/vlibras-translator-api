@@ -8,7 +8,7 @@ import {
 } from '../../app/translator/glossRefinement.js';
 
 describe('Gloss refinement feature gate', () => {
-  it('should skip the route when refinement is disabled', () => {
+  it('should return an explicit 404 error when refinement is disabled', () => {
     const middleware = createGlossRefinementEnabledMiddleware({
       GLOSS_REFINEMENT_ENABLED: 'false',
     });
@@ -16,7 +16,8 @@ describe('Gloss refinement feature gate', () => {
 
     middleware({}, {}, next);
 
-    expect(next).toHaveBeenCalledWith('route');
+    expect(next.mock.calls[0][0].status).toBe(404);
+    expect(next.mock.calls[0][0].message).toBe('Refinement route is disabled for this environment');
   });
 
   it('should allow the route when refinement is enabled', () => {
