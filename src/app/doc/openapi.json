@@ -158,7 +158,7 @@
           "translations"
         ],
         "summary": "Translates a text and applies standalone gloss refinement",
-        "description": "Runs the normal translation flow and then attempts a second-stage gloss refinement through the worker capabilities and refinement queues. This endpoint is optional and controlled by environment configuration.",
+        "description": "Runs the normal translation flow and then attempts a second-stage gloss refinement through the refinement queue. This endpoint is optional and controlled by environment configuration.",
         "operationId": "refineGloss",
         "requestBody": {
           "description": "Text to translate and refine",

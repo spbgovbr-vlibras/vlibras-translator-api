@@ -5,7 +5,6 @@ import {
 import {
   createGlossRefinementEnabledMiddleware,
   createGlossRefinementService,
-  shouldUseGlossRefinementMode,
 } from '../../app/translator/glossRefinement.js';
 
 describe('Gloss refinement feature gate', () => {
@@ -32,27 +31,6 @@ describe('Gloss refinement feature gate', () => {
   });
 });
 
-describe('Gloss refinement mode selection', () => {
-  it('should always allow live mode', () => {
-    expect(shouldUseGlossRefinementMode({ NODE_ENV: 'production' }, 'live')).toBe(true);
-  });
-
-  it('should reject stub mode in production by default', () => {
-    expect(shouldUseGlossRefinementMode({ NODE_ENV: 'production' }, 'stub')).toBe(false);
-  });
-
-  it('should allow stub mode outside production', () => {
-    expect(shouldUseGlossRefinementMode({ NODE_ENV: 'dev' }, 'stub')).toBe(true);
-  });
-
-  it('should allow stub mode in production when explicitly enabled', () => {
-    expect(shouldUseGlossRefinementMode({
-      GLOSS_REFINEMENT_ALLOW_STUB: 'true',
-      NODE_ENV: 'production',
-    }, 'stub')).toBe(true);
-  });
-});
-
 describe('Gloss refinement service', () => {
   it('should return the base gloss when refinement is disabled', async () => {
     const requestReply = jest.fn();
@@ -73,22 +51,15 @@ describe('Gloss refinement service', () => {
     expect(requestReply).not.toHaveBeenCalled();
   });
 
-  it('should return the base gloss when capabilities disable refinement', async () => {
-    const requestReply = jest.fn()
-      .mockResolvedValueOnce({
-        gloss_refinement: {
-          enabled: false,
-          mode: 'live',
-          queue: 'refine.gloss',
-        },
-      });
+  it('should return the base gloss when refinement queue is not configured', async () => {
+    const requestReply = jest.fn();
     const service = createGlossRefinementService({
       requestReply,
       runtimeEnv: {
         GLOSS_REFINEMENT_ENABLED: 'true',
-        GLOSS_REFINEMENT_QUEUE: 'refine.gloss',
-        NODE_ENV: 'production',
-        WORKER_CAPABILITIES_QUEUE: 'worker.capabilities',
+      },
+      logger: {
+        warn: jest.fn(),
       },
     });
 
@@ -99,18 +70,11 @@ describe('Gloss refinement service', () => {
     });
 
     expect(refinedGloss).toBe('BASE GLOSS');
-    expect(requestReply).toHaveBeenCalledTimes(1);
+    expect(requestReply).not.toHaveBeenCalled();
   });
 
   it('should send text and gloss to the refinement queue and return the refined translation', async () => {
     const requestReply = jest.fn()
-      .mockResolvedValueOnce({
-        gloss_refinement: {
-          enabled: true,
-          mode: 'live',
-          queue: 'refine.custom',
-        },
-      })
       .mockResolvedValueOnce({
         translation: 'GLOSSA REFINADA',
       });
@@ -119,8 +83,6 @@ describe('Gloss refinement service', () => {
       runtimeEnv: {
         GLOSS_REFINEMENT_ENABLED: 'true',
         GLOSS_REFINEMENT_QUEUE: 'refine.gloss',
-        NODE_ENV: 'production',
-        WORKER_CAPABILITIES_QUEUE: 'worker.capabilities',
       },
     });
 
@@ -131,35 +93,22 @@ describe('Gloss refinement service', () => {
     });
 
     expect(refinedGloss).toBe('GLOSSA REFINADA');
+    expect(requestReply).toHaveBeenCalledTimes(1);
     expect(requestReply).toHaveBeenNthCalledWith(1, {
-      correlationId: 'uid-3:capabilities',
-      payload: { type: 'capabilities' },
-      queueName: 'worker.capabilities',
-    });
-    expect(requestReply).toHaveBeenNthCalledWith(2, {
       correlationId: 'uid-3:refine',
       payload: { text: 'bom dia', gloss: 'GLOSSA BASE' },
-      queueName: 'refine.custom',
+      queueName: 'refine.gloss',
     });
   });
 
   it('should fall back to the base gloss when refinement fails', async () => {
     const requestReply = jest.fn()
-      .mockResolvedValueOnce({
-        gloss_refinement: {
-          enabled: true,
-          mode: 'live',
-          queue: 'refine.gloss',
-        },
-      })
       .mockRejectedValueOnce(new Error('queue timeout'));
     const service = createGlossRefinementService({
       requestReply,
       runtimeEnv: {
         GLOSS_REFINEMENT_ENABLED: 'true',
         GLOSS_REFINEMENT_QUEUE: 'refine.gloss',
-        NODE_ENV: 'production',
-        WORKER_CAPABILITIES_QUEUE: 'worker.capabilities',
       },
       logger: {
         warn: jest.fn(),
