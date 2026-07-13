@@ -62,6 +62,5 @@ const countCachedTranslation = async function countCachedTranslationController(t
 
 export default translationCache;
 export {
-  buildTextHash,
   getCachedTranslation,
 };

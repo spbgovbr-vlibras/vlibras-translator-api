@@ -8,11 +8,7 @@ import { textTranslator, sentimentTranslator, refinedTextTranslator } from './te
 
 const textTranslatorRoute = Router();
 const glossRefinementApiKeyAuth = createApiKeyAuthMiddleware(env, {
-  apiKeysKey: 'GLOSS_REFINEMENT_API_KEYS',
   enabled: true,
-  fallbackApiKeysKey: 'API_KEYS',
-  fallbackHeaderNameKey: 'API_KEY_HEADER',
-  headerNameKey: 'GLOSS_REFINEMENT_API_KEY_HEADER',
 });
 const glossRefinementEnabled = createGlossRefinementEnabledMiddleware(env);
 

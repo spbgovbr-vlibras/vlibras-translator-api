@@ -12,7 +12,7 @@ import {
   TRANSLATION_TIMEOUT,
   TRANSLATION_PAYLOAD_TTL,
 } from '../../config/timeout.js';
-import { buildTextHash, getCachedTranslation } from '../middlewares/translationCache.js';
+import { getCachedTranslation } from '../middlewares/translationCache.js';
 import { requestQueueReply } from './amqpRpc.js';
 import { glossRefinementService } from './glossRefinement.js';
 import phraseBreaker from '../util/phraseBreaker.js';
@@ -286,14 +286,10 @@ const refinedTextTranslator = async function refinedTextTranslatorController(req
     if (providedGloss === undefined || providedGloss.length === 0) {
       try {
         const cacheEntry = await getCachedTranslation(req.body.text);
-        req.body.textHash = cacheEntry.textHash;
         cachedGloss = cacheEntry.cachedTranslation ?? undefined;
       } catch (cacheErr) {
-        req.body.textHash = buildTextHash(req.body.text);
         cacheError(`GET ${cacheErr.message}`);
       }
-    } else {
-      req.body.textHash = buildTextHash(req.body.text);
     }
 
     const refinementGloss = providedGloss && providedGloss.length > 0
@@ -305,20 +301,6 @@ const refinedTextTranslator = async function refinedTextTranslatorController(req
       text: req.body.text,
       uid,
     });
-
-    if (req.body.textHash) {
-      try {
-        const redisClient = await redisConnection();
-        await redisClient.set(
-          req.body.textHash,
-          refinedGloss,
-          'EX',
-          env.CACHE_EXP,
-        );
-      } catch (redisErr) {
-        cacheError(`SET ${redisErr.message}`);
-      }
-    }
 
     translation.set({ translation: refinedGloss });
     await translation.save();
