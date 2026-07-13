@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import env from '../../config/environments/environment.js';
 import createApiKeyAuthMiddleware from '../middlewares/apiKeyAuth.js';
-import { textValidationRules, checkValidation } from '../middlewares/validator.js';
+import { textValidationRules, refineValidationRules, checkValidation } from '../middlewares/validator.js';
 import translationCache from '../middlewares/translationCache.js';
 import { createGlossRefinementEnabledMiddleware } from './glossRefinement.js';
 import { textTranslator, sentimentTranslator, refinedTextTranslator } from './textTranslator.js';
@@ -36,7 +36,7 @@ textTranslatorRoute.post(
   '/refine',
   glossRefinementEnabled,
   glossRefinementApiKeyAuth,
-  textValidationRules,
+  refineValidationRules,
   checkValidation,
   refinedTextTranslator,
 );

@@ -11,6 +11,7 @@ export const VALIDATION_ERRORS = {
   notFoundText: `'text' field is required.`,
   textType: '\'text\' must be a string.',
   glossLength: `'gloss' exceeded ${VALIDATION_VALUES.textLength.max} characters limit.`,
+  glossType: '\'gloss\' must be a string.',
   translationLength: `'translation' exceeded ${VALIDATION_VALUES.textLength.max} characters limit.`,
   translationType: '\'translation\' must be a string.',
   reviewType: '\'review\' must be a string.',

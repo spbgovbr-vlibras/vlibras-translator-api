@@ -12,6 +12,7 @@ import {
   TRANSLATION_TIMEOUT,
   TRANSLATION_PAYLOAD_TTL,
 } from '../../config/timeout.js';
+import { buildTextHash, getCachedTranslation } from '../middlewares/translationCache.js';
 import { requestQueueReply } from './amqpRpc.js';
 import { glossRefinementService } from './glossRefinement.js';
 import phraseBreaker from '../util/phraseBreaker.js';
@@ -278,13 +279,29 @@ const refinedTextTranslator = async function refinedTextTranslatorController(req
       text: req.body.text,
       requester: requesterIp,
     });
-    const baseResponse = await requestQueueReply({
-      correlationId: `${uid}:translate`,
-      payload: { text: req.body.text },
-      queueName: env.TRANSLATOR_QUEUE,
-    });
+
+    let cachedGloss;
+    const providedGloss = typeof req.body.gloss === 'string' ? req.body.gloss : undefined;
+
+    if (providedGloss === undefined || providedGloss.length === 0) {
+      try {
+        const cacheEntry = await getCachedTranslation(req.body.text);
+        req.body.textHash = cacheEntry.textHash;
+        cachedGloss = cacheEntry.cachedTranslation ?? undefined;
+      } catch (cacheErr) {
+        req.body.textHash = buildTextHash(req.body.text);
+        cacheError(`GET ${cacheErr.message}`);
+      }
+    } else {
+      req.body.textHash = buildTextHash(req.body.text);
+    }
+
+    const refinementGloss = providedGloss && providedGloss.length > 0
+      ? providedGloss
+      : (cachedGloss ?? '');
+
     const refinedGloss = await glossRefinementService.refineGloss({
-      gloss: baseResponse.translation,
+      gloss: refinementGloss,
       text: req.body.text,
       uid,
     });

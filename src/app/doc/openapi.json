@@ -157,15 +157,15 @@
         "tags": [
           "translations"
         ],
-        "summary": "Translates a text and applies standalone gloss refinement",
-        "description": "Runs the normal translation flow and then attempts a second-stage gloss refinement through the refinement queue. This endpoint is optional and controlled by environment configuration.",
+        "summary": "Applies standalone gloss refinement",
+        "description": "Sends the source text to the refinement queue with an optional base gloss. When gloss is not provided, the API reuses a cached translation when available before delegating translation to the refinement worker.",
         "operationId": "refineGloss",
         "requestBody": {
-          "description": "Text to translate and refine",
+          "description": "Text to refine, with optional base gloss",
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/Translate"
+                "$ref": "#/components/schemas/RefineRequest"
               }
             }
           },
@@ -448,6 +448,22 @@
           "text": {
             "type": "string",
             "example": "o rato roeu a roupa do rei de roma"
+          }
+        }
+      },
+      "RefineRequest": {
+        "required": [
+          "text"
+        ],
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string",
+            "example": "o rato roeu a roupa do rei de roma"
+          },
+          "gloss": {
+            "type": "string",
+            "example": "RATO ROER ROUPA REI ROMA"
           }
         }
       },

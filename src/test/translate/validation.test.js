@@ -43,6 +43,10 @@ describe('Validation Error Messages', () => {
     );
   });
 
+  it('should have correct error message for glossType', () => {
+    expect(VALIDATION_ERRORS.glossType).toBe("'gloss' must be a string.");
+  });
+
   it('should have correct error message for translationLength', () => {
     expect(VALIDATION_ERRORS.translationLength).toBe(
       `'translation' exceeded ${VALIDATION_VALUES.textLength.max} characters limit.`

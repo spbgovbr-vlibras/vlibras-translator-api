@@ -2,6 +2,7 @@ import request from 'supertest';
 import express from 'express';
 import {
   textValidationRules,
+  refineValidationRules,
   idValidationRules,
   timestampValidationRules,
   reviewValidationRules,
@@ -21,6 +22,13 @@ app.post(
 app.post(
   '/validate-review',
   reviewValidationRules,
+  checkValidation,
+  (_req, res) => res.status(200).json({ success: true }),
+);
+
+app.post(
+  '/validate-refine',
+  refineValidationRules,
   checkValidation,
   (_req, res) => res.status(200).json({ success: true }),
 );
@@ -67,6 +75,36 @@ describe('Validator Middleware', () => {
     expect(response.body.error).toContainEqual({
       field: 'text',
       message: "'text' must be a string.",
+    });
+  });
+
+  it('should validate refine requests without gloss', async () => {
+    const response = await request(app)
+      .post('/validate-refine')
+      .send({ text: 'Valid Text' });
+
+    expect(response.status).toBe(200);
+    expect(response.body.success).toBe(true);
+  });
+
+  it('should validate refine requests with gloss', async () => {
+    const response = await request(app)
+      .post('/validate-refine')
+      .send({ text: 'Valid Text', gloss: 'VALID GLOSS' });
+
+    expect(response.status).toBe(200);
+    expect(response.body.success).toBe(true);
+  });
+
+  it('should reject non-string gloss in refine requests', async () => {
+    const response = await request(app)
+      .post('/validate-refine')
+      .send({ text: 'Valid Text', gloss: { $ne: '' } });
+
+    expect(response.status).toBe(422);
+    expect(response.body.error).toContainEqual({
+      field: 'gloss',
+      message: "'gloss' must be a string.",
     });
   });
 

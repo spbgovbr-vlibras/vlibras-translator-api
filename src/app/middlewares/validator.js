@@ -65,6 +65,20 @@ const textSchema = z.object({
     .max(VALIDATION_VALUES.textLength.max, VALIDATION_ERRORS.textLength),
 }).strict();
 
+const refineSchema = z.object({
+  text: z.string({
+    invalid_type_error: VALIDATION_ERRORS.textType,
+    required_error: VALIDATION_ERRORS.notFoundText,
+  })
+    .min(VALIDATION_VALUES.textLength.min, VALIDATION_ERRORS.notFoundText)
+    .max(VALIDATION_VALUES.textLength.max, VALIDATION_ERRORS.textLength),
+  gloss: z.string({
+    invalid_type_error: VALIDATION_ERRORS.glossType,
+  })
+    .max(VALIDATION_VALUES.textLength.max, VALIDATION_ERRORS.glossLength)
+    .optional(),
+}).strict();
+
 const uuidSchema = z.object({
   requestUID: z.string()
     .uuid(VALIDATION_ERRORS.uuidVersion),
@@ -119,12 +133,18 @@ const reviewValidationRules = validateWithSchema({
   statusCode: 400,
 });
 
+const refineValidationRules = validateWithSchema({
+  schema: refineSchema,
+  source: 'body',
+});
+
 const checkValidation = (_req, _res, next) => {
   next();
 };
 
 export {
   textValidationRules,
+  refineValidationRules,
   idValidationRules,
   timestampValidationRules,
   reviewValidationRules,
