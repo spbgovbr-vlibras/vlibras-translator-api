@@ -1,9 +1,10 @@
+/* eslint-disable consistent-return, no-await-in-loop, no-console */
 import createError from 'http-errors';
 import { v4 as uuid } from 'uuid';
 import env from '../../config/environments/environment.js';
 import queueConnection from '../util/queueConnection.js';
 import redisConnection from '../util/redisConnection.js';
-import { cacheError, databaseError, serverError } from '../util/debugger.js';
+import { cacheError, serverError } from '../util/debugger.js';
 import db from '../db/models/index.js';
 import { TRANSLATOR_ERROR } from '../../config/error.js';
 import {
@@ -11,10 +12,10 @@ import {
   TRANSLATION_TIMEOUT,
   TRANSLATION_PAYLOAD_TTL,
 } from '../../config/timeout.js';
-
-
+import { getCachedTranslation } from '../middlewares/translationCache.js';
+import { requestQueueReply } from './amqpRpc.js';
+import { glossRefinementService } from './glossRefinement.js';
 import phraseBreaker from '../util/phraseBreaker.js';
-import sentimentPhraseBreaker from '../util/sentimentPhraseBreaker.js';
 import sentimentAnalyzer from '../util/sentimentAnalyzer.js';
 
 /**
@@ -23,23 +24,21 @@ import sentimentAnalyzer from '../util/sentimentAnalyzer.js';
  * @param {Request} req - The http(s) request.
  */
 const storeStats = async function storeStatsController(req) {
-
   try {
-    
     const phrases = await phraseBreaker(req.body.text);
     await db.sequelize.transaction(async (t) => {
-      for (let i = 0; i < phrases.length; i = i + 1) {
+      for (let i = 0; i < phrases.length; i += 1) {
         const phrase = phrases[i].trim();
         const translationAlreadyExists = await db.Hit.findOne({
           where: {
-            text: phrase
+            text: phrase,
           },
-          transaction: t
+          transaction: t,
         });
-  
-        let translationHit = undefined;
+
+        let translationHit;
         if (translationAlreadyExists) {
-          translationAlreadyExists.set({hits: translationAlreadyExists.hits + 1});
+          translationAlreadyExists.set({ hits: translationAlreadyExists.hits + 1 });
           await translationAlreadyExists.save({ transaction: t });
         } else {
           translationHit = db.Hit.build({
@@ -51,12 +50,12 @@ const storeStats = async function storeStatsController(req) {
       }
     });
   } catch (error) {
-    serverError('Text translator failed storing stats')
+    serverError('Text translator failed storing stats');
   }
-}
+};
 
 const textTranslatorHealth = async function textTranslatorController(req, res, next) {
-  const uid = req.uid;
+  const { uid } = req;
   try {
     const AMQPConnection = await queueConnection();
     const AMQPChannel = await AMQPConnection.createChannel();
@@ -70,7 +69,7 @@ const textTranslatorHealth = async function textTranslatorController(req, res, n
       try {
         AMQPChannel.close();
       } catch (channelAlreadyClosedError) { /* empty */ }
-      
+
       return next(createError(500, TRANSLATOR_ERROR.unavailable));
     }
 
@@ -97,7 +96,6 @@ const textTranslatorHealth = async function textTranslatorController(req, res, n
 
             // Armazenar o conteúdo e resolver a promessa
             resolve(content);
-
           } catch (error) {
             reject(createError(500, error.message));
           }
@@ -124,23 +122,26 @@ const textTranslatorHealth = async function textTranslatorController(req, res, n
     });
 
     await translation.save();
-    return result;  // Retornar o conteúdo
+    return result; // Retornar o conteúdo
   } catch (error) {
     return next(createError(500, TRANSLATOR_ERROR.translationError));
   }
 };
 
 const textTranslator = async function textTranslatorController(req, res, next) {
-  const uid = req.uid;
+  const { uid } = req;
   try {
     const AMQPConnection = await queueConnection();
-    console.log('[TextTranslator] - Processando requisição:', uid)
+    console.log('[TextTranslator] - Processando requisição:', uid);
     console.log(`[RabbitMQ][${uid}] - Conectado com sucesso`);
 
     const AMQPChannel = await AMQPConnection.createChannel();
     console.log(`[RabbitMQ][${uid}] - Canal criado`);
 
-    const { consumerCount } = await AMQPChannel.assertQueue(env.TRANSLATOR_QUEUE, { durable: false });
+    const { consumerCount } = await AMQPChannel.assertQueue(
+      env.TRANSLATOR_QUEUE,
+      { durable: false },
+    );
     console.log(`[RabbitMQ][${uid}] - Fila "${env.TRANSLATOR_QUEUE}" verificada. Consumers ativos: ${consumerCount}`);
 
     if (consumerCount === 0) {
@@ -178,11 +179,10 @@ const textTranslator = async function textTranslatorController(req, res, next) {
         }, CHANNEL_CLOSE_TIMEOUT);
 
         try {
-          const correlationId = message.properties.correlationId;
+          const { correlationId } = message.properties;
           if (correlationId !== uid) {
             console.error(`[RabbitMQ][${uid}] - correlationId inválido. Esperado: ${uid}, recebido: ${correlationId}`);
-            if (!res.headersSent)
-              return next(createError(500, TRANSLATOR_ERROR.wrongResponse));
+            if (!res.headersSent) return next(createError(500, TRANSLATOR_ERROR.wrongResponse));
             return;
           }
 
@@ -191,8 +191,7 @@ const textTranslator = async function textTranslatorController(req, res, next) {
 
           if (content.error !== undefined) {
             console.error(`[RabbitMQ][${uid}] - Erro retornado do worker:`, content.error);
-            if (!res.headersSent)
-              return next(createError(500, content.error));
+            if (!res.headersSent) return next(createError(500, content.error));
             return;
           }
 
@@ -209,7 +208,7 @@ const textTranslator = async function textTranslatorController(req, res, next) {
                 req.body.textHash,
                 content.translation,
                 'EX',
-                env.CACHE_EXP
+                env.CACHE_EXP,
               );
               console.log(`[Redis][${uid}] - Tradução armazenada com chave "${req.body.textHash}" por ${env.CACHE_EXP} segundos`);
             } catch (redisErr) {
@@ -261,11 +260,55 @@ const textTranslator = async function textTranslatorController(req, res, next) {
 
     await translation.save();
     console.log(`[DB][${uid}] - Registro salvo inicialmente no banco para log`);
-
   } catch (error) {
     console.error(`[Fatal][${uid}] - Erro fatal na tradução:`, error.message);
     if (!res.headersSent) {
       return next(createError(500, TRANSLATOR_ERROR.translationError));
+    }
+  }
+};
+
+const refinedTextTranslator = async function refinedTextTranslatorController(req, res, next) {
+  const { uid } = req;
+
+  try {
+    setTimeout(storeStats, 10, req);
+
+    const requesterIp = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+    const translation = db.Translation.build({
+      text: req.body.text,
+      requester: requesterIp,
+    });
+
+    let cachedGloss;
+    const providedGloss = typeof req.body.gloss === 'string' ? req.body.gloss : undefined;
+
+    if (providedGloss === undefined || providedGloss.length === 0) {
+      try {
+        const cacheEntry = await getCachedTranslation(req.body.text);
+        cachedGloss = cacheEntry.cachedTranslation ?? undefined;
+      } catch (cacheErr) {
+        cacheError(`GET ${cacheErr.message}`);
+      }
+    }
+
+    const refinementGloss = providedGloss && providedGloss.length > 0
+      ? providedGloss
+      : (cachedGloss ?? '');
+
+    const refinedGloss = await glossRefinementService.refineGloss({
+      gloss: refinementGloss,
+      text: req.body.text,
+      uid,
+    });
+
+    translation.set({ translation: refinedGloss });
+    await translation.save();
+
+    res.status(200).send(refinedGloss);
+  } catch (error) {
+    if (!res.headersSent) {
+      next(error.status ? error : createError(500, TRANSLATOR_ERROR.translationError));
     }
   }
 };
@@ -304,7 +347,7 @@ const sentimentTranslator = async function sentimentTranslatorController(req, re
             }
 
             if (message.properties.correlationId !== uid) {
-              AMQPChannel.nack(message, false, false); 
+              AMQPChannel.nack(message, false, false);
               return;
             }
 
@@ -314,7 +357,7 @@ const sentimentTranslator = async function sentimentTranslatorController(req, re
               return reject(createError(500, content.error));
             }
 
-            const translatedText = content.translation || ''; 
+            const translatedText = content.translation || '';
 
             let sentimentAnalysisResult;
             try {
@@ -322,15 +365,14 @@ const sentimentTranslator = async function sentimentTranslatorController(req, re
                 sentimentAnalysisResult = await sentimentAnalyzer(req.body.text, translatedText);
               } else {
                 sentimentAnalysisResult = {
-                    sentimentoGeral: 'neutro',
-                    sentimentoPorSentenca: []
+                  sentimentoGeral: 'neutro',
+                  sentimentoPorSentenca: [],
                 };
               }
-
             } catch (sentimentError) {
               sentimentAnalysisResult = {
                 sentimentoGeral: 'ERRO_API_GERAL',
-                sentimentoPorSentenca: [{ traducao: translatedText, sentimento: 'ERRO_API_GERAL' }]
+                sentimentoPorSentenca: [{ traducao: translatedText, sentimento: 'ERRO_API_GERAL' }],
               };
             }
 
@@ -341,17 +383,15 @@ const sentimentTranslator = async function sentimentTranslatorController(req, re
             };
 
             resolve(responsePayload);
-
           } catch (error) {
-             
-             reject(createError(500, error.message || TRANSLATOR_ERROR.translationError));
+            reject(createError(500, error.message || TRANSLATOR_ERROR.translationError));
           }
         },
         { noAck: true },
       );
 
       setTimeout(() => {
-         reject(createError(408, TRANSLATOR_ERROR.timeout));
+        reject(createError(408, TRANSLATOR_ERROR.timeout));
       }, TRANSLATION_TIMEOUT);
     });
 
@@ -384,24 +424,26 @@ const sentimentTranslator = async function sentimentTranslatorController(req, re
         );
       }
     } catch (error) {
-        cacheError(`SET ${error.message}`);
+      cacheError(`SET ${error.message}`);
     }
 
     try {
-      if (finalPayload && finalPayload.traducao !== undefined && translation) { // Verifica se translation existe
-          translation.set({ translation: finalPayload.traducao });
-          await translation.save();
+      if (
+        finalPayload
+        && finalPayload.traducao !== undefined
+        && translation
+      ) {
+        translation.set({ translation: finalPayload.traducao });
+        await translation.save();
       }
     } catch (error) {
-        serverError(`Erro ao atualizar tradução no DB: ${error.message}`);
+      serverError(`Erro ao atualizar tradução no DB: ${error.message}`);
     }
-
   } catch (error) {
     if (!res.headersSent) {
       return next(error);
-    } else {
-       console.error('[ERROR] Erro após resposta HTTP já ter sido enviada:', error);
     }
+    console.error('[ERROR] Erro após resposta HTTP já ter sido enviada:', error);
   } finally {
     if (AMQPChannel) {
       try {
@@ -413,4 +455,6 @@ const sentimentTranslator = async function sentimentTranslatorController(req, re
   }
 };
 
-export { textTranslator, textTranslatorHealth, sentimentTranslator };
+export {
+  textTranslator, textTranslatorHealth, sentimentTranslator, refinedTextTranslator,
+};

@@ -75,7 +75,11 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(attachUid);
 app.use((req, res, next) => {
-  if (req.path === '/translate' || req.path === '/translatesentiment') {
+  if (
+    req.path === '/translate'
+    || req.path === '/translatesentiment'
+    || req.path.startsWith('/refine')
+  ) {
     next();
     return;
   }
@@ -87,6 +91,7 @@ app.use('/', apiDocRoute);
 app.use('/', reviewRoute);
 app.use('/translate', translateRateLimit);
 app.use('/translatesentiment', translateRateLimit);
+app.use('/refine', translateRateLimit);
 app.use('/', translatorRoute);
 app.use(
   '/',

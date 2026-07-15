@@ -92,6 +92,7 @@ tradapi:
       RATE_LIMIT_MAX_REQUESTS: '100'
       TRANSLATE_RATE_LIMIT_WINDOW_MS: '60000'
       TRANSLATE_RATE_LIMIT_MAX_REQUESTS: '20'
+      GLOSS_REFINEMENT_ENABLED: 'false'
 
   service:
     type: ClusterIP

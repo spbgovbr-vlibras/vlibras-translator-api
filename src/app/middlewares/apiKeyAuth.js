@@ -27,10 +27,35 @@ const getApiKeyFromRequest = (req, headerName) => {
   return token.trim();
 };
 
-const createApiKeyAuthMiddleware = (env) => {
-  const isEnabled = env.API_KEY_AUTH_ENABLED === 'true';
-  const headerName = env.API_KEY_HEADER || 'x-api-key';
-  const allowedApiKeys = parseApiKeys(env.API_KEYS);
+const resolveApiKeyConfig = (env, options = {}) => {
+  const {
+    apiKeysKey = 'API_KEYS',
+    enabled = undefined,
+    enabledKey = 'API_KEY_AUTH_ENABLED',
+    fallbackApiKeysKey,
+    fallbackHeaderNameKey,
+    headerNameKey = 'API_KEY_HEADER',
+  } = options;
+  const resolvedEnabled = enabled ?? env[enabledKey] === 'true';
+  const headerName = env[headerNameKey] || env[fallbackHeaderNameKey] || 'x-api-key';
+  const configuredApiKeys = parseApiKeys(env[apiKeysKey]);
+  const allowedApiKeys = configuredApiKeys.length > 0
+    ? configuredApiKeys
+    : parseApiKeys(env[fallbackApiKeysKey]);
+
+  return {
+    allowedApiKeys,
+    headerName,
+    isEnabled: resolvedEnabled,
+  };
+};
+
+const createApiKeyAuthMiddleware = (env, options = {}) => {
+  const {
+    isEnabled,
+    headerName,
+    allowedApiKeys,
+  } = resolveApiKeyConfig(env, options);
 
   return (req, _res, next) => {
     if (!isEnabled) {
@@ -55,3 +80,4 @@ const createApiKeyAuthMiddleware = (env) => {
 };
 
 export default createApiKeyAuthMiddleware;
+export { resolveApiKeyConfig };
