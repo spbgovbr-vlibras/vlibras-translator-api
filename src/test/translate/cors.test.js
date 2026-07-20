@@ -28,6 +28,24 @@ describe('CORS helpers', () => {
     expect(callbackResult).toBe(true);
   });
 
+  it('should allow metrics origins when the allowlist is empty and allowAllIfEmpty is true', () => {
+    const options = createCorsOptions({
+      allowedOrigins: parseAllowedOrigins(''),
+      allowAllIfEmpty: true,
+    });
+
+    let callbackError;
+    let callbackResult;
+
+    options.origin('https://grafana.example', (error, allowed) => {
+      callbackError = error;
+      callbackResult = allowed;
+    });
+
+    expect(callbackError).toBeNull();
+    expect(callbackResult).toBe(true);
+  });
+
   it('should reject origins not present in the allowlist when allowAllIfEmpty is false', () => {
     const options = createCorsOptions({
       allowedOrigins: parseAllowedOrigins('https://allowed.example'),

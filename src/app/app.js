@@ -4,6 +4,7 @@ import logger from 'morgan';
 import cors from 'cors';
 import compression from 'compression';
 import helmet from 'helmet';
+import createError from 'http-errors';
 
 import env from '../config/environments/environment.js';
 
@@ -71,7 +72,7 @@ app.use('/', translatorRoute);
 app.use(
   '/',
   apiKeyAuth,
-  cors(createCorsOptions({ allowedOrigins: metricsAllowedOrigins })),
+  cors(createCorsOptions({ allowedOrigins: metricsAllowedOrigins, allowAllIfEmpty: true })),
   metricsRoute,
 );
 app.use(
