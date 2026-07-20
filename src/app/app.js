@@ -1,4 +1,3 @@
-import createError from 'http-errors';
 import express from 'express';
 import cookieParser from 'cookie-parser';
 import logger from 'morgan';
@@ -15,34 +14,10 @@ import metricsRoute from './metrics/metricsRoute.js';
 import healthRouter from './health/healthRoute.js';
 import { attachUid } from './middlewares/attachUid.js';
 import createApiKeyAuthMiddleware from './middlewares/apiKeyAuth.js';
+import { createCorsOptions, parseAllowedOrigins } from './middlewares/corsOptions.js';
 import { createRateLimitMiddleware } from './middlewares/rateLimit.js';
 
 const app = express();
-const parseAllowedOrigins = (allowedOrigins = '') => allowedOrigins
-  .split(',')
-  .map((origin) => origin.trim())
-  .filter(Boolean);
-const createCorsOptions = ({ allowedOrigins = [], allowAllIfEmpty = false } = {}) => ({
-  credentials: false,
-  origin(origin, callback) {
-    if (!origin) {
-      callback(null, true);
-      return;
-    }
-
-    if (allowAllIfEmpty && allowedOrigins.length === 0) {
-      callback(null, true);
-      return;
-    }
-
-    if (allowedOrigins.includes(origin)) {
-      callback(null, true);
-      return;
-    }
-
-    callback(createError(403, 'Origin not allowed by CORS'));
-  },
-});
 const appAllowedOrigins = parseAllowedOrigins(env.CORS_ALLOWED_ORIGINS);
 const healthAllowedOrigins = parseAllowedOrigins(env.HEALTH_CORS_ALLOWED_ORIGINS);
 const metricsAllowedOrigins = parseAllowedOrigins(env.METRICS_CORS_ALLOWED_ORIGINS);
@@ -102,7 +77,7 @@ app.use(
 app.use(
   '/',
   apiKeyAuth,
-  cors(createCorsOptions({ allowedOrigins: healthAllowedOrigins })),
+  cors(createCorsOptions({ allowedOrigins: healthAllowedOrigins, allowAllIfEmpty: true })),
   healthRouter,
 );
 
