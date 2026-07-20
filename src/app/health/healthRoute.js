@@ -15,13 +15,17 @@ const getDetailedHealthAllowedIps = () => {
     return configuredIps;
   }
 
-  if (process.env.NODE_ENV !== 'production') {
-    return ['127.0.0.1', '::1', '::ffff:127.0.0.1'];
+  return null;
+};
+const isDetailedHealthAllowed = (ip) => {
+  const allowedIps = getDetailedHealthAllowedIps();
+
+  if (allowedIps === null) {
+    return true;
   }
 
-  return [];
+  return allowedIps.includes(ip);
 };
-const isDetailedHealthAllowed = (ip) => getDetailedHealthAllowedIps().includes(ip);
 
 healthRouter.get('/health', (_req, res) => {
   res.status(200).json(getPublicHealthResponse());
@@ -51,3 +55,4 @@ healthRouter.get('/status', async (req, res, next) => {
 });
 
 export default healthRouter;
+export { parseAllowedIps, getDetailedHealthAllowedIps, isDetailedHealthAllowed };
