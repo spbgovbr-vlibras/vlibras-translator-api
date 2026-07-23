@@ -1,14 +1,15 @@
 import { Router } from 'express';
-import { reviewValidationRules, checkValidation } from '../middlewares/validator.js';
+import { reviewValidationRules } from '../middlewares/validator.js';
 import translationReview from './translationReview.js';
 import reviewStats from './reviewStats.js';
 
 const translationReviewRoute = Router();
 
-translationReviewRoute.post('/review',
+translationReviewRoute.post(
+  '/review',
   reviewValidationRules,
-  checkValidation,
-  translationReview);
+  translationReview,
+);
 
 translationReviewRoute.get('/review/stats', reviewStats);
 
