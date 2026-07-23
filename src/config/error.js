@@ -13,4 +13,3 @@ export const REVIEW_ERROR = {
   reviewError: 'Failed to publish review.',
 };
 
-

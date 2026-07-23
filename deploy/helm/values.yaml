@@ -62,7 +62,7 @@ tradapi:
     AMQP_PROTOCOL: 'amqp'
   
   ingress:
-    enabled: true
+    enabled: false
     className: nginx
     host: traducao2-dth.vlibras.lavid.ufpb.br
     name: vlibras-tradapi-ing
