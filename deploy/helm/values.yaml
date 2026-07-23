@@ -60,6 +60,18 @@ tradapi:
     LOGGER_FORMAT: 'production' #dev or production
     PORT: '80'
     AMQP_PROTOCOL: 'amqp'
+    AMQP_PREFETCH_COUNT: '1'
+    API_CONSUMER_QUEUE: 'amq.rabbitmq.reply-to'
+    TRANSLATOR_QUEUE: 'translate.to_text4'
+    VIDEOMAKER_QUEUE: 'translate.to_video'
+    CACHE_EXP: '604800'
+    CACHE_SIZE: '10485760'
+    DOCS_ENABLED: 'true'
+    RATE_LIMIT_WINDOW_MS: '60000'
+    RATE_LIMIT_MAX_REQUESTS: '100'
+    TRANSLATE_RATE_LIMIT_WINDOW_MS: '60000'
+    TRANSLATE_RATE_LIMIT_MAX_REQUESTS: '20'
+    GLOSS_REFINEMENT_ENABLED: 'false'
   
   ingress:
     enabled: false
@@ -81,18 +93,7 @@ tradapi:
     existingSecret: "vlibras-tradutor-api-appsecret"
     
     appSecret:
-      AMQP_PREFETCH_COUNT: '1'
-      API_CONSUMER_QUEUE: 'amq.rabbitmq.reply-to'
-      TRANSLATOR_QUEUE: 'translate.to_text4'
-      VIDEOMAKER_QUEUE: 'translate.to_video'
-      CACHE_EXP: '604800'
-      CACHE_SIZE: '10485760'
-      DOCS_ENABLED: 'true'
-      RATE_LIMIT_WINDOW_MS: '60000'
-      RATE_LIMIT_MAX_REQUESTS: '100'
-      TRANSLATE_RATE_LIMIT_WINDOW_MS: '60000'
-      TRANSLATE_RATE_LIMIT_MAX_REQUESTS: '20'
-      GLOSS_REFINEMENT_ENABLED: 'false'
+      abc: 'abc'
 
   service:
     type: ClusterIP
