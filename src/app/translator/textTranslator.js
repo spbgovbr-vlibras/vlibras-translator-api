@@ -12,6 +12,7 @@ import {
   TRANSLATION_TIMEOUT,
   TRANSLATION_PAYLOAD_TTL,
 } from '../../config/timeout.js';
+import { VALIDATION_VALUES } from '../../config/validation.js';
 import { getCachedTranslation } from '../middlewares/translationCache.js';
 import { requestQueueReply } from './amqpRpc.js';
 import { glossRefinementService } from './glossRefinement.js';
