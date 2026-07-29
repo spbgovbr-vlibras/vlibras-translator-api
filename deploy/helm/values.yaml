@@ -7,6 +7,7 @@ fullnameOverride: ""
 ## Labels to apply to all resources
 commonLabels: {}
 
+namespace: vlibras
 imagePullSecrets:
   - name: registrynuvem
 
@@ -59,6 +60,30 @@ tradapi:
     LOGGER_FORMAT: 'production' #dev or production
     PORT: '80'
     AMQP_PROTOCOL: 'amqp'
+    AMQP_PREFETCH_COUNT: '1'
+    API_CONSUMER_QUEUE: 'amq.rabbitmq.reply-to'
+    TRANSLATOR_QUEUE: 'translate.to_text4'
+    VIDEOMAKER_QUEUE: 'translate.to_video'
+    CACHE_EXP: '604800'
+    CACHE_SIZE: '10485760'
+    DOCS_ENABLED: 'false'
+    RATE_LIMIT_WINDOW_MS: '60000'
+    RATE_LIMIT_MAX_REQUESTS: '300'
+    TRANSLATE_RATE_LIMIT_WINDOW_MS: '60000'
+    TRANSLATE_RATE_LIMIT_MAX_REQUESTS: '60'
+    GLOSS_REFINEMENT_ENABLED: 'false'
+  
+  ingress:
+    enabled: false
+    className: nginx
+    host: traducao2-dth.vlibras.lavid.ufpb.br
+    name: vlibras-tradapi-ing
+    port: 80
+    path: /
+    pathType: Prefix
+    secretName: kcert-tradapi
+    annotations: {} 
+
 
 
   secrets:
@@ -68,12 +93,7 @@ tradapi:
     existingSecret: "vlibras-tradutor-api-appsecret"
     
     appSecret:
-      AMQP_PREFETCH_COUNT: '1'
-      API_CONSUMER_QUEUE: 'amq.rabbitmq.reply-to'
-      TRANSLATOR_QUEUE: 'translate.to_text4'
-      VIDEOMAKER_QUEUE: 'translate.to_video'
-      CACHE_EXP: '604800'
-      CACHE_SIZE: '10485760'
+      abc: 'abc'
 
   service:
     type: ClusterIP

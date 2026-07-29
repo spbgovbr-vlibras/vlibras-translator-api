@@ -1,0 +1,30 @@
+{{- if .Values.tradapi.ingress.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ .Values.tradapi.ingress.name }}
+  labels:
+    {{ include "tradapi.labels" . | indent 4 }}
+  namespace: {{ .Values.namespace }}
+  {{- with .Values.tradapi.ingress.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  ingressClassName: {{ .Values.tradapi.ingress.className }}
+  tls:
+    - hosts: 
+        - {{ .Values.tradapi.ingress.host }}
+      secretName: {{ .Values.tradapi.ingress.secretName }}
+  rules:
+    - host: {{ .Values.tradapi.ingress.host }}
+      http:
+        paths:
+          - path:  {{ .Values.tradapi.ingress.path }}
+            pathType:  {{ .Values.tradapi.ingress.pathType }}
+            backend:
+              service:
+                name:  {{ include "tradapi.fullname" . }}
+                port:
+                  number: {{ .Values.tradapi.ingress.port }}
+{{- end }}

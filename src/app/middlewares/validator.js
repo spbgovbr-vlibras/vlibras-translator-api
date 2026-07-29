@@ -1,62 +1,152 @@
 import createError from 'http-errors';
-import {
-  body, param, query, validationResult,
-} from 'express-validator';
+import { z } from 'zod';
 import { VALIDATION_VALUES, VALIDATION_ERRORS } from '../../config/validation.js';
 
-export const textValidationRules = body('text')
-  .exists()
-  .withMessage(VALIDATION_ERRORS.notFoundText) // TODO: update express validator to 7.0 and add .bail()
-  .isLength(VALIDATION_VALUES.textLength)
-  .withMessage(VALIDATION_ERRORS.textLength);
+const buildErrorPayload = (issues) => ({
+  errors: issues.map((issue) => ({
+    field: issue.path.join('.') || 'body',
+    message: issue.message,
+  })),
+});
+const createTimestampFieldSchema = () => z.preprocess(
+  (value) => {
+    if (value === undefined) {
+      return undefined;
+    }
 
-export const idValidationRules = param('requestUID')
-  .isUUID(4)
-  .withMessage(VALIDATION_ERRORS.uuidVersion);
+    const parsedValue = Number.parseInt(value, 10);
 
-export const timestampValidationRules = [
-  query('startTime')
-    .optional()
-    .isInt(VALIDATION_VALUES.dateInterval)
-    .toInt()
-    .withMessage(VALIDATION_ERRORS.dateInterval),
-  query('endTime')
-    .optional()
-    .isInt(VALIDATION_VALUES.dateInterval)
-    .toInt()
-    .withMessage(VALIDATION_ERRORS.dateInterval),
-];
+    if (Number.isNaN(parsedValue)) {
+      return null;
+    }
 
-export const reviewValidationRules = [
-  body('text')
-    .isLength(VALIDATION_VALUES.textLength)
-    .withMessage(VALIDATION_ERRORS.textLength),
-  body('translation')
-    .isLength(VALIDATION_VALUES.textLength)
-    .withMessage(VALIDATION_ERRORS.translationLength),
-  body('rating')
-    .isIn(VALIDATION_VALUES.ratingOptions)
-    .withMessage(VALIDATION_ERRORS.ratingOptions),
-];
+    return parsedValue;
+  },
+  z.number({
+    invalid_type_error: VALIDATION_ERRORS.dateInterval,
+    required_error: VALIDATION_ERRORS.dateInterval,
+  })
+    .int(VALIDATION_ERRORS.dateInterval)
+    .min(VALIDATION_VALUES.dateInterval.min, VALIDATION_ERRORS.dateInterval)
+    .max(VALIDATION_VALUES.dateInterval.max, VALIDATION_ERRORS.dateInterval)
+    .optional(),
+);
+const createValidationError = (statusCode, issues) => {
+  const errorPayload = buildErrorPayload(issues);
+  const error = createError(statusCode);
 
-export const checkValidation = function checkRequestValidation(req, _res, next) {
-  const errors = validationResult(req);
-  if (errors.isEmpty()) {
-    return next();
-  }
+  error.errors = errorPayload.errors;
 
-  // Log para verificar se os erros estão sendo gerados corretamente
-  console.log("Validation errors:", errors.array());
-
-  const extractedErrors = errors.array().map(err => {
-    console.log("UIU", err);
-    return {
-      field: err.param || err.path || 'unknown',
-      message: err.msg,
-    };
-  });
-
-  // Garantir que os erros estão no formato correto ao serem passados para createError
-  return next(createError(422, { errors: extractedErrors }));
+  return error;
 };
 
+const validateWithSchema = ({
+  schema,
+  source,
+  statusCode = 422,
+}) => (req, _res, next) => {
+  const validationResult = schema.safeParse(req[source]);
+
+  if (validationResult.success) {
+    req[source] = validationResult.data;
+    next();
+    return;
+  }
+
+  next(createValidationError(statusCode, validationResult.error.issues));
+};
+
+const textSchema = z.object({
+  text: z.string({
+    invalid_type_error: VALIDATION_ERRORS.textType,
+    required_error: VALIDATION_ERRORS.notFoundText,
+  })
+    .min(VALIDATION_VALUES.textLength.min, VALIDATION_ERRORS.notFoundText)
+    .max(VALIDATION_VALUES.textLength.max, VALIDATION_ERRORS.textLength),
+}).strict();
+
+const refineSchema = z.object({
+  text: z.string({
+    invalid_type_error: VALIDATION_ERRORS.textType,
+    required_error: VALIDATION_ERRORS.notFoundText,
+  })
+    .min(VALIDATION_VALUES.textLength.min, VALIDATION_ERRORS.notFoundText)
+    .max(VALIDATION_VALUES.textLength.max, VALIDATION_ERRORS.textLength),
+  gloss: z.string({
+    invalid_type_error: VALIDATION_ERRORS.glossType,
+  })
+    .max(VALIDATION_VALUES.textLength.max, VALIDATION_ERRORS.glossLength)
+    .optional(),
+}).strict();
+
+const uuidSchema = z.object({
+  requestUID: z.string()
+    .uuid(VALIDATION_ERRORS.uuidVersion),
+}).strict();
+
+const timestampSchema = z.object({
+  startTime: createTimestampFieldSchema(),
+  endTime: createTimestampFieldSchema(),
+}).strict();
+
+const reviewSchema = z.object({
+  text: z.string({
+    invalid_type_error: VALIDATION_ERRORS.textType,
+    required_error: VALIDATION_ERRORS.notFoundText,
+  })
+    .min(VALIDATION_VALUES.textLength.min, VALIDATION_ERRORS.notFoundText)
+    .max(VALIDATION_VALUES.textLength.max, VALIDATION_ERRORS.textLength),
+  translation: z.string({
+    invalid_type_error: VALIDATION_ERRORS.translationType,
+    required_error: VALIDATION_ERRORS.translationLength,
+  })
+    .min(VALIDATION_VALUES.textLength.min, VALIDATION_ERRORS.translationLength)
+    .max(VALIDATION_VALUES.textLength.max, VALIDATION_ERRORS.translationLength),
+  rating: z.enum(VALIDATION_VALUES.ratingOptions, {
+    errorMap: () => ({ message: VALIDATION_ERRORS.ratingOptions }),
+  }),
+  review: z.string({
+    invalid_type_error: VALIDATION_ERRORS.reviewType,
+  })
+    .max(VALIDATION_VALUES.textLength.max, VALIDATION_ERRORS.reviewLength)
+    .optional(),
+}).strict();
+
+const textValidationRules = validateWithSchema({
+  schema: textSchema,
+  source: 'body',
+});
+
+const idValidationRules = validateWithSchema({
+  schema: uuidSchema,
+  source: 'params',
+});
+
+const timestampValidationRules = validateWithSchema({
+  schema: timestampSchema,
+  source: 'query',
+});
+
+const reviewValidationRules = validateWithSchema({
+  schema: reviewSchema,
+  source: 'body',
+  statusCode: 400,
+});
+
+const refineValidationRules = validateWithSchema({
+  schema: refineSchema,
+  source: 'body',
+});
+
+const checkValidation = (_req, _res, next) => {
+  next();
+};
+
+export {
+  textValidationRules,
+  refineValidationRules,
+  idValidationRules,
+  timestampValidationRules,
+  reviewValidationRules,
+  checkValidation,
+};

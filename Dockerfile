@@ -1,6 +1,7 @@
-FROM public.ecr.aws/docker/library/node:hydrogen-alpine AS build
+FROM public.ecr.aws/docker/library/node:24-alpine3.22 AS build
 
-RUN apk add --no-cache make g++ python3
+RUN apk upgrade --no-cache libcrypto3 libssl3 \
+  && apk add --no-cache make g++ python3
 
 COPY . /src
 WORKDIR /src
@@ -8,17 +9,25 @@ WORKDIR /src
 RUN npm ci \
   && npm prune --production
 
-FROM public.ecr.aws/docker/library/node:hydrogen-alpine
+FROM public.ecr.aws/docker/library/node:24-alpine3.22
 
-RUN npm install -g sequelize-cli
+WORKDIR /app
 
-COPY --from=build /src/node_modules node_modules
-COPY --from=build /src/src src
-COPY --from=build /src/bootstrap.sh bootstrap.sh
-COPY --from=build /src/package.json package.json
-COPY --from=build /src/.sequelizerc .sequelizerc
+RUN apk upgrade --no-cache libcrypto3 libssl3
 
-ENV DEBUG vlibras-translator-*:*
-ENV NODE_ENV=production
+COPY --from=build --chown=node:node /src/node_modules node_modules
+COPY --from=build --chown=node:node /src/src src
+COPY --from=build --chown=node:node /src/bootstrap.js bootstrap.js
+COPY --from=build --chown=node:node /src/package.json package.json
+COPY --from=build --chown=node:node /src/.sequelizerc .sequelizerc
 
-CMD ["sh", "bootstrap.sh"]
+RUN rm -rf /usr/local/lib/node_modules/npm \
+  && rm -f /usr/local/bin/npm /usr/local/bin/npx
+
+ARG NODE_ENV=production
+ENV DEBUG=vlibras-translator-*:*
+ENV NODE_ENV=$NODE_ENV
+
+USER node
+
+CMD ["node", "bootstrap.js"]

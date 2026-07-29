@@ -30,6 +30,14 @@
     {
       "name": "reviews",
       "description": "Human revision of VLibras Translator translations"
+    },
+    {
+      "name": "health",
+      "description": "Public and operational health endpoints"
+    },
+    {
+      "name": "metrics",
+      "description": "Operational counters and usage metrics"
     }
   ],
   "paths": {
@@ -59,6 +67,140 @@
               "text/plain": {
                 "schema": {
                   "$ref": "#/components/schemas/TranslatedText"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Received an invalid body param",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvalidParams"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal processing error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InternalError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/translatesentiment": {
+      "post": {
+        "tags": [
+          "translations"
+        ],
+        "summary": "Translates a text and returns sentiment analysis",
+        "description": "Translates a text written in Brazilian Portuguese to LIBRAS and returns overall and per-sentence sentiment analysis for the translated content.",
+        "operationId": "translateTextWithSentiment",
+        "requestBody": {
+          "description": "Text to translate and analyze",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Translate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Text translated with sentiment analysis",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SentimentTranslationResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Received an invalid body param",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvalidParams"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal processing error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InternalError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/refine": {
+      "post": {
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "tags": [
+          "translations"
+        ],
+        "summary": "Applies standalone gloss refinement",
+        "description": "Sends the source text to the refinement queue with an optional base gloss. When gloss is not provided, the API reuses a cached translation when available before delegating translation to the refinement worker.",
+        "operationId": "refineGloss",
+        "requestBody": {
+          "description": "Text to refine, with optional base gloss",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RefineRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Refined translated text",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/TranslatedText"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid API key",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Unauthorized"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Refinement route is disabled for this environment",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InternalError"
+                },
+                "example": {
+                  "error": "Refinement route is disabled for this environment"
                 }
               }
             }
@@ -138,10 +280,175 @@
           }
         }
       }
+    },
+    "/health": {
+      "get": {
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "tags": [
+          "health"
+        ],
+        "summary": "Returns the public health status",
+        "description": "Public health endpoint with minimal response and no infrastructure details.",
+        "operationId": "getPublicHealth",
+        "responses": {
+          "200": {
+            "description": "Public health status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicHealth"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid API key",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Unauthorized"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/healthcheck": {
+      "get": {
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "tags": [
+          "health"
+        ],
+        "summary": "Returns a simple liveness check",
+        "description": "Minimal liveness endpoint used by infrastructure checks.",
+        "operationId": "getHealthcheck",
+        "responses": {
+          "200": {
+            "description": "Liveness check succeeded"
+          },
+          "401": {
+            "description": "Missing or invalid API key",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Unauthorized"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/metrics": {
+      "get": {
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "tags": [
+          "metrics"
+        ],
+        "summary": "Returns service metrics",
+        "description": "Aggregated metrics for translations, reviews, ratings and most frequent translated texts.",
+        "operationId": "getMetrics",
+        "parameters": [
+          {
+            "name": "startTime",
+            "in": "query",
+            "description": "Start of the reporting window in a parseable date-time format.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "endTime",
+            "in": "query",
+            "description": "End of the reporting window in a parseable date-time format.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Aggregated metrics",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MetricsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid API key",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Unauthorized"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Received an invalid query param",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvalidParams"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal processing error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InternalError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
+    "securitySchemes": {
+      "ApiKeyAuth": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "x-api-key"
+      }
+    },
     "schemas": {
+      "PublicHealth": {
+        "type": "object",
+        "required": [
+          "status"
+        ],
+        "properties": {
+          "status": {
+            "type": "string",
+            "example": "up"
+          }
+        }
+      },
       "Translate": {
         "required": [
           "text"
@@ -154,9 +461,66 @@
           }
         }
       },
+      "RefineRequest": {
+        "required": [
+          "text"
+        ],
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string",
+            "example": "o rato roeu a roupa do rei de roma"
+          },
+          "gloss": {
+            "type": "string",
+            "example": "RATO ROER ROUPA REI ROMA"
+          }
+        }
+      },
       "TranslatedText": {
         "type": "string",
         "example": "RATO ROER ROUPA REI ROMA"
+      },
+      "SentimentTranslationResponse": {
+        "type": "object",
+        "required": [
+          "traducao",
+          "sentimentoGeral",
+          "sentimentoPorSentenca"
+        ],
+        "properties": {
+          "traducao": {
+            "type": "string",
+            "example": "RATO ROER ROUPA REI ROMA"
+          },
+          "sentimentoGeral": {
+            "type": "string",
+            "example": "Neutro"
+          },
+          "sentimentoPorSentenca": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SentenceSentiment"
+            }
+          }
+        }
+      },
+      "SentenceSentiment": {
+        "type": "object",
+        "required": [
+          "traducao",
+          "sentimento"
+        ],
+        "properties": {
+          "traducao": {
+            "type": "string",
+            "example": "RATO ROER ROUPA"
+          },
+          "sentimento": {
+            "type": "string",
+            "example": "Neutro"
+          }
+        }
       },
       "Review": {
         "required": [
@@ -192,6 +556,61 @@
         "type": "string",
         "example": "OK"
       },
+      "MetricsResponse": {
+        "type": "object",
+        "properties": {
+          "translationsCount": {
+            "type": "integer",
+            "example": 42
+          },
+          "reviewsCount": {
+            "type": "integer",
+            "example": 17
+          },
+          "ratingsCounters": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RatingCounter"
+            }
+          },
+          "translationsHits": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TranslationHit"
+            }
+          }
+        }
+      },
+      "RatingCounter": {
+        "type": "object",
+        "properties": {
+          "rating": {
+            "type": "string",
+            "enum": [
+              "good",
+              "bad"
+            ],
+            "example": "good"
+          },
+          "count": {
+            "type": "integer",
+            "example": 12
+          }
+        }
+      },
+      "TranslationHit": {
+        "type": "object",
+        "properties": {
+          "_id": {
+            "type": "string",
+            "example": "o rato roeu a roupa do rei de roma"
+          },
+          "hits": {
+            "type": "integer",
+            "example": 9
+          }
+        }
+      },
       "requestUID": {
         "type": "string",
         "example": "c6730846-5d8e-4803-a38a-9cac921c9a04"
@@ -216,6 +635,20 @@
           "error": {
             "type": "object",
             "example": "Unprocessable Entity"
+          }
+        }
+      },
+      "Unauthorized": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "object",
+            "properties": {
+              "message": {
+                "type": "string",
+                "example": "Unauthorized"
+              }
+            }
           }
         }
       },
