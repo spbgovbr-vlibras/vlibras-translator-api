@@ -458,6 +458,11 @@
           "text": {
             "type": "string",
             "example": "o rato roeu a roupa do rei de roma"
+          },
+          "domain": {
+            "type": "string",
+            "example": "portal.vlibras.gov.br",
+            "description": "Optional compatibility field accepted by the API and ignored by the current translation flow."
           }
         }
       },

@@ -66,6 +66,27 @@ describe('Validator Middleware', () => {
     expect(response.body.success).toBe(true);
   });
 
+  it('should allow optional domain in translate requests', async () => {
+    const response = await request(app)
+      .post('/validate-text')
+      .send({ text: 'Valid Text', domain: 'portal.vlibras.gov.br' });
+
+    expect(response.status).toBe(200);
+    expect(response.body.success).toBe(true);
+  });
+
+  it('should reject non-string domain in translate requests', async () => {
+    const response = await request(app)
+      .post('/validate-text')
+      .send({ text: 'Valid Text', domain: { $ne: '' } });
+
+    expect(response.status).toBe(422);
+    expect(response.body.error).toContainEqual({
+      field: 'domain',
+      message: "'domain' must be a string.",
+    });
+  });
+
   it('should reject non-string text', async () => {
     const response = await request(app)
       .post('/validate-text')
