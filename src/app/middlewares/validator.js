@@ -63,6 +63,12 @@ const textSchema = z.object({
   })
     .min(VALIDATION_VALUES.textLength.min, VALIDATION_ERRORS.notFoundText)
     .max(VALIDATION_VALUES.textLength.max, VALIDATION_ERRORS.textLength),
+  domain: z.string({
+    invalid_type_error: VALIDATION_ERRORS.domainType,
+  })
+    .min(VALIDATION_VALUES.textLength.min, VALIDATION_ERRORS.domainEmpty)
+    .max(VALIDATION_VALUES.textLength.max, VALIDATION_ERRORS.domainLength)
+    .optional(),
 }).strict();
 
 const refineSchema = z.object({
