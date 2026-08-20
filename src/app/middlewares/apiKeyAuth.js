@@ -5,6 +5,50 @@ const parseApiKeys = (rawValue = '') => rawValue
   .map((apiKey) => apiKey.trim())
   .filter(Boolean);
 
+const parseBypassList = (rawValue = '') => rawValue
+  .split(',')
+  .map((value) => value.trim().toLowerCase())
+  .filter(Boolean);
+
+const normalizeHost = (rawValue = '') => {
+  const trimmedValue = rawValue.trim().toLowerCase();
+
+  if (!trimmedValue) {
+    return '';
+  }
+
+  if (trimmedValue.startsWith('[')) {
+    const closingBracketIndex = trimmedValue.indexOf(']');
+
+    if (closingBracketIndex !== -1) {
+      return trimmedValue.slice(1, closingBracketIndex);
+    }
+  }
+
+  const lastColonIndex = trimmedValue.lastIndexOf(':');
+  const firstColonIndex = trimmedValue.indexOf(':');
+
+  if (lastColonIndex > -1 && lastColonIndex === firstColonIndex) {
+    return trimmedValue.slice(0, lastColonIndex);
+  }
+
+  return trimmedValue;
+};
+
+const getRequestHost = (req) => {
+  if (typeof req.hostname === 'string' && req.hostname.trim()) {
+    return normalizeHost(req.hostname);
+  }
+
+  const hostHeader = req.get('host');
+
+  if (!hostHeader) {
+    return '';
+  }
+
+  return normalizeHost(hostHeader);
+};
+
 const getApiKeyFromRequest = (req, headerName) => {
   const headerValue = req.get(headerName);
 
@@ -35,6 +79,9 @@ const resolveApiKeyConfig = (env, options = {}) => {
     fallbackApiKeysKey,
     fallbackHeaderNameKey,
     headerNameKey = 'API_KEY_HEADER',
+    internalBypassEnabledKey = 'INTERNAL_AUTH_BYPASS_ENABLED',
+    internalBypassHostsKey = 'INTERNAL_AUTH_BYPASS_HOSTS',
+    internalBypassPathsKey = 'INTERNAL_AUTH_BYPASS_PATHS',
   } = options;
   const resolvedEnabled = enabled ?? env[enabledKey] === 'true';
   const headerName = env[headerNameKey] || env[fallbackHeaderNameKey] || 'x-api-key';
@@ -42,10 +89,15 @@ const resolveApiKeyConfig = (env, options = {}) => {
   const allowedApiKeys = configuredApiKeys.length > 0
     ? configuredApiKeys
     : parseApiKeys(env[fallbackApiKeysKey]);
+  const internalBypassHosts = parseBypassList(env[internalBypassHostsKey]);
+  const internalBypassPaths = parseBypassList(env[internalBypassPathsKey]);
 
   return {
     allowedApiKeys,
     headerName,
+    internalBypassHosts,
+    internalBypassPaths,
+    isInternalBypassEnabled: env[internalBypassEnabledKey] === 'true',
     isEnabled: resolvedEnabled,
   };
 };
@@ -55,6 +107,9 @@ const createApiKeyAuthMiddleware = (env, options = {}) => {
     isEnabled,
     headerName,
     allowedApiKeys,
+    isInternalBypassEnabled,
+    internalBypassHosts,
+    internalBypassPaths,
   } = resolveApiKeyConfig(env, options);
 
   return (req, _res, next) => {
@@ -65,6 +120,15 @@ const createApiKeyAuthMiddleware = (env, options = {}) => {
 
     if (allowedApiKeys.length === 0) {
       next(createError(500, 'API key authentication is enabled but no API keys are configured'));
+      return;
+    }
+
+    if (
+      isInternalBypassEnabled
+      && internalBypassPaths.includes((req.path || '').toLowerCase())
+      && internalBypassHosts.includes(getRequestHost(req))
+    ) {
+      next();
       return;
     }
 
@@ -80,4 +144,8 @@ const createApiKeyAuthMiddleware = (env, options = {}) => {
 };
 
 export default createApiKeyAuthMiddleware;
-export { resolveApiKeyConfig };
+export {
+  resolveApiKeyConfig,
+  normalizeHost,
+  getRequestHost,
+};
