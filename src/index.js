@@ -4,6 +4,7 @@ import http from 'http';
 import app from './app/app.js';
 import db from './app/db/models/index.js';
 import redisConnection from './app/util/redisConnection.js';
+import { startMetricsRefresher } from './app/metrics/metricsRefresher.js';
 import { serverInfo, serverError, cacheError, databaseError } from './app/util/debugger.js';
 
 const normalizePort = function normalizeServerPort(portValue) {
@@ -67,6 +68,8 @@ const startHTTPServer = async function startHTTPServerListen() {
     } catch (error) {
       cacheError('Fail connecting to cache server')
     }
+
+    startMetricsRefresher();
 
     const server = http.createServer(app);
     server.listen(app.get('port'));
