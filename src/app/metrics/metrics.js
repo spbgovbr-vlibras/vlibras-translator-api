@@ -59,9 +59,12 @@ const fetchMetricsFromTables = async function fetchMetricsFromTables(range) {
       transaction: t,
     });
 
+    // Reviews sem rating ficam de fora: agrupá-las devolveria um grupo zerado
+    // que o mapeamento booleano rotularia 'bad', duplicando o grupo.
     const ratings = await db.Review.findAll({
       attributes: ['rating', [db.Sequelize.fn('COUNT', db.sequelize.col('rating')), 'count']],
       where: {
+        rating: { [db.Sequelize.Op.not]: null },
         createdAt: { [db.Sequelize.Op.between]: [startTime, endTime] },
       },
       group: ['rating'],

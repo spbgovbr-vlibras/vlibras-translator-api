@@ -99,7 +99,7 @@ const countReviews = async function countReviews(range, lastAggregatedDay, trans
        SELECT
          count(*) FILTER (WHERE review IS NOT NULL) AS total,
          count(*) FILTER (WHERE rating IS TRUE) AS ratings_good,
-         count(*) FILTER (WHERE rating IS NOT TRUE) AS ratings_bad
+         count(*) FILTER (WHERE rating IS FALSE) AS ratings_bad
        FROM "Reviews"
        WHERE ("createdAt" >= $1::timestamptz AND "createdAt" < $3::timestamptz)
           OR ("createdAt" >= $4::timestamptz AND "createdAt" < $2::timestamptz)
@@ -151,6 +151,7 @@ const fetchAggregatedMetrics = async function fetchAggregatedMetrics(range, hits
     ]);
 
     // O caminho legado agrupa por rating e só devolve os grupos existentes.
+    // Reviews sem rating ficam fora dos dois grupos.
     const ratings = [];
     if (reviews.bad > 0) {
       ratings.push({ rating: 'bad', count: String(reviews.bad) });

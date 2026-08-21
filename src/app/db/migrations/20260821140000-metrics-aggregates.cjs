@@ -46,7 +46,8 @@ module.exports = {
           ("createdAt" AT TIME ZONE 'UTC')::date AS day,
           count(*) FILTER (WHERE review IS NOT NULL)::bigint AS total,
           count(*) FILTER (WHERE rating IS TRUE)::bigint AS ratings_good,
-          count(*) FILTER (WHERE rating IS NOT TRUE)::bigint AS ratings_bad
+          -- Rating nulo não é "bad": review sem nota fica fora dos dois grupos.
+          count(*) FILTER (WHERE rating IS FALSE)::bigint AS ratings_bad
         FROM "Reviews"
         WHERE ${CLOSED_DAYS_ONLY}
         GROUP BY 1
