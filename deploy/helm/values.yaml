@@ -75,6 +75,7 @@ tradapi:
     TRANSLATE_RATE_LIMIT_WINDOW_MS: '60000'
     TRANSLATE_RATE_LIMIT_MAX_REQUESTS: '300'
     GLOSS_REFINEMENT_ENABLED: 'false'
+    METRICS_REFRESH_INTERVAL_MS: '86400000' #daily; 0 disables the in-app scheduler
   
   ingress:
     enabled: false
