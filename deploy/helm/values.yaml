@@ -75,6 +75,7 @@ tradapi:
     TRANSLATE_RATE_LIMIT_WINDOW_MS: '60000'
     TRANSLATE_RATE_LIMIT_MAX_REQUESTS: '300'
     GLOSS_REFINEMENT_ENABLED: 'false'
+    MIGRATION_LOCK_TIMEOUT_MS: '120000'
   
   ingress:
     enabled: false
@@ -114,7 +115,7 @@ tradapi:
   ##
   livenessProbe:
     enabled: true
-    initialDelaySeconds: 60
+    initialDelaySeconds: 0
     periodSeconds: 1
     timeoutSeconds: 5
     failureThreshold: 3
@@ -128,7 +129,7 @@ tradapi:
   ##
   readinessProbe:
     enabled: true
-    initialDelaySeconds: 30
+    initialDelaySeconds: 0
     periodSeconds: 10
     timeoutSeconds: 1
     failureThreshold: 3
@@ -142,8 +143,8 @@ tradapi:
   ## @param startupProbe.successThreshold Success threshold for startupProbe
   ##
   startupProbe:
-    enabled: false
-    initialDelaySeconds: 45
+    enabled: true
+    initialDelaySeconds: 0
     periodSeconds: 5
     timeoutSeconds: 1
     failureThreshold: 60
