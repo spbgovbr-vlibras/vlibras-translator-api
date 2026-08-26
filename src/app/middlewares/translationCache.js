@@ -2,6 +2,7 @@ import crypto from 'crypto';
 import db from '../db/models/index.js';
 import { cacheError } from '../util/debugger.js';
 import redisConnection from '../util/redisConnection.js';
+import { scheduleStoreStats } from '../translator/translationStats.js';
 
 const normalizeTextForCache = (text) => Buffer.from(
   text.replace(/[^A-Za-z0-9\s?!.,;:()]/g, '').toLowerCase(),
@@ -37,6 +38,7 @@ const translationCache = async function getTranslationCache(req, res, next) {
 
       try {
         await countCachedTranslation(text, translation, requester);
+        scheduleStoreStats(req);
       } catch (error) {
         cacheError(`COUNT ${error.message}`);
       }

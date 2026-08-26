@@ -16,44 +16,8 @@ import { VALIDATION_VALUES } from '../../config/validation.js';
 import { getCachedTranslation } from '../middlewares/translationCache.js';
 import { requestQueueReply } from './amqpRpc.js';
 import { glossRefinementService } from './glossRefinement.js';
-import phraseBreaker from '../util/phraseBreaker.js';
 import sentimentAnalyzer from '../util/sentimentAnalyzer.js';
-
-/**
- * Asynchronous stores the statistics of the traslator at the DB.
- *
- * @param {Request} req - The http(s) request.
- */
-const storeStats = async function storeStatsController(req) {
-  try {
-    const phrases = await phraseBreaker(req.body.text);
-    await db.sequelize.transaction(async (t) => {
-      for (let i = 0; i < phrases.length; i += 1) {
-        const phrase = phrases[i].trim();
-        const translationAlreadyExists = await db.Hit.findOne({
-          where: {
-            text: phrase,
-          },
-          transaction: t,
-        });
-
-        let translationHit;
-        if (translationAlreadyExists) {
-          translationAlreadyExists.set({ hits: translationAlreadyExists.hits + 1 });
-          await translationAlreadyExists.save({ transaction: t });
-        } else {
-          translationHit = db.Hit.build({
-            text: phrase,
-            hits: 1,
-          });
-          await translationHit.save({ transaction: t });
-        }
-      }
-    });
-  } catch (error) {
-    serverError('Text translator failed storing stats');
-  }
-};
+import { scheduleStoreStats } from './translationStats.js';
 
 const textTranslatorHealth = async function textTranslatorController(req, res, next) {
   const { uid } = req;
@@ -74,7 +38,7 @@ const textTranslatorHealth = async function textTranslatorController(req, res, n
       return next(createError(500, TRANSLATOR_ERROR.unavailable));
     }
 
-    setTimeout(storeStats, 10, req); // 10miliseconds means now.
+    scheduleStoreStats(req);
 
     const translation = db.Translation.build({
       text: req.body.text,
@@ -159,6 +123,8 @@ const textTranslator = async function textTranslatorController(req, res, next) {
       }
       return next(createError(500, TRANSLATOR_ERROR.unavailable));
     }
+
+    scheduleStoreStats(req);
 
     const requesterIp = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
     const translation = db.Translation.build({
@@ -259,7 +225,7 @@ const refinedTextTranslator = async function refinedTextTranslatorController(req
   const { uid } = req;
 
   try {
-    setTimeout(storeStats, 10, req);
+    scheduleStoreStats(req);
 
     const requesterIp = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
     const translation = db.Translation.build({
@@ -317,7 +283,7 @@ const sentimentTranslator = async function sentimentTranslatorController(req, re
       throw createError(500, TRANSLATOR_ERROR.unavailable);
     }
 
-    setTimeout(storeStats, 10, req);
+    scheduleStoreStats(req);
 
     const translation = db.Translation.build({
       text: req.body.text,
