@@ -57,7 +57,7 @@ tradapi:
   pullPolicy: Always
 
   appConfig:
-    LOGGER_FORMAT: 'production' #dev or production
+    LOGGER_FORMAT: 'combined' #formatos validos do morgan: combined, common, dev, short, tiny
     PORT: '80'
     AMQP_PROTOCOL: 'amqp'
     AMQP_PREFETCH_COUNT: '1'
