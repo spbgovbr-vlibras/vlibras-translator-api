@@ -13,7 +13,7 @@ import {
   TRANSLATION_PAYLOAD_TTL,
 } from '../../config/timeout.js';
 import { VALIDATION_VALUES } from '../../config/validation.js';
-import { getCachedTranslation } from '../middlewares/translationCache.js';
+import { CACHE_NAMESPACES, getCachedTranslation } from '../middlewares/translationCache.js';
 import { requestQueueReply } from './amqpRpc.js';
 import { glossRefinementService } from './glossRefinement.js';
 import phraseBreaker from '../util/phraseBreaker.js';
@@ -272,7 +272,10 @@ const refinedTextTranslator = async function refinedTextTranslatorController(req
 
     if (providedGloss === undefined || providedGloss.length === 0) {
       try {
-        const cacheEntry = await getCachedTranslation(req.body.text);
+        const cacheEntry = await getCachedTranslation(
+          req.body.text,
+          CACHE_NAMESPACES.translation,
+        );
         cachedGloss = cacheEntry.cachedTranslation ?? undefined;
       } catch (cacheErr) {
         cacheError(`GET ${cacheErr.message}`);
