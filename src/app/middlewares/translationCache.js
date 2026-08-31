@@ -1,4 +1,5 @@
 import crypto from 'crypto';
+import env from '../../config/environments/environment.js';
 import db from '../db/models/index.js';
 import { cacheError } from '../util/debugger.js';
 import redisConnection from '../util/redisConnection.js';
@@ -17,18 +18,29 @@ const normalizeTextForCache = (text) => Buffer.from(
   text.replace(/[^A-Za-z0-9\s?!.,;:()]/g, '').toLowerCase(),
 );
 
-const buildTextHash = (text, namespace = CACHE_NAMESPACES.translation) => {
-  const digest = crypto.createHash('md5').update(normalizeTextForCache(text)).digest('hex');
+const digestText = (text) => crypto.createHash('md5').update(normalizeTextForCache(text)).digest('hex');
 
-  return `${namespace}:${digest}`;
-};
+const buildTextHash = (text, namespace = CACHE_NAMESPACES.translation) => `${namespace}:${digestText(text)}`;
 
-const getCachedTranslation = async (text, namespace = CACHE_NAMESPACES.translation) => {
-  const redisClient = await redisConnection();
-  const textHash = buildTextHash(text, namespace);
-  const cachedTranslation = await redisClient.get(textHash);
+/**
+ * Key format used before the namespaces existed: the bare digest, shared by
+ * both routes. Kept only to warm the namespaced keys from entries already in
+ * Redis; nothing writes to it anymore.
+ */
+const buildLegacyTextHash = (text) => digestText(text);
 
-  return { cachedTranslation, textHash };
+const parseSentimentPayload = function parseSentimentCachePayload(cachedValue) {
+  try {
+    const payload = JSON.parse(cachedValue);
+
+    if (payload === null || typeof payload !== 'object' || payload.traducao === undefined) {
+      return null;
+    }
+
+    return payload;
+  } catch (error) {
+    return null;
+  }
 };
 
 /**
@@ -41,17 +53,65 @@ const parseCachedValue = function parseCachedValueByNamespace(namespace, cachedV
     return { payload: cachedValue, translation: cachedValue, isJson: false };
   }
 
-  try {
-    const payload = JSON.parse(cachedValue);
+  const payload = parseSentimentPayload(cachedValue);
 
-    if (payload === null || typeof payload !== 'object' || payload.traducao === undefined) {
-      return null;
-    }
+  return payload === null
+    ? null
+    : { payload, translation: payload.traducao, isJson: true };
+};
 
-    return { payload, translation: payload.traducao, isJson: true };
-  } catch (error) {
+/**
+ * Legacy keys were written by both routes, so a legacy value may well belong to
+ * the other one. Only a value shaped like this namespace's payload is adopted;
+ * anything else is left behind to expire.
+ */
+const belongsToNamespace = function valueBelongsToNamespace(namespace, cachedValue) {
+  const isSentimentPayload = parseSentimentPayload(cachedValue) !== null;
+
+  return namespace === CACHE_NAMESPACES.sentiment ? isSentimentPayload : !isSentimentPayload;
+};
+
+/**
+ * Copies a still-valid legacy entry into its namespaced key, carrying the
+ * remaining TTL over so migrated entries keep expiring on the original
+ * schedule. The legacy key is left untouched: the copy is additive, so a
+ * rollback to the previous release still finds its cache warm.
+ */
+const adoptLegacyCacheEntry = async function adoptLegacyCacheEntryForNamespace({
+  redisClient, text, namespace, textHash,
+}) {
+  const legacyHash = buildLegacyTextHash(text);
+  const legacyValue = await redisClient.get(legacyHash);
+
+  if (legacyValue === null || !belongsToNamespace(namespace, legacyValue)) {
     return null;
   }
+
+  const remainingTtl = await redisClient.pttl(legacyHash);
+
+  if (remainingTtl > 0) {
+    await redisClient.set(textHash, legacyValue, 'PX', remainingTtl);
+  } else {
+    await redisClient.set(textHash, legacyValue, 'EX', env.CACHE_EXP);
+  }
+
+  return legacyValue;
+};
+
+const getCachedTranslation = async (text, namespace = CACHE_NAMESPACES.translation) => {
+  const redisClient = await redisConnection();
+  const textHash = buildTextHash(text, namespace);
+  const cachedTranslation = await redisClient.get(textHash);
+
+  if (cachedTranslation !== null) {
+    return { cachedTranslation, textHash };
+  }
+
+  const legacyTranslation = await adoptLegacyCacheEntry({
+    redisClient, text, namespace, textHash,
+  });
+
+  return { cachedTranslation: legacyTranslation, textHash };
 };
 
 const createTranslationCache = function createTranslationCacheMiddleware(
@@ -114,6 +174,7 @@ const translationCache = createTranslationCache(CACHE_NAMESPACES.translation);
 export default translationCache;
 export {
   CACHE_NAMESPACES,
+  buildLegacyTextHash,
   buildTextHash,
   createTranslationCache,
   getCachedTranslation,

@@ -2,12 +2,29 @@ import {
   beforeEach, describe, expect, it, jest,
 } from '@jest/globals';
 
+const CACHE_EXP = '604800';
+
 const redisStore = new Map();
+const redisTtl = new Map();
 const redisClient = {
   get: jest.fn(async (key) => (redisStore.has(key) ? redisStore.get(key) : null)),
+  set: jest.fn(async (key, value) => {
+    redisStore.set(key, value);
+    return 'OK';
+  }),
+  // -2 when the key is gone, -1 when it exists without expiry.
+  pttl: jest.fn(async (key) => {
+    if (!redisStore.has(key)) return -2;
+    return redisTtl.has(key) ? redisTtl.get(key) : -1;
+  }),
 };
 const translationSave = jest.fn(async () => {});
 const translationBuild = jest.fn(() => ({ save: translationSave }));
+const runtimeEnv = { CACHE_EXP };
+
+jest.unstable_mockModule('../../config/environments/environment.js', () => ({
+  default: runtimeEnv,
+}));
 
 jest.unstable_mockModule('../../app/util/redisConnection.js', () => ({
   default: jest.fn(async () => redisClient),
@@ -26,6 +43,7 @@ jest.unstable_mockModule('../../app/db/models/index.js', () => ({
 
 const {
   CACHE_NAMESPACES,
+  buildLegacyTextHash,
   buildTextHash,
   createTranslationCache,
   getCachedTranslation,
@@ -69,8 +87,16 @@ const SENTIMENT_PAYLOAD = {
 
 beforeEach(() => {
   redisStore.clear();
+  redisTtl.clear();
   jest.clearAllMocks();
 });
+
+const seedLegacy = (text, value, ttlMs) => {
+  const legacyHash = buildLegacyTextHash(text);
+  redisStore.set(legacyHash, value);
+  if (ttlMs !== undefined) redisTtl.set(legacyHash, ttlMs);
+  return legacyHash;
+};
 
 describe('Cache key namespacing', () => {
   it('should prefix the hash with the namespace', () => {
@@ -266,5 +292,127 @@ describe('Translation cache middleware fallbacks', () => {
     await createTranslationCache()(createRequest('oi tudo bem'), res, jest.fn());
 
     expect(res.sent).toBe('OI TUDO BEM');
+  });
+});
+
+describe('Legacy cache key fallback', () => {
+  it('should adopt a legacy gloss for the translation namespace', async () => {
+    seedLegacy('oi tudo bem', 'OI TUDO BEM', 120000);
+
+    const entry = await getCachedTranslation('oi tudo bem', CACHE_NAMESPACES.translation);
+
+    expect(entry.cachedTranslation).toBe('OI TUDO BEM');
+    expect(entry.textHash).toBe(buildTextHash('oi tudo bem', CACHE_NAMESPACES.translation));
+  });
+
+  it('should adopt a legacy sentiment payload for the sentiment namespace', async () => {
+    seedLegacy('oi tudo bem', JSON.stringify(SENTIMENT_PAYLOAD), 120000);
+
+    const entry = await getCachedTranslation('oi tudo bem', CACHE_NAMESPACES.sentiment);
+
+    expect(JSON.parse(entry.cachedTranslation)).toEqual(SENTIMENT_PAYLOAD);
+  });
+
+  it('should not adopt a legacy sentiment payload into the translation namespace', async () => {
+    seedLegacy('oi tudo bem', JSON.stringify(SENTIMENT_PAYLOAD), 120000);
+
+    const entry = await getCachedTranslation('oi tudo bem', CACHE_NAMESPACES.translation);
+
+    expect(entry.cachedTranslation).toBeNull();
+    expect(redisClient.set).not.toHaveBeenCalled();
+  });
+
+  it('should not adopt a legacy gloss into the sentiment namespace', async () => {
+    seedLegacy('oi tudo bem', 'OI TUDO BEM', 120000);
+
+    const entry = await getCachedTranslation('oi tudo bem', CACHE_NAMESPACES.sentiment);
+
+    expect(entry.cachedTranslation).toBeNull();
+    expect(redisClient.set).not.toHaveBeenCalled();
+  });
+
+  it('should copy the adopted value into the namespaced key', async () => {
+    seedLegacy('oi tudo bem', 'OI TUDO BEM', 120000);
+
+    await getCachedTranslation('oi tudo bem', CACHE_NAMESPACES.translation);
+
+    const namespacedHash = buildTextHash('oi tudo bem', CACHE_NAMESPACES.translation);
+    expect(redisStore.get(namespacedHash)).toBe('OI TUDO BEM');
+  });
+
+  it('should carry the remaining TTL over to the namespaced key', async () => {
+    seedLegacy('oi tudo bem', 'OI TUDO BEM', 120000);
+
+    await getCachedTranslation('oi tudo bem', CACHE_NAMESPACES.translation);
+
+    expect(redisClient.set).toHaveBeenCalledWith(
+      buildTextHash('oi tudo bem', CACHE_NAMESPACES.translation),
+      'OI TUDO BEM',
+      'PX',
+      120000,
+    );
+  });
+
+  it('should fall back to CACHE_EXP when the legacy key has no expiry', async () => {
+    seedLegacy('oi tudo bem', 'OI TUDO BEM');
+
+    await getCachedTranslation('oi tudo bem', CACHE_NAMESPACES.translation);
+
+    expect(redisClient.set).toHaveBeenCalledWith(
+      buildTextHash('oi tudo bem', CACHE_NAMESPACES.translation),
+      'OI TUDO BEM',
+      'EX',
+      CACHE_EXP,
+    );
+  });
+
+  it('should leave the legacy key in place so a rollback stays warm', async () => {
+    const legacyHash = seedLegacy('oi tudo bem', 'OI TUDO BEM', 120000);
+
+    await getCachedTranslation('oi tudo bem', CACHE_NAMESPACES.translation);
+
+    expect(redisStore.get(legacyHash)).toBe('OI TUDO BEM');
+  });
+
+  it('should not read the legacy key when the namespaced key hits', async () => {
+    redisStore.set(buildTextHash('oi tudo bem', CACHE_NAMESPACES.translation), 'OI TUDO BEM');
+    seedLegacy('oi tudo bem', 'GLOSA ANTIGA', 120000);
+
+    const entry = await getCachedTranslation('oi tudo bem', CACHE_NAMESPACES.translation);
+
+    expect(entry.cachedTranslation).toBe('OI TUDO BEM');
+    expect(redisClient.get).toHaveBeenCalledTimes(1);
+    expect(redisClient.get).not.toHaveBeenCalledWith(buildLegacyTextHash('oi tudo bem'));
+  });
+
+  it('should cost exactly one extra read on a miss', async () => {
+    await getCachedTranslation('oi tudo bem', CACHE_NAMESPACES.translation);
+
+    expect(redisClient.get).toHaveBeenCalledTimes(2);
+    expect(redisClient.get).toHaveBeenLastCalledWith(buildLegacyTextHash('oi tudo bem'));
+  });
+
+  it('should serve an adopted legacy entry through the middleware', async () => {
+    seedLegacy('oi tudo bem', 'OI TUDO BEM', 120000);
+
+    const res = createResponse();
+    const next = jest.fn();
+
+    await createTranslationCache(CACHE_NAMESPACES.translation)(createRequest('oi tudo bem'), res, next);
+
+    expect(next).not.toHaveBeenCalled();
+    expect(res.sent).toBe('OI TUDO BEM');
+  });
+
+  it('should serve an adopted legacy sentiment entry as JSON', async () => {
+    seedLegacy('oi tudo bem', JSON.stringify(SENTIMENT_PAYLOAD), 120000);
+
+    const res = createResponse();
+    const next = jest.fn();
+
+    await createTranslationCache(CACHE_NAMESPACES.sentiment)(createRequest('oi tudo bem'), res, next);
+
+    expect(next).not.toHaveBeenCalled();
+    expect(res.jsonPayload).toEqual(SENTIMENT_PAYLOAD);
   });
 });
