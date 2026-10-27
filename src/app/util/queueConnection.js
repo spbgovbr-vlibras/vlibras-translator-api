@@ -1,5 +1,7 @@
 import amqplib from 'amqplib';
-import { serverError } from './debugger.js';
+import baseLogger from './logger.js';
+
+const logger = baseLogger.child({ component: 'rabbitmq' });
 
 let AMQPConnection;
 
@@ -14,33 +16,36 @@ const connectionURL = {
 const queueConnection = async function AMQPQueueConnection() {
   try {
     if (AMQPConnection === undefined) {
-      console.log('[RabbitMQ] - Tentando conectar com RabbitMQ em:', connectionURL);
+      // Nunca logar connectionURL inteiro: ele contém a senha.
+      logger.info(
+        { host: connectionURL.hostname, port: connectionURL.port },
+        'Conectando ao RabbitMQ',
+      );
       AMQPConnection = await amqplib.connect(connectionURL);
-      console.log('[RabbitMQ] - Conexão estabelecida com RabbitMQ');
+      logger.info('Conexão estabelecida com RabbitMQ');
 
       AMQPConnection.on('close', () => {
-        console.warn('[RabbitMQ] - Conexão com RabbitMQ fechada');
+        logger.warn('Conexão com RabbitMQ fechada');
         AMQPConnection = undefined;
       });
 
       AMQPConnection.on('error', (err) => {
-        console.error('[RabbitMQ] - Erro na conexão:', err.message);
+        logger.error({ err }, 'Erro na conexão com RabbitMQ');
       });
     } else {
-      console.log('[RabbitMQ] - Reutilizando conexão existente');
+      logger.debug('Reutilizando conexão existente');
     }
     return AMQPConnection;
   } catch (error) {
-    serverError('Queue connection failed. Reason: ', error);
-    console.error('[RabbitMQ] - Falha ao conectar com RabbitMQ:', error.message);
+    logger.error({ err: error }, 'Falha ao conectar com RabbitMQ');
 
     if (AMQPConnection !== undefined) {
       setTimeout(() => {
         try {
           AMQPConnection.close();
-          console.log('[RabbitMQ] - Conexão fechada após erro');
+          logger.info('Conexão fechada após erro');
         } catch (closeErr) {
-          console.warn('[RabbitMQ] - Erro ao fechar conexão após falha:', closeErr.message);
+          logger.warn({ err: closeErr }, 'Erro ao fechar conexão após falha');
         }
       }, 500);
     }

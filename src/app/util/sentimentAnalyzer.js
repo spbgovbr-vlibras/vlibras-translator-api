@@ -76,7 +76,6 @@ export default async function sentimentAnalyzer(originalText, translatedText = "
       });
 
       const respText = await resp.text();
-      console.log("UUUU", respText);
 
       if (!resp.ok) {
         return "neutral";

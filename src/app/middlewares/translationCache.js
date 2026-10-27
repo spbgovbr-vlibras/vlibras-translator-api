@@ -1,6 +1,5 @@
 import crypto from 'crypto';
 import db from '../db/models/index.js';
-import { cacheError } from '../util/debugger.js';
 import redisConnection from '../util/redisConnection.js';
 
 const normalizeTextForCache = (text) => Buffer.from(
@@ -18,18 +17,17 @@ const getCachedTranslation = async (text) => {
 };
 
 const translationCache = async function getTranslationCache(req, res, next) {
-  const uid = req.uid;
+  const log = req.log.child({ component: 'cache' });
   try {
-    console.log(`[Cache][${uid}] - Conexão com Redis estabelecida`);
     const { cachedTranslation, textHash } = await getCachedTranslation(req.body.text);
 
     req.body.textHash = textHash;
 
     if (cachedTranslation === null) {
-      console.log(`[Cache][${uid}] - Tradução não está no cache`);
+      log.debug('Tradução não está no cache');
       return next();
     } else {
-      console.log(`[Cache][${uid}] - Tradução está no cache`);
+      log.debug('Tradução está no cache');
       const text = req.body.text;
       const translation = cachedTranslation;
       const requester =
@@ -38,14 +36,13 @@ const translationCache = async function getTranslationCache(req, res, next) {
       try {
         await countCachedTranslation(text, translation, requester);
       } catch (error) {
-        cacheError(`COUNT ${error.message}`);
+        log.error({ err: error }, 'Falha ao registrar tradução vinda do cache');
       }
     }
 
     return res.status(200).send(cachedTranslation);
   } catch (error) {
-    console.log(`[Cache][${uid}] - Error no cache`);
-    cacheError(`GET ${error.message}`);
+    log.error({ err: error }, 'Falha ao consultar o cache');
     return next();
   }
 };

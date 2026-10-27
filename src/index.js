@@ -58,14 +58,14 @@ const startHTTPServer = async function startHTTPServerListen() {
       await db.sequelize.authenticate();
       serverInfo(`Connected to database ${process.env.POSTGRES_DATABASE}`);
     } catch (error) {
-      databaseError('Failed connecting to database')
+      databaseError('Failed connecting to database', error);
     }
     
     try {
       await redisConnection();
       serverInfo(`Connected to ${process.env.CACHE_NAME}`);
     } catch (error) {
-      cacheError('Fail connecting to cache server')
+      cacheError('Fail connecting to cache server', error);
     }
 
     const server = http.createServer(app);
@@ -73,7 +73,7 @@ const startHTTPServer = async function startHTTPServerListen() {
     server.on('error', (err) => { onError(err, app.get('port')); });
     server.on('listening', () => { onListening(server.address()); });
   } catch (error) {
-    serverError('', error.stack);
+    serverError('Failed to start server', error);
     process.exit(1);
   }
 };

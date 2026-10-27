@@ -1,13 +1,14 @@
 import createError from 'http-errors';
 import env from '../../config/environments/environment.js';
 import { requestQueueReply } from './amqpRpc.js';
+import baseLogger from '../util/logger.js';
 
 const isGlossRefinementEnabled = (runtimeEnv) => runtimeEnv.GLOSS_REFINEMENT_ENABLED === 'true';
 
 const createGlossRefinementService = ({
   runtimeEnv = env,
   requestReply = requestQueueReply,
-  logger = console,
+  logger = baseLogger.child({ component: 'refinement' }),
 } = {}) => {
   const refineGloss = async ({ text, gloss, uid }) => {
     if (!isGlossRefinementEnabled(runtimeEnv)) {

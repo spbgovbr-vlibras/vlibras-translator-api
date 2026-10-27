@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import { spawn } from 'node:child_process';
+import logger from './src/app/util/logger.js';
 
 const run = (command, args) => new Promise((resolve, reject) => {
   const child = spawn(command, args, {
@@ -24,15 +25,15 @@ const run = (command, args) => new Promise((resolve, reject) => {
 });
 
 if (!process.env.NODE_ENV) {
-  console.error('Environment variable NODE_ENV is required to start services');
+  logger.fatal('Environment variable NODE_ENV is required to start services');
   process.exit(1);
 }
 
 try {
-  console.log('Run Postgres migrations');
+  logger.info('Run Postgres migrations');
   await run(process.execPath, ['./node_modules/sequelize-cli/lib/sequelize', 'db:migrate']);
   await import('./src/index.js');
 } catch (error) {
-  console.error(error.message);
+  logger.fatal({ err: error }, 'Failed to start service');
   process.exit(1);
 }
